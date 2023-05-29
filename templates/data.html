@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Data</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+
+	<body>
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
+			<a class="navbar-brand" href="#">Navbar</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="collapsibleNavbar">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link" href="#">Data</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#">Build</a>
+					</li>
+				</ul>
+			</div>
+		</nav> 
+		
+		<div class="table-responsive container-fluid p-2">
+			<table class="table table-hover table-bordered" id="question_table">
+				<thead class="thead-light">
+					<tr>
+						<th>ID</th>
+						<th>Question</th>
+						<th>Answer 1</th>
+						<th>Answer 2</th>
+						<th>Answer 3</th>
+						<th>Answer 4</th>
+						<th>Correct Answer</th>
+						<th>Category</th>
+						<th>Tag</th>
+						<th class="table-primary">Use</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for q in questions %}
+					<tr>
+						<td>{{q["id"]}}</td>
+						<td>{{q["question"]}}</td>
+						{% if q["correct_id"] == 1 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer1"]}}</td>
+						{% if q["correct_id"] == 2 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer2"]}}</td>
+						{% if q["correct_id"] == 3 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer3"]}}</td>
+						{% if q["correct_id"] == 4 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer4"]}}</td>
+						<td>{{q["correct_id"]}}</td>
+						<td>{{q.get("category", "N/A")}}</td>
+						<td>{{q.get("tag", "-")}}</td>
+						<td class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control" id="use_question_{{q["id"]}}">
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<div class="container-fluid d-flex p-2">
+				<button class="mx-2 btn btn-info" onclick="test(event)">Import</button>
+				<button class="mx-2 btn btn-info" onclick="test(event)">Export</button>
+				<button class="mx-2 ml-auto btn btn-success" onclick="createQuestionnaire(event)">Use Selected</button>
+			</div>
+
+			<div id="classifier_wrapper" style="display: none;">
+				<label id="questionnaire_items"> Waiting for button click...</label>
+				<div class="d-flex border border-dark" id="barebone_classifier"></div>
+				<label class="my-2"> Disposition </label>
+				<br />
+				<div class="container" id="disposition"> 
+					<div class="row">
+						<div class="align-middle col-sm-2 m-1">Uses:</div>
+						<div class="align-middle col-sm-2 input-group border border-primary p-2 m-1">
+							<input type="number" class="form-control" id="group_0" maxlength=3 /> 
+							<div class "input-group-append">/ <label id="group_count_0">0</label></div>
+						</div>
+						<div class="align-middle col-sm-2 input-group border border-success p-2 m-1">
+							<input type="number" class="form-control" id="group_1" maxlength=3 /> 
+							<div class "input-group-append">/ <label id="group_count_1">0</label></div>
+						</div>
+						<div class="align-middle col-sm-2 input-group border border-danger p-2 m-1">
+							<input type="number" class="form-control" id="group_2" maxlength=3 /> 
+							<div class "input-group-append">/ <label id="group_count_2">0</label></div>
+						</div>
+						<div class="align-middle col-sm-2 input-group border border-warning p-2 m-1">
+							<input type="number" class="form-control" id="group_3" maxlength=3 /> 
+							<div class "input-group-append">/ <label id="group_count_3">0</label></div>
+						</div>
+					</div>
+				</div>
+				<button class="my-2 btn btn-success" onclick="submitQuestionnaire(event)">Build Questionnaire</button>
+			</div>
+
+			<div id="classifier" hidden> 
+				<p>WIP, delay for now.</p>
+				{% for i in range(5) %}
+				<div class="m-2 p-2 border border-3" id="section{{i}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
+					<div class="bg-secondary" draggable="true" ondragstart="drag(event)" id="{{i*2}}" width="336">Test No.{{i}} </div>
+				</div>
+				{% endfor %}
+			</div>
+
+			<div id="result_panel" style="display: none;">
+				Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
+				<br />
+				Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
+				<br />
+				Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+			</div>
+		</div>
+
+		<script src={{ url_for('static', filename="data.js") }}></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+	</body>
+</html> 
+

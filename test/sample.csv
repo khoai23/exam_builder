@@ -1,0 +1,8 @@
+question,answer1,answer2,answer3,answer4,correct_id,category
+Test question A,1,2,3,4,1,v1
+Test question B,10,9,8,7,2,v1
+Test question C,11,6,20,12,2,v1
+Test question D,14,5,17,3,3,v2
+Test question E,11,14,3,12,4,v2
+Test question F,13,10,5,11,3,v2
+Test question G,6,9,1,10,2,v2
