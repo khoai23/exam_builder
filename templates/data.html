@@ -68,28 +68,90 @@
 
 			<div id="classifier_wrapper" style="display: none;">
 				<label id="questionnaire_items"> Waiting for button click...</label>
-				<div class="d-flex border border-dark" id="barebone_classifier"></div>
-				<label class="my-2"> Disposition </label>
 				<br />
-				<div class="container" id="disposition"> 
+				<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
+				<div class="d-flex border border-dark" id="barebone_classifier"></div>
+				<label class="mt-3"> Questionnaire setting: </label>
+				<br />
+				<div class="container-fluid" id="disposition"> 
+					<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
 					<div class="row">
-						<div class="align-middle col-sm-2 m-1">Uses:</div>
-						<div class="align-middle col-sm-2 input-group border border-primary p-2 m-1">
-							<input type="number" class="form-control" id="group_0" maxlength=3 /> 
-							<div class "input-group-append">/ <label id="group_count_0">0</label></div>
+						<div class="col-sm-12 col-md-5 border border-primary p-2 m-1">
+							<div class="input-group">
+							<input type="number" class="form-control" id="group_0" maxlength="2" /> 
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									<span>question /</span> <b><span id="group_count_0">0</span></b> <span>&nbsp;total with&nbsp;</span>
+								</div>
+							</div>
+							<input type="number" class="form-control" id="score_0" maxlength="5" />
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									 <span>PPC</span>
+								</div>
+							</div>
+							</div>
 						</div>
-						<div class="align-middle col-sm-2 input-group border border-success p-2 m-1">
-							<input type="number" class="form-control" id="group_1" maxlength=3 /> 
-							<div class "input-group-append">/ <label id="group_count_1">0</label></div>
+						<div class="col-sm-12 col-md-5 border border-success p-2 m-1">
+							<div class="input-group">
+							<input type="number" class="form-control" id="group_1" maxlength="2" /> 
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									<span>question /</span> <b><span id="group_count_1">0</span></b> <span>&nbsp;total with&nbsp;</span>
+								</div>
+							</div>
+							<input type="number" class="form-control" id="score_1" maxlength="5" />
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									 <span>PPC</span>
+								</div>
+							</div>
+							</div>
 						</div>
-						<div class="align-middle col-sm-2 input-group border border-danger p-2 m-1">
-							<input type="number" class="form-control" id="group_2" maxlength=3 /> 
-							<div class "input-group-append">/ <label id="group_count_2">0</label></div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12 col-md-5 input-group border border-danger p-2 m-1">
+							<input type="number" class="form-control" id="group_2" maxlength="2" /> 
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									<span>question /</span> <b><span id="group_count_2">0</span></b> <span>&nbsp;total with&nbsp;</span>
+								</div>
+							</div>
+							<input type="number" class="form-control" id="score_2" maxlength="5" />
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									 <span>PPC</span>
+								</div>
+							</div>
 						</div>
-						<div class="align-middle col-sm-2 input-group border border-warning p-2 m-1">
-							<input type="number" class="form-control" id="group_3" maxlength=3 /> 
-							<div class "input-group-append">/ <label id="group_count_3">0</label></div>
+						<div class="col-sm-12 col-md-5 input-group border border-warning p-2 m-1">
+							<input type="number" class="form-control" id="group_3" maxlength="2" /> 
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									<span>question /</span> <b><span id="group_count_3">0</span></b> <span>&nbsp;total with&nbsp;</span>
+								</div>
+							</div>
+							<input type="number" class="form-control" id="score_3" maxlength="5" />
+							<div class="input-group-append">
+								<div class="input-group-text"> 
+									 <span>PPC</span>
+								</div>
+							</div>
 						</div>
+					</div>
+					<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
+				</div>
+				<div class="container-fluid" id="setting">
+					<div class="row">
+						<div class="col-sm-12 col-md-3">
+							<input type="checkbox" id="allow_result">Show correct answers when exam finishes</input>
+						</div>
+						<div class="col-sm-12 col-md-3">
+							<input type="checkbox" id="allow_score">Show score when exam finishes</input>
+						</div>
+					</div>
+					<div class="row input-group">
+						<div class>
 					</div>
 				</div>
 				<button class="my-2 btn btn-success" onclick="submitQuestionnaire(event)">Build Questionnaire</button>
@@ -113,11 +175,11 @@
 			</div>
 		</div>
 
-		<script src={{ url_for('static', filename="data.js") }}></script>
 		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+		<script src={{ url_for('static', filename="data.js") }}></script>
 	</body>
 </html> 
 

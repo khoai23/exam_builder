@@ -52,13 +52,14 @@ def enter():
             raise NotImplementedError
         # retrieve the generated test; TODO also keep backup of what was chosen
         student_data = session[template_key]["student"][student_key]
-        print("Accessing existing key: ", student_key, " with data", student_data["exam_data"])
+        print("Accessing existing key: ", student_key, " with data", student_data)
         # return the exam page directly
         # send 2 values: elapsed & remaining 
         end_time = student_data["start_time"] + 3600.0 # 1 hr fixed for now 
         elapsed = min(time.time() - student_data["start_time"], 3600.0)
         remaining = 3600.0 - elapsed
-        return render_template("exam.html", exam_data=student_data["exam_data"], elapsed=elapsed, remaining=remaining)
+        print("Submitted answer? ", ("answers" in student_data))
+        return render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining)
     else:
         template_key = request.args.get("template_key", None)
         if(template_key is None):
@@ -82,7 +83,26 @@ def enter():
         print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
         # redirect to self 
         return redirect(url_for("enter", key=student_key))
-        
+
+@app.route("/submit", methods=["POST"])
+def submit():
+    """Student will submit there answer here
+    Must be accomodated by the student_key."""
+    try:
+        student_key  = request.args.get("key")
+        template_key = student_belong_to_session[student_key]
+        submitted_answers = request.get_json()
+        assert isinstance(submitted_answers, list) and all((a is None or 0 <= a < 4 for a in submitted_answers)), "answers must be list of [0-3]; but is {}".format(submitted_answers)
+        student_data = session[template_key]["student"][student_key]
+        print(student_data)
+        if("answers" in student_data):
+            return jsonify(result=False)
+        else:
+            student_data["answers"] = submitted_answers 
+            return jsonify(result=True)
+    except Exception as e:
+        return jsonify(result=False, error=str(e))
+
 @app.route("/manage")
 def manage():
     """Exam maker can access this page to track the current status of the exam; including the choices being made by the student (if chosen to be tracked)

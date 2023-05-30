@@ -100,6 +100,7 @@ function updateDisposition(event) {
 	for(let i=0;i<4;i++){
 		$("#group_count_" + i.toString()).text(cats[i]);
 		$("#group_" + i.toString()).prop("disabled", cats[i] == 0);
+		$("#score_" + i.toString()).prop("disabled", cats[i] == 0);
 //		console.log($("#group_count_" + i.toString()), "->", cats[i])
 	}
 }
