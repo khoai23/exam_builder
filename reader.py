@@ -5,6 +5,8 @@ import io, csv
 
 from typing import Optional, List, Tuple, Any, Union
 
+DEFAULT_FILE_PATH = "test/sample.csv"
+
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []

@@ -1,25 +1,51 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+import flask
+from flask import Flask, request, url_for
+from werkzeug.utils import secure_filename
 import secrets
-import time
+import time 
+import traceback
 
-from reader import read_file
+from reader import read_file, DEFAULT_FILE_PATH
 from organizer import assign_ids, shuffle
 
 app = Flask("exam_builder")
+app.config["UPLOAD_FOLDER"] = "test"
+
 data = {}
-data["table"] = current_data = read_file("test/sample.csv")
+data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
 data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
 
 @app.route("/")
 def main():
     """Enter the index page"""
-    return render_template("main.html")
+    return flask.render_template("main.html")
 
 @app.route("/data")
 def data():
     "Enter the data page, where we can modify the bank and build a new template for an exam"
-    return render_template("data.html", questions=current_data)
+    return flask.render_template("data.html", questions=current_data)
+
+@app.route("/export")
+def file_export():
+    """Allow access to the database file."""
+    return flask.send_file(DEFAULT_FILE_PATH, as_attachment=True)
+
+@app.route("/import", methods=["POST"])
+def file_import():
+    """Allow overwriting the database file with a better variant."""
+    try:
+        file = request.files["file"]
+        file.save(DEFAULT_FILE_PATH)
+        # TODO read and replace current data
+        print("File saved to default path; reload data now.")
+        del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
+        id_data.clear(); id_data.update(assign_ids(current_data))
+        session.clear()
+        return flask.jsonify(result=True)
+    except Exception as e:
+        return flask.jsonify(result=False, error=str(e))
+#    raise NotImplementedError
 
 @app.route("/build_template", methods=["POST"])
 def build_template():
@@ -35,7 +61,7 @@ def build_template():
     session[key] = {"template": template, "admin_key": admin_key, "expire": None, "student": dict()}
     print("Session after modification: ", session)
     # return the key to be accessed by the browser
-    return jsonify(session_key=key, admin_key=admin_key)
+    return flask.jsonify(session_key=key, admin_key=admin_key)
 
 student_belong_to_session = dict()
 @app.route("/enter")
@@ -59,7 +85,7 @@ def enter():
         elapsed = min(time.time() - student_data["start_time"], 3600.0)
         remaining = 3600.0 - elapsed
         print("Submitted answer? ", ("answers" in student_data))
-        return render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining)
+        return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining)
     else:
         template_key = request.args.get("template_key", None)
         if(template_key is None):
@@ -82,7 +108,7 @@ def enter():
         }
         print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
         # redirect to self 
-        return redirect(url_for("enter", key=student_key))
+        return flask.redirect(url_for("enter", key=student_key))
 
 @app.route("/submit", methods=["POST"])
 def submit():
@@ -96,18 +122,40 @@ def submit():
         student_data = session[template_key]["student"][student_key]
         print(student_data)
         if("answers" in student_data):
-            return jsonify(result=False)
+            return flask.jsonify(result=False)
         else:
+            # record to the student info
             student_data["answers"] = submitted_answers 
-            return jsonify(result=True)
+            # calculate scores immediately 
+            score = 0.0
+            for sub, crt, qst in zip(submitted_answers, student_data["correct"], student_data["exam_data"]):
+                if(sub == crt): 
+                    # upon a correct answer submitted; add to the student score
+                    score += qst["score"]
+            print("Calculated score: ", score)
+            student_data["score"] = score 
+            return flask.jsonify(result=True)
     except Exception as e:
-        return jsonify(result=False, error=str(e))
+        return flask.jsonify(result=False, error=str(e))
 
 @app.route("/manage")
 def manage():
     """Exam maker can access this page to track the current status of the exam; including the choices being made by the student (if chosen to be tracked)
     Not implemented as of now"""
-    raise NotImplementedError
+    try:
+        template_key = request.args.get("template_key")
+        admin_key = request.args.get("key")
+        # TODO allow a box to supplement key to manage 
+        # TODO listing all running templates
+        session_data = session[template_key]
+        print("Access session data: ", session_data)
+        if(admin_key == session_data["admin_key"]):
+            return flask.render_template("manage.html", session_data=session_data)
+        else:
+            return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
+    except Exception as e:
+        print("Error: ", e)
+        return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
 
 if __name__ == "__main__":
     app.run(debug=True)

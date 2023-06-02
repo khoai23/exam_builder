@@ -109,7 +109,7 @@ function submitQuestionnaire(event) {
 	// check for validity; then submit the data to the server; receiving an entry link
 //	var data = [[$("#group_0").val(), []], [$("#group_1").val(), []], 
 //		[$("#group_2").val(), []], [$("#group_3").val(), []]];
-	var data = [0, 1, 2, 3].map(i => [parseInt($("#group_" + i).val()), []]);
+	var data = [0, 1, 2, 3].map(i => [parseInt($("#group_" + i).val()), parseFloat($("#score_" + i).val()), []]);
 	$("#barebone_classifier").find("label").each(function(index) {
 		let question_index = parseInt($(this).attr("qidx"));
 		console.log($(this), question_index)
@@ -128,26 +128,28 @@ function submitQuestionnaire(event) {
 			return;
 		}
 		// append the index to the list of choices
-		data[question_category][1].push(question_index);
+		data[question_category][2].push(question_index);
 	});
 	console.log("Raw result", data);
 	// Check phase.
 	var err_type = data.map(function(item, index) {
-		console.log(item[1]);
-		if(item[1].length > 0) {
+		console.log(item[2]);
+		if(item[2].length > 0) {
 			if(isNaN(item[0]) || item[0] == 0)
-				return "Category " + index + " is valid but want zero question."
-			else if(item[0] > item[1].length)
-				return "Category " + index + " has insufficient base."
-		} else if(item[1].length == 0) {
+				return "Category " + index + " is valid but want zero question.";
+			else if(item[0] > item[2].length)
+				return "Category " + index + " has insufficient base.";
+			else if(isNaN(item[1]) || item[1] <=0)
+				return "Score of " + index + " is NaN/non-positive";
+		} else if(item[2].length == 0) {
 			// should be disabled and value irrelevant
 			return null;
 		}
 		return null;
 	});
-	if(err_type.every(v => v === null)) {
+	if(err_type.every(v => v === null) && err_type.length > 0) {
 		// everything is ok, clear and push to an event 
-		data = data.filter(v => v[1].length > 0);
+		data = data.filter(v => v[2].length > 0);
 		var payload = JSON.stringify(data);
 		console.log("Cleaned result: ", payload);
 		var result_panel = $("#result_panel");
@@ -186,4 +188,32 @@ function submitQuestionnaire(event) {
 	}
 	// Alert to screen for now 
 	// alert("Selection created:" + data.toString() )
+}
+
+function choose_file(event) {
+	$("#import_file").click();
+}
+
+function submit_file(event) {
+// $(document).on("ready", function() {
+	console.log("Attempt override submit.")
+	var form = $("#import_form");
+	var actionUrl = form.attr('action');
+	console.log(form[0]);
+	var data = new FormData(form[0])
+	$.ajax({
+		type: "POST",
+		url: actionUrl,
+		data: data,
+		processData: false,
+		contentType: false,
+		success: function(data, textStatus, jqXHR) {
+			console.log("Form submitted: ", data);
+			$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.");
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log(error);
+			$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed.")
+		}
+	});
 }

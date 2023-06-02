@@ -8,7 +8,7 @@
 
 	<body>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-			<a class="navbar-brand" href="#">Navbar</a>
+			<a class="navbar-brand" href="/">Navbar</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
 				<span class="navbar-toggler-icon"></span>
 			</button>
@@ -18,7 +18,7 @@
 						<a class="nav-link" href="#">Data</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="#">Build</a>
+						<a class="nav-link" href="manage">Manage</a>
 					</li>
 				</ul>
 			</div>
@@ -61,8 +61,12 @@
 			</table>
 
 			<div class="container-fluid d-flex p-2">
-				<button class="mx-2 btn btn-info" onclick="test(event)">Import</button>
-				<button class="mx-2 btn btn-info" onclick="test(event)">Export</button>
+				<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
+					<input id="import_file" type="file" name="file" accept=".csv" onchange="submit_file(event)"></input>
+				</form>
+				<button class="mx-2 btn btn-info" onclick="choose_file(event)">Import</button>
+				<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
+				<span id="mx-2 io_result"></span> 
 				<button class="mx-2 ml-auto btn btn-success" onclick="createQuestionnaire(event)">Use Selected</button>
 			</div>
 

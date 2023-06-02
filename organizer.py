@@ -20,25 +20,26 @@ def organize(data: List[Dict], default_category: str="unknown"):
         categorized_data[cat].append(row)
     return categorized_data 
 
-def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, List]], seed=None):
+def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], seed=None):
     # handle multiple questions already selected 
     # the selected should already been sub-divided to its minor section; this process will shuffle both the choices and the order of the answers and provide correct answer ids for them.
+    # not one step back further after the score var
     if(seed):
         random.seed(seed)
     selected, correct = [], []
-    for qnum, qids in all_questions:
+    for qnum, qsc, qids in all_questions:
         qids = random.sample(qids, qnum)
         for qid in qids:
             q = data[qid]
             answer_shuffle = random.sample(list(range(1, 5)), 4)
-            new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle] }
+            new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle], "score": qsc }
             new_correct_id = answer_shuffle[q["correct_id"] - 1]
             selected.append(new_question)
             correct.append(new_correct_id)
     return selected, correct
 
 if __name__ == "__main__":
-    from reader import read_file
-    data = read_file("test/sample.csv")
+    from reader import read_file, DEFAULT_FILE_PATH
+    data = read_file(DEFAULT_FILE_PATH)
     id_data = assign_ids(data)
     print(shuffle(id_data, [(1, [0, 1, 2]), (2, [3, 4, 5, 6])]))
