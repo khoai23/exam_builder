@@ -53,7 +53,7 @@
 					{% for student_key, student_info in session_data["student"].items() %}
 						<tr id="{{student_key}}">
 							<td> {{ student_key }} </td>
-							<td> TODO add in template generation process </td>
+							<td> {{ student_info["student_name"] }} </td>
 							<td class="{{ "text-success" if "answers" in student_info else "text-warning" }}"> 
 								{{ student_info.get("score", "Working") }}
 							</td>

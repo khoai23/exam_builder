@@ -15,6 +15,13 @@ data = {}
 data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
 data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
+data["submit_route"] = submit_route = dict()
+
+def reload_data():
+    del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
+    id_data.clear(); id_data.update(assign_ids(current_data))
+    session.clear()
+    submit_route.clear()
 
 @app.route("/")
 def main():
@@ -39,9 +46,7 @@ def file_import():
         file.save(DEFAULT_FILE_PATH)
         # TODO read and replace current data
         print("File saved to default path; reload data now.")
-        del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
-        id_data.clear(); id_data.update(assign_ids(current_data))
-        session.clear()
+        reload_data()
         return flask.jsonify(result=True)
     except Exception as e:
         return flask.jsonify(result=False, error=str(e))
@@ -64,6 +69,47 @@ def build_template():
     return flask.jsonify(session_key=key, admin_key=admin_key)
 
 student_belong_to_session = dict()
+@app.route("/identify")
+def identify():
+    """First part of entering the exam; this link will allow student to input necessary info to be monitored by /manage
+    The form should trigger the generic_submit redirect and go to /enter after it."""
+    template_key = request.args.get("template_key", None)
+    if(template_key is None):
+        return flask.render_template("error.html", error="No session key specified; please use one to identify yourself.", error_traceback=None)
+    else:
+        # with a template key; try to format properly
+        try:
+            session_data = session[template_key]
+            if(template_key not in submit_route):
+                print("First trigger of identify, building corresponding submit route")
+                def receive_form_information(student_name=None, **kwargs):
+                    # refer to generic_submit for more detail
+                    # create unique student key for this specific format
+                    student_key = secrets.token_hex(8)
+                    # write to session retrieval 
+                    student_belong_to_session[student_key] = template_key
+                    # write to session data itself.
+                    selected, correct = shuffle(id_data, session_data["template"])
+                    session_data["student"][student_key] = student_data = {
+                            "student_name": student_name,
+                            "exam_data": selected,
+                            "correct": correct,
+                            "start_time": time.time()
+                    }
+                    print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
+                    # redirect to enter/ 
+                    return flask.redirect(url_for("enter", key=student_key))
+                # add this to the submit_route dictionary
+                submit_route[template_key] = receive_form_information
+            # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
+            return flask.render_template("generic_input.html", 
+                    title="Enter Exam",
+                    message="Enter name & submit to start your exam.", 
+                    submit_key=template_key,
+                    input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}])
+        except Exception as e:
+            return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+
 @app.route("/enter")
 def enter():
     """Enter the exam.
@@ -91,8 +137,8 @@ def enter():
         if(template_key is None):
             # TODO return a page allowing to enter the key 
             raise NotImplementedError
-        template = session.get(template_key, None)
-        if(template is None):
+        session_data = session.get(template_key, None)
+        if(session_data is None):
             # TODO return a warning that session is not correct/expired; also enter the key as above
             raise NotImplementedError
         # create the new student key 
@@ -100,8 +146,8 @@ def enter():
         # write to session retrieval 
         student_belong_to_session[student_key] = template_key
         # write to session data itself.
-        selected, correct = shuffle(id_data, template["template"])
-        session[template_key]["student"][student_key] = student_data = {
+        selected, correct = shuffle(id_data, session_data["template"])
+        session_data["student"][student_key] = student_data = {
                 "exam_data": selected,
                 "correct": correct,
                 "start_time": time.time()
@@ -145,6 +191,8 @@ def manage():
     try:
         template_key = request.args.get("template_key")
         admin_key = request.args.get("key")
+        if(template_key is None or admin_key is None):
+            return flask.render_template("error.html", error="Missing key specified; TODO allow input box", error_traceback=None)
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
@@ -156,6 +204,32 @@ def manage():
     except Exception as e:
         print("Error: ", e)
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+
+@app.route("/generic_submit", methods=["POST"])
+def generic_submit():
+    """Generic submission trigger; allowing user to send up custom data to a hooked function.
+    Currently, this will trigger binding of new entrant to template
+    Each route must be a Callable[List[str, str]] -> Any
+    arguments/keys are supplied by the form construction; 
+    returning a redirect blob if handled by the string; or returning a true/false json block for further guidance
+    """
+    try:
+        print("Entering generic_submit...")
+        form = request.form.to_dict()
+        submit_id = form.pop("id")
+        if submit_id not in submit_route:
+            print("Cannot found route id: ", submit_id)
+            return flask.jsonify(result=False, error="No route id available")
+        result_blob = submit_route[submit_id](**form)
+        if(isinstance(result_blob, str) or not isinstance(result_blob, (list, tuple))):
+            # upon data being a redirect blob; just throw it back
+            return result_blob 
+        else:
+            result, data_or_error = result_blob 
+            # TODO differentiate between result=True and result=False
+            return flask.jsonify(result=result, error=data_or_error, data=data_or_error)
+    except Exception as e:
+        return flask.jsonify(result=False, error=str(e))
 
 if __name__ == "__main__":
     app.run(debug=True)

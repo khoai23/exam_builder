@@ -169,7 +169,7 @@ function submitQuestionnaire(event) {
 				var admin_path = base + "/manage" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
 				var admin_link = $("#admin_link");
 				admin_link.attr("href", admin_path); admin_link.text(admin_path)
-				var exam_path = base + "/enter" + "?template_key=" + data["session_key"];
+				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
 				var exam_link = $("#exam_link");
 				exam_link.attr("href", exam_path); exam_link.text(exam_path)
 				// open the view 

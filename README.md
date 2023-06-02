@@ -6,6 +6,7 @@ All possible extension regard the builder, unlikely first:
 [ ] Data source
 [ ] Drag-n-drop categorizer
 [ ] Filter for question types
-[ ] Redirect student with template key to a specializing page; optional choice to use hashed info as student key 
+[x] Redirect student with template key to a specializing page
+[ ] Optional choice to use hashed info as student key (enabled by creator)
 [ ] Add more info to session template (name, comment, expiry time, grace time, try to force submission upon end)
 
