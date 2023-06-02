@@ -121,7 +121,7 @@ def enter():
         template_key = student_belong_to_session.get(student_key, None)
         if(template_key is None):
             # TODO return a warning that the student key is not correct/expired; also allow entering the key
-            raise NotImplementedError
+            return flask.render_template("error.html", error="Missing key; TODO allow input box", error_traceback=None)
         # retrieve the generated test; TODO also keep backup of what was chosen
         student_data = session[template_key]["student"][student_key]
         print("Accessing existing key: ", student_key, " with data", student_data)
@@ -134,13 +134,10 @@ def enter():
         return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining)
     else:
         template_key = request.args.get("template_key", None)
-        if(template_key is None):
-            # TODO return a page allowing to enter the key 
-            raise NotImplementedError
         session_data = session.get(template_key, None)
-        if(session_data is None):
+        if(template_key is None or session_data is None):
             # TODO return a warning that session is not correct/expired; also enter the key as above
-            raise NotImplementedError
+            return flask.render_template("error.html", error="Missing key or missing exam session; TODO allow input box", error_traceback=None)
         # create the new student key 
         student_key = secrets.token_hex(8)
         # write to session retrieval 
@@ -182,7 +179,7 @@ def submit():
             student_data["score"] = score 
             return flask.jsonify(result=True)
     except Exception as e:
-        return flask.jsonify(result=False, error=str(e))
+        return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 
 @app.route("/manage")
 def manage():

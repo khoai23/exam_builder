@@ -24,8 +24,8 @@ function runTimer(elapsed, remaining) {
 		$("#timer").css("width", (percentage * 100.0).toFixed(2) + "%")
 		let rm = Math.floor(total - elapsed)
 		$("#timer").text(`${Math.floor(rm / 60)}m${(rm % 60)}s`);
-		elapsed += 1.0;
-	}, 1000); // every one sec
+		elapsed += 0.25;
+	}, 250); // every 1/4 sec
 }
 
 function listAnswers() {

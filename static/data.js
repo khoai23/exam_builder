@@ -105,6 +105,22 @@ function updateDisposition(event) {
 	}
 }
 
+function readQuestionnaireSetting(event) {
+	// read non-critical setting associated with the questionnaire 
+	var setting = {
+		"session_name": $("#session_name").val(),
+		"student_identifier_name": $("#id_name").val(),
+		"exam_duration": parseInt($("#session_duration").val()),
+		"grace_duration": parseInt($("#grace_duration").val()),
+		"session_start": Date.parse( $("#start_date_text").val() ), // TODO access the datepicker item instead
+		"session_end": Date.parse( $("#end_date_text").val() ), // TODO access the datepicker item instead 
+		"show_result": $("#allow_result").is(":checked"),
+		"show_score": $("#allow_score").is(":checked"),
+	};
+	console.log("Chosen setting: ", setting)
+	return setting
+}
+
 function submitQuestionnaire(event) {
 	// check for validity; then submit the data to the server; receiving an entry link
 //	var data = [[$("#group_0").val(), []], [$("#group_1").val(), []], 
@@ -196,11 +212,11 @@ function choose_file(event) {
 
 function submit_file(event) {
 // $(document).on("ready", function() {
-	console.log("Attempt override submit.")
+//	console.log("Attempt override submit.")
 	var form = $("#import_form");
 	var actionUrl = form.attr('action');
-	console.log(form[0]);
 	var data = new FormData(form[0])
+	console.log(data);
 	$.ajax({
 		type: "POST",
 		url: actionUrl,
@@ -217,3 +233,14 @@ function submit_file(event) {
 		}
 	});
 }
+
+$(document).ready(function() {
+	console.log("Document ready, initializing");
+	// bind the grace period checkbox to the input 
+	$("#allow_grace").click(function() {
+		$("#grace_duration").attr("disabled", $(this).is(":checked"));
+	});
+	// activate the datetimepicker options
+	//$("#start_date_picker").datetimepicker();
+	//$("#end_date_picker").datetimepicker();
+})
