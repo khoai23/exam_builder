@@ -52,8 +52,11 @@ function createQuestionnaire(event) {
 		});
 		$("#classifier_wrapper").show(); // bootstrap cannot use hide/show apparently
 		updateDisposition(event);
+		$("#data_table").collapse('hide'); $("#result_frame").collapse('hide');
+		$("#category_selector").collapse('show'); // automatically hide the table
 	} else {
 		$("#classifier_wrapper").hide(); // bootstrap cannot use hide/show apparently
+		// $("#data_table").collapse('show'); $("#category_selector").collapse('hide');
 		//classifier.hide();
 	}
 }
@@ -112,8 +115,8 @@ function readQuestionnaireSetting(event) {
 		"student_identifier_name": $("#id_name").val(),
 		"exam_duration": parseInt($("#session_duration").val()),
 		"grace_duration": parseInt($("#grace_duration").val()),
-		"session_start": Date.parse( $("#start_date_text").val() ), // TODO access the datepicker item instead
-		"session_end": Date.parse( $("#end_date_text").val() ), // TODO access the datepicker item instead 
+		"session_start":$("#start_exam_time").val() + " " + $("#start_exam_date").val(), // leave parsing to server
+		"session_end": $("#end_exam_time").val() + " " + $("#end_exam_date").val(), 
 		"show_result": $("#allow_result").is(":checked"),
 		"show_score": $("#allow_score").is(":checked"),
 	};
@@ -166,7 +169,7 @@ function submitQuestionnaire(event) {
 	if(err_type.every(v => v === null) && err_type.length > 0) {
 		// everything is ok, clear and push to an event 
 		data = data.filter(v => v[2].length > 0);
-		var payload = JSON.stringify(data);
+		var payload = JSON.stringify({"template": data, "setting": readQuestionnaireSetting(event)});
 		console.log("Cleaned result: ", payload);
 		var result_panel = $("#result_panel");
 		result_panel.hide();
@@ -188,7 +191,11 @@ function submitQuestionnaire(event) {
 				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
 				var exam_link = $("#exam_link");
 				exam_link.attr("href", exam_path); exam_link.text(exam_path)
+				// also hiding the above panels
+				$("#data_table").collapse('hide'); 
+				$("#category_selector").collapse('hide');
 				// open the view 
+				$("#result_frame").collapse('show');
 				result_panel.show();
 			},
 			error: function(jqXHR, textStatus, error){
@@ -234,6 +241,47 @@ function submit_file(event) {
 	});
 }
 
+function select_category(event) {
+	// select a category depending on the clicked button 
+	var category = event.currentTarget.innerText;
+	// filter all fields that does not contain this category 
+	$("tbody").find("tr").each(function(index) {
+		let row_cat = $(this).find(".category_cell").first().text().trim();
+		console.log(row_cat);
+		if(row_cat !== category) 
+			$(this).hide();
+		else 
+			$(this).show();
+	});
+	// update the clear filter and show it 
+	$("#filter_category_clear").text(category + "(X)");
+	$("#filter_category_clear").show();
+}
+
+function clear_category(event) {
+	// clear out the selected category 
+	$("tbody").find("tr").each(function(index) { $(this).show(); });
+	// hide the clear filter 
+	$("#filter_category_clear").hide();
+}
+
+function toggle_select_tag(event) {
+	// select/deselect all items by a chosen tag. if not all items selected, use select mode
+	var target_tag = event.currentTarget.innerText;
+	// get all same-tag row; extract the checkboxes
+	var boxes = $("tbody").find("tr").filter(function(index) {
+		return $(this).find(".tag_cell:contains('" + target_tag + "')").length > 0;
+	}).find("[id^=use_question_]");
+	//console.log(boxes);
+	if(boxes.filter(":checked").length == boxes.length) {
+		// all box checked; deselect 
+		boxes.each(function() { $(this).prop("checked", false); })
+	} else {
+		// zero/some box checked; select
+		boxes.each(function() { $(this).prop("checked", true); })
+	}
+}
+
 $(document).ready(function() {
 	console.log("Document ready, initializing");
 	// bind the grace period checkbox to the input 
@@ -242,5 +290,13 @@ $(document).ready(function() {
 	});
 	// activate the datetimepicker options
 	//$("#start_date_picker").datetimepicker();
-	//$("#end_date_picker").datetimepicker();
+	$(".datepicker").datepicker({
+		format: "dd-mm-yyyy",
+		todayHighlight: true,
+	});
+	// clicking the show of Data Table card will collapse the Category Selector & Result
+	$("#data_table").on("show.bs.collapse", function() { 
+		$("#category_selector").collapse('hide'); 
+		$("#result_frame").collapse('hide');
+	});
 })

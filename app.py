@@ -55,15 +55,17 @@ def file_import():
 @app.route("/build_template", methods=["POST"])
 def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
-    template = request.get_json()
-    print("Received template data:", template)
+    data = request.get_json()
+    print("Received template data:", data)
+    setting = data["setting"]
+    # format setting: cleaning dates; voiding nulled fields
+
     # generate a random key for this session.
     key = secrets.token_hex(8)
     admin_key = secrets.token_hex(8)
     # Maybe TODO check here if the template is valid?
     # TODO add a timer to expire the session when needed
-    # TODO wipe all sessions when a new import had been made.
-    session[key] = {"template": template, "admin_key": admin_key, "expire": None, "student": dict()}
+    session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict()}
     print("Session after modification: ", session)
     # return the key to be accessed by the browser
     return flask.jsonify(session_key=key, admin_key=admin_key)
@@ -114,7 +116,8 @@ def identify():
 def enter():
     """Enter the exam.
     If the student_key is not available, a specific student key is generated and used to track individual result.
-    Subsequent access with student_key will relaunch the same test, preferably with the choices ready"""
+    Subsequent access with student_key will relaunch the same test, preferably with the choices ready
+    TODO disallow entering when not in start_exam_date -> end_exam_date; or time had ran out."""
     student_key = request.args.get("key", None)
     if(student_key):
         # retrieve the session key 
@@ -131,7 +134,12 @@ def enter():
         elapsed = min(time.time() - student_data["start_time"], 3600.0)
         remaining = 3600.0 - elapsed
         print("Submitted answer? ", ("answers" in student_data))
-        return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining)
+        if(time.time() > end_time):
+            flask.render_template("error.html", error="Exam time over.", error_traceback=None)
+        else:
+            # allow entering
+            return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, 
+                    exam_setting = session[template_key]["setting"])
     else:
         template_key = request.args.get("template_key", None)
         session_data = session.get(template_key, None)

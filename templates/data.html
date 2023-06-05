@@ -6,6 +6,7 @@
 	<!--
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css">
 	-->
+		<link id="bsdp-css" href="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker3.min.css" rel="stylesheet">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 
@@ -26,199 +27,238 @@
 				</ul>
 			</div>
 		</nav> 
-		
-		<div class="table-responsive container-fluid p-2">
-			<table class="table table-hover table-bordered" id="question_table">
-				<thead class="thead-light">
-					<tr>
-						<th>ID</th>
-						<th>Question</th>
-						<th>Answer 1</th>
-						<th>Answer 2</th>
-						<th>Answer 3</th>
-						<th>Answer 4</th>
-						<th>Correct Answer</th>
-						<th>Category</th>
-						<th>Tag</th>
-						<th class="table-primary">Use</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for q in questions %}
-					<tr>
-						<td>{{q["id"]}}</td>
-						<td>{{q["question"]}}</td>
-						{% if q["correct_id"] == 1 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer1"]}}</td>
-						{% if q["correct_id"] == 2 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer2"]}}</td>
-						{% if q["correct_id"] == 3 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer3"]}}</td>
-						{% if q["correct_id"] == 4 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer4"]}}</td>
-						<td>{{q["correct_id"]}}</td>
-						<td>{{q.get("category", "N/A")}}</td>
-						<td>{{q.get("tag", "-")}}</td>
-						<td class="custom-control custom-checkbox">
-							<input type="checkbox" class="custom-control" id="use_question_{{q["id"]}}">
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-
-			<div class="container-fluid d-flex p-2">
-				<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
-					<input id="import_file" type="file" name="file" accept=".csv" onchange="submit_file(event)"></input>
-				</form>
-				<button class="mx-2 btn btn-info" onclick="choose_file(event)">Import</button>
-				<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
-				<span id="mx-2 io_result"></span> 
-				<button class="mx-2 ml-auto btn btn-success" onclick="createQuestionnaire(event)">Use Selected</button>
+	
+		<div class="accordion" id="accordion_main">
+			<div class="card">
+				<div class="card-header" id="accordion_data_header"> 
+					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#data_table" aria-expanded="true" aria-controls="data_table">
+						Data Table 
+					</button>
+				</div>
+				<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="data_table">
+				<div class="table-responsive card-body">
+					<table class="table table-hover table-bordered" id="question_table">
+						<thead class="thead-light">
+							<tr>
+								<th>ID</th>
+								<th>Question</th>
+								<th>Answer 1</th>
+								<th>Answer 2</th>
+								<th>Answer 3</th>
+								<th>Answer 4</th>
+								<th>Correct Answer</th>
+								<th>Category &nbsp;
+									<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
+										(X)
+									</button>
+								</th>
+								<th>Tag</th>
+								<th class="table-primary">Use</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for q in questions %}
+							<tr>
+								<td>{{q["id"]}}</td>
+								<td>{{q["question"]}}</td>
+								{% if q["correct_id"] == 1 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer1"]}}</td>
+								{% if q["correct_id"] == 2 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer2"]}}</td>
+								{% if q["correct_id"] == 3 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer3"]}}</td>
+								{% if q["correct_id"] == 4 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer4"]}}</td>
+								<td>{{q["correct_id"]}}</td>
+								<td class="category_cell">
+									<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
+										{{q.get("category", "N/A")}}
+									</button>
+								</td>
+								<td>
+									{% if "tag" in q %}
+										{% for tag in q["tag"] %}
+											<button class="m-0 p-0 btn btn-link tag_cell" onclick="toggle_select_tag(event)">{{tag}}</button>&nbsp;
+										{% endfor %}
+									{% else %} 
+										-
+									{% endif %}
+								</td>
+								<td class="custom-checkbox">
+									<input type="checkbox" class="custom-control" id="use_question_{{q["id"]}}">
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+						
+					<div class="container-fluid d-flex p-2">
+						<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
+							<input id="import_file" type="file" name="file" accept=".csv" onchange="submit_file(event)"></input>
+						</form>
+						<button class="mx-2 btn btn-info" onclick="choose_file(event)">Import</button>
+						<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
+						<span id="mx-2 io_result"></span> 
+						<button class="mx-2 ml-auto btn btn-success" onclick="createQuestionnaire(event)">Use Selected</button>
+					</div>
+				</div>
+				</div>
 			</div>
 
-			<div id="classifier_wrapper" style="display: none;">
-				<label id="questionnaire_items"> Waiting for button click...</label>
-				<br />
-				<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
-				<div class="d-flex border border-dark" id="barebone_classifier"></div>
-				<label class="mt-3"> Questionnaire setting: </label>
-				<br />
-				<div class="container-fluid" id="disposition"> 
-					<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
-					<div class="row">
-						<div class="col-sm-12 col-md-5 border border-primary p-2 m-1">
-							<div class="input-group">
-							<input type="number" class="form-control" id="group_0" maxlength="2" /> 
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									<span>question /</span> <b><span id="group_count_0">0</span></b> <span>&nbsp;total with&nbsp;</span>
-								</div>
-							</div>
-							<input type="number" class="form-control" id="score_0" maxlength="5" />
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									 <span>PPC</span>
-								</div>
-							</div>
-							</div>
-						</div>
-						<div class="col-sm-12 col-md-5 border border-success p-2 m-1">
-							<div class="input-group">
-							<input type="number" class="form-control" id="group_1" maxlength="2" /> 
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									<span>question /</span> <b><span id="group_count_1">0</span></b> <span>&nbsp;total with&nbsp;</span>
-								</div>
-							</div>
-							<input type="number" class="form-control" id="score_1" maxlength="5" />
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									 <span>PPC</span>
-								</div>
-							</div>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-12 col-md-5 input-group border border-danger p-2 m-1">
-							<input type="number" class="form-control" id="group_2" maxlength="2" /> 
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									<span>question /</span> <b><span id="group_count_2">0</span></b> <span>&nbsp;total with&nbsp;</span>
-								</div>
-							</div>
-							<input type="number" class="form-control" id="score_2" maxlength="5" />
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									 <span>PPC</span>
-								</div>
-							</div>
-						</div>
-						<div class="col-sm-12 col-md-5 input-group border border-warning p-2 m-1">
-							<input type="number" class="form-control" id="group_3" maxlength="2" /> 
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									<span>question /</span> <b><span id="group_count_3">0</span></b> <span>&nbsp;total with&nbsp;</span>
-								</div>
-							</div>
-							<input type="number" class="form-control" id="score_3" maxlength="5" />
-							<div class="input-group-append">
-								<div class="input-group-text"> 
-									 <span>PPC</span>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
+			<div class="card">
+				<div class="card-header" id="accordion_category_header"> 
+					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector">
+						Category Selector 
+					</button>
 				</div>
-				<div class="container-fluid" id="setting">
-					<div class="row align-middle col-sm-12 m-1">Setting:</div>
-					<div class="row my-2">
-						<div class="col-sm-12 col-md-6 input-group">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="session_name">Exam name</span>
+				<div class="collapse" aria-labelledby="accordion_category_header" data-bs-parent="#accordion_main" id="category_selector">
+					<div id="classifier_wrapper">
+						<label id="questionnaire_items"> Waiting for button click...</label>
+						<br />
+						<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
+						<div class="d-flex border border-dark" id="barebone_classifier"></div>
+						<label class="mt-3"> Questionnaire setting: </label>
+						<br />
+						<div class="container-fluid" id="disposition"> 
+							<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
+							<div class="row">
+								<div class="col-sm-12 col-md-5 border border-primary p-2 m-1">
+									<div class="input-group">
+									<input type="number" class="form-control" id="group_0" maxlength="2" /> 
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											<span>question /</span> <b><span id="group_count_0">0</span></b> <span>&nbsp;total with&nbsp;</span>
+										</div>
+									</div>
+									<input type="number" class="form-control" id="score_0" maxlength="5" />
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											 <span>PPC</span>
+										</div>
+									</div>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-5 border border-success p-2 m-1">
+									<div class="input-group">
+									<input type="number" class="form-control" id="group_1" maxlength="2" /> 
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											<span>question /</span> <b><span id="group_count_1">0</span></b> <span>&nbsp;total with&nbsp;</span>
+										</div>
+									</div>
+									<input type="number" class="form-control" id="score_1" maxlength="5" />
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											 <span>PPC</span>
+										</div>
+									</div>
+									</div>
+								</div>
 							</div>
-							<input type="text" class="form-control" id="session_name"></input>
+							<div class="row">
+								<div class="col-sm-12 col-md-5 input-group border border-danger p-2 m-1">
+									<input type="number" class="form-control" id="group_2" maxlength="2" /> 
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											<span>question /</span> <b><span id="group_count_2">0</span></b> <span>&nbsp;total with&nbsp;</span>
+										</div>
+									</div>
+									<input type="number" class="form-control" id="score_2" maxlength="5" />
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											 <span>PPC</span>
+										</div>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-5 input-group border border-warning p-2 m-1">
+									<input type="number" class="form-control" id="group_3" maxlength="2" /> 
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											<span>question /</span> <b><span id="group_count_3">0</span></b> <span>&nbsp;total with&nbsp;</span>
+										</div>
+									</div>
+									<input type="number" class="form-control" id="score_3" maxlength="5" />
+									<div class="input-group-append">
+										<div class="input-group-text"> 
+											 <span>PPC</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
 						</div>
-						<div class="col-sm-12 col-md-6 input-group">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="id_name">Identification field name</span>
+						<div class="container-fluid" id="setting">
+							<div class="row align-middle col-sm-12 m-1">Setting:</div>
+							<div class="row my-2">
+								<div class="col-sm-12 col-md-6 input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="session_name">Exam name</span>
+									</div>
+									<input type="text" class="form-control" id="session_name"></input>
+								</div>
+								<div class="col-sm-12 col-md-6 input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="id_name">Identification field</span>
+									</div>
+									<input type="text" class="form-control" id="id_name" value="Student Name" disabled></input>
+								</div>
 							</div>
-							<input type="text" class="form-control" id="id_name"></input>
+							<div class="row my-2">
+								<div class="col-sm-12 col-md-6 input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="session_duration">Exam length</span>
+									</div>
+									<input type="number" class="form-control" id="session_duration"></input>
+									<div class="input-group-append">
+										<span class="input-group-text" for="session_duration">min</span>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-6 input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="grace_duration">Grace
+											<input type="checkbox" id="allow_grace" for="grace_duration" class="mx-1"></input>
+										</span>
+									</div>
+									<input type="number" class="form-control" id="grace_duration"></input>
+									<div class="input-group-append">
+										<span class="input-group-text" for="grace_duration">min</span>
+									</div>
+								</div>
+							</div>
+							<div class="row my-2">
+								<div class="col-sm-12 col-md-6 input-group date" id="start_date_picker">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="start_exam_time"> Exam start </span>
+									</div>
+									<input type="time" class="form-control" id="start_exam_time">
+									<input data-provide="datepicker" class="form-control" id="start_exam_date"  data-date-format="dd/mm/yyyy">
+									<div class="input-group-addon" />
+										<span class="glyphicon glyphicon-calendar" />
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-6 input-group date" id="end_date_picker">
+									<div class="input-group-prepend">
+										<span class="input-group-text" for="end_exam_date"> Exam end </span>
+									</div>
+									<!-- <input type="text" class="form-control" id="end_date_text"/> -->
+									<input type="time" class="form-control" id="end_exam_time">
+									<input data-provide="datepicker" class="form-control" id="end_exam_date"  data-date-format="dd/mm/yyyy">
+									<div class="input-group-addon" />
+										<span class="glyphicon glyphicon-calendar" />
+									</div>
+								</div>
+							</div>
+							<div class="row my-2">
+								<div class="col-sm-12 col-md-3">
+									<input type="checkbox" id="allow_result">Show correct answers when exam finishes</input>
+								</div>
+								<div class="col-sm-12 col-md-3">
+									<input type="checkbox" id="allow_score">Show score when exam finishes</input>
+								</div>
+								<div class="col-sm-12 col-md-3" hidden>
+									<input type="checkbox" id=""></input>
+								</div>
+							</div>
 						</div>
-					</div>
-					<div class="row my-2">
-						<div class="col-sm-12 col-md-6 input-group">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="session_duration">Exam length</span>
-							</div>
-							<input type="number" class="form-control" id="session_duration"></input>
-							<div class="input-group-append">
-								<span class="input-group-text" for="session_duration">min</span>
-							</div>
-						</div>
-						<div class="col-sm-12 col-md-6 input-group">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="grace_duration">Grace
-									<input type="checkbox" id="allow_grace" for="grace_duration" class="mx-1"></input>
-								</span>
-							</div>
-							<input type="number" class="form-control" id="grace_duration"></input>
-							<div class="input-group-append">
-								<span class="input-group-text" for="grace_duration">min</span>
-							</div>
-						</div>
-					</div>
-					<div class="row my-2">
-						<div class="col-sm-12 col-md-6 input-group date" id="start_date_picker">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="start_date_text"> Exam start </span>
-							</div>
-							<input type="text" class="form-control" id="start_date_text"/>
-							<div class="input-group-addon" />
-								<span class="glyphicon glyphicon-calendar" />
-							</div>
-						</div>
-						<div class="col-sm-12 col-md-6 input-group date" id="end_date_picker">
-							<div class="input-group-prepend">
-								<span class="input-group-text" for="end_date_text"> Exam end </span>
-							</div>
-							<input type="text" class="form-control" id="end_date_text"/>
-							<div class="input-group-addon" />
-								<span class="glyphicon glyphicon-calendar" />
-							</div>
-						</div>
-					</div>
-					<div class="row my-2">
-						<div class="col-sm-12 col-md-3">
-							<input type="checkbox" id="allow_result">Show correct answers when exam finishes</input>
-						</div>
-						<div class="col-sm-12 col-md-3">
-							<input type="checkbox" id="allow_score">Show score when exam finishes</input>
-						</div>
-						<div class="col-sm-12 col-md-3" hidden>
-							<input type="checkbox" id=""></input>
-						</div>
+						<button class="my-2 btn btn-success" onclick="submitQuestionnaire(event)">Build Questionnaire</button>
 					</div>
 				</div>
-				<button class="my-2 btn btn-success" onclick="submitQuestionnaire(event)">Build Questionnaire</button>
 			</div>
 
 			<div id="classifier" hidden> 
@@ -230,22 +270,29 @@
 				{% endfor %}
 			</div>
 
-			<div id="result_panel" style="display: none;">
-				Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
-				<br />
-				Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
-				<br />
-				Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+			<div class="card" id="result_panel" style="display: none;">
+				<div class="card-header" id="accordion_result_header"> 
+					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#result_frame" aria-expanded="true" aria-controls="result_frame">
+						Result
+					</button>
+				</div>
+				<div class="p-2 collapse show" aria-labelledby="accordion_result_header" data-bs-parent="#accordion_main" id="result_frame">
+					Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
+					<br />
+					Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
+					<br />
+					Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+				</div>
 			</div>
 		</div>
-
-		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-	<!--
+		<script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.1/moment.min.js"></script>
+	<!--
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker3.standalone.min.css"> </script>
 	-->
 		<script src={{ url_for('static', filename="data.js") }}></script>
 	</body>
