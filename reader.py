@@ -29,7 +29,8 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
             k = k.lower()
         if(k == "tag"):
             # for tag field, split it by delimiter 
-            v = [] if v == "" else [v] if delimiter not in v else v.split(delimiter)
+            v = [] if v == "" else [v.strip()] if delimiter not in v else [t.strip() for t in v.split(delimiter)]
+            print("Tag: ", v)
             # if has tag for multiple choice, swap it to is_multiple_choice
             if("is_multiple_choice" in v):
                 v.remove("is_multiple_choice")
@@ -52,7 +53,7 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     assert len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
     # if multiple-choice question with only a single selection, convert it to list 
     if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):
-        new_data["correct_id"] = tuple(new_data["correct_id"])
+        new_data["correct_id"] = (new_data["correct_id"],)
     return new_data
 
 if __name__ == "__main__":
