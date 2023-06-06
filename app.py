@@ -59,7 +59,7 @@ def build_template():
     data = request.get_json()
     print("Received template data:", data)
     # format setting: cleaning dates; voiding nulled fields
-    setting = {k: v for k, v in data["setting"].items() if v is not None}
+    setting = {k: v for k, v in data["setting"].items() if v is not None and (not isinstance(v, str) or v.strip() != "")}
     if("session_start" in setting):
         # format date & limit entrance
         setting["true_session_start"] = datetime.strptime(setting["session_start"], "%H:%M %d/%m/%Y").timestamp()
@@ -177,7 +177,7 @@ def submit():
         student_key  = request.args.get("key")
         template_key = student_belong_to_session[student_key]
         submitted_answers = request.get_json()
-        assert isinstance(submitted_answers, list) and all((a is None or 0 < a <= 4 for a in submitted_answers)), "answers must be list of [1-4]; but is {}".format(submitted_answers)
+#        assert isinstance(submitted_answers, list), "answers must be list of [1-4]; but is {}".format(submitted_answers)
         student_data = session[template_key]["student"][student_key]
         print(student_data)
         if("answers" in student_data):
@@ -188,9 +188,15 @@ def submit():
             # calculate scores immediately 
             score = 0.0
             for sub, crt, qst in zip(submitted_answers, student_data["correct"], student_data["exam_data"]):
-                if(sub == crt): 
-                    # upon a correct answer submitted; add to the student score
-                    score += qst["score"]
+                if(isinstance(crt, (tuple, list))):
+                    if(all((s in crt for s in sub))):
+                        # upon all correct answers, add to the student score 
+                        # TODO partial score mode 
+                        score += qst["score"]
+                else:
+                    if(sub == crt): 
+                        # upon a correct answer submitted; add to the student score
+                        score += qst["score"]
             print("Calculated score: ", score)
             student_data["score"] = score 
             return flask.jsonify(result=True)

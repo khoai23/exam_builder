@@ -4,6 +4,7 @@ All possible extension regard the builder, unlikely first:
 - [ ] Template problems (replacing variables)
 - [ ] LaTeX-type formatting
 - [ ] Data source
+- [ ] Multiple-choice options
 - [ ] Drag-n-drop categorizer
 - [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page

@@ -22,7 +22,7 @@ def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=Fal
 
 def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     """All processing of fields is done here."""
-    new_data = {}
+    new_data = {"is_multiple_choice": False}
     for k, v in row.items():
         v = v.strip()
         if(lowercase_field):
@@ -30,17 +30,29 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
         if(k == "tag"):
             # for tag field, split it by delimiter 
             v = [] if v == "" else [v] if delimiter not in v else v.split(delimiter)
-        if(k == "correct_id"):
+            # if has tag for multiple choice, swap it to is_multiple_choice
+            if("is_multiple_choice" in v):
+                v.remove("is_multiple_choice")
+                new_data["is_multiple_choice"] = True
+        if(k == "correct_id"): 
             try:
-                v = int(v)
+                if("," in v):
+                    new_data["is_multiple_choice"] = True 
+                    v = tuple(int(iv) for iv in v.split(","))
+                    assert all(( 0 < iv <= 4 for iv in v)), "Correct_id is fixed to [1, 4] for now, but received: {}".format(v)
+                else:
+                    v = int(v)
+                    assert 0 < v <= 4, "Correct_id is fixed to [1, 4] for now, but received: {}".format(v)
             except ValueError as e:
                 print("The correct id `{}` cannot be parsed".format(v))
                 raise e
-            assert 0 < v <= 4, "Correct_id is fixed to [1, 4] for now."
         new_data[k] = v
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
     assert len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
+    # if multiple-choice question with only a single selection, convert it to list 
+    if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):
+        new_data["correct_id"] = tuple(new_data["correct_id"])
     return new_data
 
 if __name__ == "__main__":

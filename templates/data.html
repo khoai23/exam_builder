@@ -36,7 +36,7 @@
 					</button>
 				</div>
 				<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="data_table">
-				<div class="table-responsive card-body">
+				<div class="table-responsive card-body" style="flex-grow: 1;">
 					<table class="table table-hover table-bordered" id="question_table">
 						<thead class="thead-light">
 							<tr>
@@ -61,10 +61,10 @@
 							<tr>
 								<td>{{q["id"]}}</td>
 								<td>{{q["question"]}}</td>
-								{% if q["correct_id"] == 1 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer1"]}}</td>
-								{% if q["correct_id"] == 2 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer2"]}}</td>
-								{% if q["correct_id"] == 3 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer3"]}}</td>
-								{% if q["correct_id"] == 4 %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer4"]}}</td>
+								{% if q["correct_id"] == 1 or q["correct_id"] is iterable and 1 in q["correct_id"] %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer1"]}}</td>
+								{% if q["correct_id"] == 2 or q["correct_id"] is iterable and 2 in q["correct_id"] %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer2"]}}</td>
+								{% if q["correct_id"] == 3 or q["correct_id"] is iterable and 3 in q["correct_id"] %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer3"]}}</td>
+								{% if q["correct_id"] == 4 or q["correct_id"] is iterable and 4 in q["correct_id"] %} <td class="table-success"> {% else %} <td> {% endif %} {{q["answer4"]}}</td>
 								<td>{{q["correct_id"]}}</td>
 								<td class="category_cell">
 									<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
@@ -103,7 +103,7 @@
 
 			<div class="card">
 				<div class="card-header" id="accordion_category_header"> 
-					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector">
+					<button class="btn btn-link" type="button" id="category_selector_btn" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector" disabled>
 						Category Selector 
 					</button>
 				</div>

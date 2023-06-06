@@ -29,8 +29,8 @@ function runTimer(elapsed, remaining) {
 }
 
 function listAnswers() {
-	var radios = $("#exam_region").find("[id^=q_]");
 	var answers = {};
+	var radios = $("#exam_region").find("[id^=qr_]");
 	radios.each(function (index) {
 		let indices = $(this).attr("id").split("_");
 		let question_id = parseInt(indices[1]);
@@ -44,6 +44,25 @@ function listAnswers() {
 		} else {
 			// slot not exist, hollow it out
 			answers[question_id] = null;
+		}
+	});
+	var checkboxes = $("#exam_region").find("[id^=qc_]");
+	checkboxes.each(function(index) {
+		let indices = $(this).attr("id").split("_");
+		let question_id = parseInt(indices[1]);
+		let answer_id = parseInt(indices[2]) + 1; // answers are submitted by index1 form (1-4) to follow data format
+		if($(this).is(":checked")) {
+			// add an array in slot if not exist; add nothing if not.
+			if(question_id in answers && answers[question_id] != null) {
+				answers[question_id].push(answer_id);
+			} else {
+				answers[question_id] = [answer_id];
+			}
+		} else {
+			if(! question_id in answers ) {
+				// void out the answer to prevent missing option
+				answers[question_id] = null;
+			}
 		}
 	});
 	return answers;
@@ -79,7 +98,7 @@ function submit(event) {
 	var answers = listAnswers();
 	var submission = [];
 	// bind to exam data indices
-	for(let i=0; i<exam_data.length; i++) {
+	for(let i=0; i<exam_data_length; i++) {
 		submission.push(answers[i]);
 	}
 	console.log(submission); // view for now

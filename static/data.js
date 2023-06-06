@@ -50,14 +50,14 @@ function createQuestionnaire(event) {
 		valid_id.forEach( function(id) {
 			$('<label class="border border-primary m-2 p-2" onclick="swapCategory(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
 		});
-		$("#classifier_wrapper").show(); // bootstrap cannot use hide/show apparently
+		$("#classifier_wrapper").show();
 		updateDisposition(event);
 		$("#data_table").collapse('hide'); $("#result_frame").collapse('hide');
-		$("#category_selector").collapse('show'); // automatically hide the table
+		$("#category_selector").collapse('show'); // automatically hide the table 
+		// also enable the category_selector's button from this point onward 
+		$("#category_selector_btn").prop('disabled', false);
 	} else {
 		$("#classifier_wrapper").hide(); // bootstrap cannot use hide/show apparently
-		// $("#data_table").collapse('show'); $("#category_selector").collapse('hide');
-		//classifier.hide();
 	}
 }
 
