@@ -3,6 +3,7 @@ from flask import Flask, request, url_for
 from werkzeug.utils import secure_filename
 import secrets
 import time 
+from datetime import datetime
 import traceback
 
 from reader import read_file, DEFAULT_FILE_PATH
@@ -57,8 +58,15 @@ def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
     print("Received template data:", data)
-    setting = data["setting"]
     # format setting: cleaning dates; voiding nulled fields
+    setting = {k: v for k, v in data["setting"].items() if v is not None}
+    if("session_start" in setting):
+        # format date & limit entrance
+        setting["true_session_start"] = datetime.strptime(setting["session_start"], "%H:%M %d/%m/%Y").timestamp()
+    if("session_end" in setting):
+        # format date & limit entrance
+        setting["true_session_end"] = datetime.strptime(setting["session_end"], "%H:%M %d/%m/%Y").timestamp()
+
 
     # generate a random key for this session.
     key = secrets.token_hex(8)
@@ -169,7 +177,7 @@ def submit():
         student_key  = request.args.get("key")
         template_key = student_belong_to_session[student_key]
         submitted_answers = request.get_json()
-        assert isinstance(submitted_answers, list) and all((a is None or 0 <= a < 4 for a in submitted_answers)), "answers must be list of [0-3]; but is {}".format(submitted_answers)
+        assert isinstance(submitted_answers, list) and all((a is None or 0 < a <= 4 for a in submitted_answers)), "answers must be list of [1-4]; but is {}".format(submitted_answers)
         student_data = session[template_key]["student"][student_key]
         print(student_data)
         if("answers" in student_data):
@@ -203,7 +211,7 @@ def manage():
         session_data = session[template_key]
         print("Access session data: ", session_data)
         if(admin_key == session_data["admin_key"]):
-            return flask.render_template("manage.html", session_data=session_data)
+            return flask.render_template("manage.html", session_data=session_data, template_key=template_key)
         else:
             return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
     except Exception as e:

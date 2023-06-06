@@ -33,7 +33,9 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], s
             q = data[qid]
             answer_shuffle = random.sample(list(range(1, 5)), 4)
             new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle], "score": qsc }
-            new_correct_id = answer_shuffle[q["correct_id"] - 1]
+            new_correct_id = next((i for i, aid in enumerate(answer_shuffle) if aid == q["correct_id"])) + 1
+            #print(answer_shuffle, q["correct_id"])
+            #print("->", new_correct_id)
             selected.append(new_question)
             correct.append(new_correct_id)
     return selected, correct

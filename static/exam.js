@@ -34,7 +34,7 @@ function listAnswers() {
 	radios.each(function (index) {
 		let indices = $(this).attr("id").split("_");
 		let question_id = parseInt(indices[1]);
-		let answer_id = parseInt(indices[2]);
+		let answer_id = parseInt(indices[2]) + 1; // answers are submitted by index1 form (1-4) to follow data format
 		// console.log(indices);
 		if($(this).is(":checked")) {
 			// TODO if there is multiple answer_id to a question and notify it if that happens.

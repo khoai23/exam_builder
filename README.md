@@ -5,8 +5,8 @@ All possible extension regard the builder, unlikely first:
 - [ ] LaTeX-type formatting
 - [ ] Data source
 - [ ] Drag-n-drop categorizer
-- [ ] Filter for question types
+- [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page
-- [ ] Optional choice to use hashed info as student key (enabled by creator)
+- [ ] Optional choice to use hashed info as student key (enabled by creator); choice to allow only specific key to enter (enabled by creator)
 - [x] Add more info to session template (name, comment, expiry time, grace time, try to force submission upon end)
 
