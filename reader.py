@@ -30,11 +30,17 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
         if(k == "tag"):
             # for tag field, split it by delimiter 
             v = [] if v == "" else [v.strip()] if delimiter not in v else [t.strip() for t in v.split(delimiter)]
-            print("Tag: ", v)
+#            print("Tag: ", v)
             # if has tag for multiple choice, swap it to is_multiple_choice
             if("is_multiple_choice" in v):
                 v.remove("is_multiple_choice")
-                new_data["is_multiple_choice"] = True
+                new_data["is_multiple_choice"] = True 
+            if("is_dynamic_key" in v):
+                v.remove("is_dynamic_key")
+                new_data["is_dynamic_key"] = True 
+            elif("is_fixed_equation" in v):
+                v.remove("is_fixed_equation")
+                new_data["is_fixed_equation"] = True
         if(k == "correct_id"): 
             try:
                 if("," in v):

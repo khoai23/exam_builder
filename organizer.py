@@ -1,4 +1,5 @@
 """Code to help organizing data by adding an unique ID, then dividing them by category, difficulty and/or tag."""
+from dynamic_problem import convert_dynamic_key_problem, convert_fixed_equation_problem, convert_single_equation_problem
 from collections import defaultdict
 import random 
 
@@ -20,9 +21,12 @@ def organize(data: List[Dict], default_category: str="unknown"):
         categorized_data[cat].append(row)
     return categorized_data 
 
+shared_generator = {}
+# TODO wipe this upon data reload
 def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], seed=None):
     # handle multiple questions already selected 
     # the selected should already been sub-divided to its minor section; this process will shuffle both the choices and the order of the answers and provide correct answer ids for them.
+    # for specific dynamic problem; propels it into corresponding dynamic_problem function
     # not one step back further after the score var
     if(seed):
         random.seed(seed)
@@ -32,6 +36,27 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], s
         for qid in qids:
             q = data[qid]
             answer_shuffle = random.sample(list(range(1, 5)), 4)
+            if(q.get("is_dynamic_key", False)):
+                q = convert_dynamic_key_problem(q)
+            elif(q.get("is_fixed_equation", False)):
+                q = convert_fixed_equation_problem(q)
+            elif(q.get("is_single_equation", False)):
+                # try to retrieve past generator
+                q_generator = shared_generator.get(qid, None)
+                if(q_generator is not None):
+                    q_test = next(q_generator, None) # try to draw another object from generator 
+                    if(q_test is not None):
+                        # has object, continue 
+                        q = q_test
+                    else:
+                        # no object, create generator, draw it, and put back into generator library
+                        shared_generator[qid] = q_generator = convert_single_equation_problem(q)
+                        q = next(q_generator)
+                else:
+                    shared_generator[qid] = q_generator = convert_single_equation_problem(q)
+                    q = next(q_generator)
+                    # no generator, draw and put back into 
+            # shuffle to create the new_question
             new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle], "score": qsc, "is_multiple_choice": q["is_multiple_choice"] }
             if(q["is_multiple_choice"]):
                 new_correct_id = tuple((i+1 for i, aid in enumerate(answer_shuffle) if aid in q["correct_id"]))
@@ -47,4 +72,4 @@ if __name__ == "__main__":
     from reader import read_file, DEFAULT_FILE_PATH
     data = read_file(DEFAULT_FILE_PATH)
     id_data = assign_ids(data)
-    print(shuffle(id_data, [(1, [0, 1, 2]), (2, [3, 4, 5, 6])]))
+    print(shuffle(id_data, [(1, 5, [0, 1, 2]), (2, 5, [3, 4, 5, 6])]))
