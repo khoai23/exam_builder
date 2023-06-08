@@ -9,5 +9,5 @@ Test question G,6,9,1,10,2,v2,t3
 Test question H,2,3,7,12,"3, 4",v2,"t1, is_multiple_choice"
 Test Ajax \( 2x^2 > y \),\[ x \],$$ y $$,0,1,1,v4,"t4, is_multiple_choice"
 Test DynamicKey {alpha_0}{alpha_1},{alpha_0},{alpha_1},Neither,Both,3,v3,"t4, is_dynamic_key"
-"{x}{y}|||Test FixedEquation {x} * {y}, check division",{x/y},{y/x},{x*y},{1/x/y},1,v3,"t4, is_fixed_equation"
-{x}{y}|||Test SingleEquation (4 * {x} + 3 * {y}),{4*x+3*y},,,,1,v3,"t4, is_single_equation"
+{x}{y}|||Test FixedEquation by division {x} / {y} =,{x/y},{y/x},{x*y},{1/x/y},1,v3,"t4, is_fixed_equation"
+{x}{y}|||Test SingleEquation (4 * {x} + 3 * {y}) =,{4*x+3*y},,,,1,v3,"t4, is_single_equation"

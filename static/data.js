@@ -18,18 +18,8 @@ function test(event) {
 	alert("Button working: \"" + event.target.innerText + "\"");
 }
 
-function createQuestionnaire(event) {
-	// get all the question id available
+function get_selected_question_ids() {
 	var valid_id = [];
-//	var table = document.getElementById("question_table");
-//	console.log(table.rows);
-//	for(let i=1; i<table.rows.length; i++) { // ignore header
-//		console.log(table.rows[i].cells[9]);
-//		let cb = table.rows[i].cells[9].firstElementChild;
-//		if(cb.checked) {
-//			valid_id.push(i-1)
-//		}
-//	}
 	var checklist = $("#question_table").find("[id^=use_question_]");
 	// find all use_question_ item in the table 
 	//console.log(checklist);
@@ -37,21 +27,29 @@ function createQuestionnaire(event) {
 //		console.log($(this)); // dunno why each returned an object though
 		if($(this)[0].checked) valid_id.push(index); 
 	});
+	return valid_id;
+}
+
+// create a new questionnaire with all the selected questions at 1st category
+function create_questionnaire(event) {
+	// get all the question id available
+	var valid_id = get_selected_question_ids();
 	// TODO put them into the droppable containers.
 	// for now just write them into a label
 	document.getElementById("questionnaire_items").innerText = "Selectable IDs: " + valid_id.toString();
 	// alert("Made list; item is " +  valid_id.toString());
 	// create changeable categorizer
 	var classifier = $("#barebone_classifier");
-	console.log(classifier);
-	console.log($("#classifier_wrapper"));
+//	console.log(classifier);
+//	console.log($("#classifier_wrapper"));
+	// void the current questionnaire ids
 	if(valid_id.length > 0) {
 		classifier.empty();
 		valid_id.forEach( function(id) {
-			$('<label class="border border-primary m-2 p-2" onclick="swapCategory(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
+			$('<label class="border border-primary m-2 p-2" onclick="swap_group(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
 		});
 		$("#classifier_wrapper").show();
-		updateDisposition(event);
+		update_group_count(event);
 		$("#data_table").collapse('hide'); $("#result_frame").collapse('hide');
 		$("#category_selector").collapse('show'); // automatically hide the table 
 		// also enable the category_selector's button from this point onward 
@@ -61,39 +59,44 @@ function createQuestionnaire(event) {
 	}
 }
 
-function swapCategory(event) {
-	// upon clicking the categorizer, change its fill color with class
+// return id of each group (0-4 for primary-success-danger-warning)
+function check_group(class_list) {
+	if(class_list.includes("border-primary")) {
+		return 0;
+	} else if(class_list.includes("border-success")) {
+		return 1;
+	} else if(class_list.includes("border-danger")) {
+		return 2;
+	} else if(class_list.includes("border-warning")) {
+		return 3;
+	} else {
+		return -1;
+	}
+}
+
+SWAP_CLASS_NAME = ["border-primary border-success", "border-success border-danger", "border-danger border-warning", "border-warning border-primary"]
+function swap_group(event) {
+	// upon clicking the categorizer, change its fill color with group's class
 //	console.log(event.currentTarget);
 	var class_list = event.currentTarget.className.split(/\s+/);
 //	console.log(class_list);
-	//	TODO swap them iteratively instead of this hardcoding
-	if(class_list.includes("border-primary")) {
-		$(event.currentTarget).toggleClass("border-primary border-success");
-	} else if(class_list.includes("border-success")) {
-		$(event.currentTarget).toggleClass("border-success border-danger");
-	} else if(class_list.includes("border-danger")) {
-		$(event.currentTarget).toggleClass("border-danger border-warning");
-	} else if(class_list.includes("border-warning")) {
-		$(event.currentTarget).toggleClass("border-warning border-primary");
+	let group_index = check_group(class_list);
+	if(group_index >= 0) {
+		$(event.currentTarget).toggleClass(SWAP_CLASS_NAME[group_index]);
 	} else {
 		console.log("Cannot perform swapCategory on ", event.currentTarget);
 	}
-	updateDisposition(event);
+	update_group_count(event);
 }
 
-function updateDisposition(event) {
+function update_group_count(event) {
 	// upon trigger, simply re-calculate category count 
 	var cats = [0, 0, 0, 0];
 	var questions = $("#barebone_classifier").find("label").each(function(index) {
 		let class_list = $(this)[0].className.split(/\s+/);
-		if(class_list.includes("border-primary")) {
-			cats[0]++;
-		} else if(class_list.includes("border-success")) {
-			cats[1]++;
-		} else if(class_list.includes("border-danger")) {
-			cats[2]++;
-		} else if(class_list.includes("border-warning")) {
-			cats[3]++;
+		let group_index = check_group(class_list);
+		if(group_index >= 0) {
+			cats[group_index]++;
 		} else {
 			console.log("Cannot perform find category on ", $(this));
 		}
@@ -124,7 +127,8 @@ function readQuestionnaireSetting(event) {
 	return setting
 }
 
-function submitQuestionnaire(event) {
+
+function submit_questionnaire(event) {
 	// check for validity; then submit the data to the server; receiving an entry link
 //	var data = [[$("#group_0").val(), []], [$("#group_1").val(), []], 
 //		[$("#group_2").val(), []], [$("#group_3").val(), []]];
@@ -133,16 +137,8 @@ function submitQuestionnaire(event) {
 		let question_index = parseInt($(this).attr("qidx"));
 		console.log($(this), question_index)
 		let qcl =  $(this)[0].className.split(/\s+/);
-		let question_category = -1;
-		if(qcl.includes("border-primary")) {
-			question_category = 0;
-		} else if(qcl.includes("border-success")) {
-			question_category = 1;
-		} else if(qcl.includes("border-danger")) {
-			question_category = 2;
-		} else if(qcl.includes("border-warning")) {
-			question_category = 3;
-		} else {
+		let question_category = check_group(qcl);
+		if(question_category < 0) {
 			console.log("Cannot find category on ", $(this), "index ",  question_index, "will be ignored.");
 			return;
 		}
@@ -258,11 +254,49 @@ function select_category(event) {
 	$("#filter_category_clear").show();
 }
 
+// clear out the selected category 
 function clear_category(event) {
-	// clear out the selected category 
 	$("tbody").find("tr").each(function(index) { $(this).show(); });
 	// hide the clear filter 
 	$("#filter_category_clear").hide();
+}
+
+// add the selected to corresponding category; any current values is overriden
+GROUP_CLASS_NAME = ["border-primary", "border-success", "border-danger", "border-warning"]
+function add_to_group(event) {
+	// get the checked
+	var checked_ids = get_selected_question_ids();
+	// get group; convert to qidx attributes
+	var group_index = parseInt($("#add_to_group_btn").html().slice(-1)[0]) - 1; // take last and convert to int; then minus 1 to move [1, 5) to [0, 4)
+	let add_field = GROUP_CLASS_NAME[group_index];
+	let remove_field = GROUP_CLASS_NAME.slice(0, group_index).join(" ") + " " + GROUP_CLASS_NAME.slice(group_index+1).join(" ");
+	var q_indices = $.map(checked_ids, i => i.toString());
+	// go through the item in the classifier; 
+	// if id already exist, swap it with new class; if it not, add it
+	var classifier = $("#barebone_classifier");
+//	console.log(checked_ids, group_index);
+	classifier.find("label").each(function (index) {
+		let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
+//		console.log($(this).attr("qidx"), i);
+		if(i >= 0) {
+			// is already in the classifier, switch the class over 
+			$(this).removeClass(remove_field).addClass(add_field);
+			// also deduce from checked_ids
+			checked_ids.splice(i, 1);
+		}
+	});
+//	console.log(checked_ids)
+	// for each item remaining in the checked_ids; add them new into the classifiers
+	checked_ids.forEach( function(id) {
+		$('<label class="border ' + add_field + ' m-2 p-2" onclick="swap_group(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
+	});
+	// recheck the group availability
+	update_group_count(classifier);
+}
+
+function switch_add_group(group_index) {
+	// modify the button to this group index 
+	$("#add_to_group_btn").html("Add to Group " + group_index);
 }
 
 function toggle_select_tag(event) {

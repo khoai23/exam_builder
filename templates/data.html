@@ -41,18 +41,18 @@
 						<thead class="thead-light">
 							<tr>
 								<th>ID</th>
-								<th>Question</th>
-								<th>Answer 1</th>
-								<th>Answer 2</th>
-								<th>Answer 3</th>
-								<th>Answer 4</th>
-								<th>Correct Answer</th>
-								<th>Category &nbsp;
+								<th class="flex-grow-4">Question</th>
+								<th class="flex-grow-2">Answer 1</th>
+								<th class="flex-grow-2">Answer 2</th>
+								<th class="flex-grow-2">Answer 3</th>
+								<th class="flex-grow-2">Answer 4</th>
+								<th class="flex-shrink-1">Correct Answer</th>
+								<th class="flex-shrink-1">Category &nbsp;
 									<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
 										(X)
 									</button>
 								</th>
-								<th>Tag</th>
+								<th class="flex-shrink-1">Tag</th>
 								<th class="table-primary">Use</th>
 							</tr>
 						</thead>
@@ -61,16 +61,20 @@
 							<tr>
 								<td>{{q["id"]}}</td>
 								<td>{{q["question"]}}</td>
-								{% for i in range(1, 5) %}
-									{% if q["correct_id"] == i %} 
-										<td class="table-success"> 
-									{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
-										<td class="table-info"> 
-									{% else %}
-										<td> 
-									{% endif %} {{q["answer{}".format(i)]}}</td>
-								{% endfor %}
-								<td>{{q["correct_id"]}}</td>
+								{% if "is_single_equation" in q or q["is_single_equation"] %}
+									<td colspan='5'> {{ q["answer1"] }}</td>
+								{% else %}
+									{% for i in range(1, 5) %}
+										{% if q["correct_id"] == i %} 
+											<td class="table-success"> 
+										{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
+											<td class="table-info"> 
+										{% else %}
+											<td> 
+										{% endif %} {{q["answer{}".format(i)]}}</td>
+									{% endfor %}
+									<td>{{q["correct_id"]}}</td>
+								{% endif %}
 								<td class="category_cell">
 									<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
 										{{q.get("category", "N/A")}}
@@ -99,8 +103,18 @@
 						</form>
 						<button class="mx-2 btn btn-info" onclick="choose_file(event)">Import</button>
 						<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
-						<span id="mx-2 io_result"></span> 
-						<button class="mx-2 ml-auto btn btn-success" onclick="createQuestionnaire(event)">Use Selected</button>
+						<span id="mx-2 io_result"></span>
+						<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
+							<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
+							<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
+							<ul class="dropdown-menu">
+								<li><button type="button" class="btn btn-link" onclick="switch_add_group(1)">To Group 1 (Blue)</button></li>
+								<li><button type="button" class="btn btn-link" onclick="switch_add_group(2)">To Group 2 (Green)</button></li>
+								<li><button type="button" class="btn btn-link" onclick="switch_add_group(3)">To Group 3 (Red)</button></li>
+								<li><button type="button" class="btn btn-link" onclick="switch_add_group(4)">To Group 4 (Yellow)</button></li>
+							</ul>
+						</div>
+						<button class="mx-2 btn btn-success" onclick="create_questionnaire(event)">Use Selected</button>
 					</div>
 				</div>
 				</div>
@@ -122,70 +136,32 @@
 						<br />
 						<div class="container-fluid" id="disposition"> 
 							<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
-							<div class="row">
-								<div class="col-sm-12 col-md-5 border border-primary p-2 m-1">
+							{% for border_type in ["border-primary", "border-success", "border-danger", "border-warning"] %}
+								{% if loop.index0 % 2 == 0 %}
+									<div class="row">
+								{% endif %}
+								<div class="col-sm-12 col-md-6 p-1">
+									<div class="border {{border_type}} p-1">
 									<div class="input-group">
-									<input type="number" class="form-control" id="group_0" maxlength="2" /> 
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											<span>question /</span> <b><span id="group_count_0">0</span></b> <span>&nbsp;total with&nbsp;</span>
+										<input type="number" class="form-control" id="group_{{loop.index0}}" maxlength="2" /> 
+										<div class="input-group-append">
+											<div class="input-group-text"> 
+												<span>question /</span> <b><span id="group_count_{loop.index0}">0</span></b> <span>&nbsp;total with&nbsp;</span>
+											</div>
 										</div>
-									</div>
-									<input type="number" class="form-control" id="score_0" maxlength="5" />
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											 <span>PPC</span>
-										</div>
-									</div>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-5 border border-success p-2 m-1">
-									<div class="input-group">
-									<input type="number" class="form-control" id="group_1" maxlength="2" /> 
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											<span>question /</span> <b><span id="group_count_1">0</span></b> <span>&nbsp;total with&nbsp;</span>
-										</div>
-									</div>
-									<input type="number" class="form-control" id="score_1" maxlength="5" />
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											 <span>PPC</span>
+										<input type="number" class="form-control" id="score_{{loop.index0}}" maxlength="5" />
+										<div class="input-group-append">
+											<div class="input-group-text"> 
+												 <span>PPC</span>
+											</div>
 										</div>
 									</div>
 									</div>
 								</div>
-							</div>
-							<div class="row">
-								<div class="col-sm-12 col-md-5 input-group border border-danger p-2 m-1">
-									<input type="number" class="form-control" id="group_2" maxlength="2" /> 
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											<span>question /</span> <b><span id="group_count_2">0</span></b> <span>&nbsp;total with&nbsp;</span>
-										</div>
+								{% if loop.index0 % 2 != 0 %}
 									</div>
-									<input type="number" class="form-control" id="score_2" maxlength="5" />
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											 <span>PPC</span>
-										</div>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-5 input-group border border-warning p-2 m-1">
-									<input type="number" class="form-control" id="group_3" maxlength="2" /> 
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											<span>question /</span> <b><span id="group_count_3">0</span></b> <span>&nbsp;total with&nbsp;</span>
-										</div>
-									</div>
-									<input type="number" class="form-control" id="score_3" maxlength="5" />
-									<div class="input-group-append">
-										<div class="input-group-text"> 
-											 <span>PPC</span>
-										</div>
-									</div>
-								</div>
-							</div>
+								{% endif %}
+							{% endfor %}
 							<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
 						</div>
 						<div class="container-fluid" id="setting">
@@ -250,21 +226,33 @@
 								</div>
 							</div>
 							<div class="row my-2">
-								<div class="col-sm-12 col-md-3">
-									<input type="checkbox" id="allow_result">Show correct answers when exam finishes</input>
+								<div class="col-sm-12 col-md-3 pl-2">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="allow_result">
+										<label class="form-check-label" for="allow_result">Show correct answers when exam finishes</label>
+									</div>
 								</div>
-								<div class="col-sm-12 col-md-3">
-									<input type="checkbox" id="allow_score">Show score when exam finishes</input>
+								<div class="col-sm-12 col-md-3 pl-2">
+									<div class="form-check">
+									<input class="form-check-input" type="checkbox" value="" id="allow_score">
+									<label class="form-check-label" for="allow_score">Show score when exam finishes</label>
+									</div>
 								</div>
-								<div class="col-sm-12 col-md-3">
-									<input type="checkbox" id="show_score">Show each question's score during exam</input>
+								<div class="col-sm-12 col-md-3 pl-2">
+									<div class="form-check">
+									<input class="form-check-input" type="checkbox" value="" id="show_score">
+									<label class="form-check-label" for="show_score">Show each question's score during exam</label>
+									</div>
 								</div>
-								<div class="col-sm-12 col-md-3">
-									<input type="checkbox" id="partial_mq">Points for incomplete answer on multiple-choice</input>
+								<div class="col-sm-12 col-md-3 pl-2">
+									<div class="form-check">
+									<input class="form-check-input" type="checkbox" value="" id="partial_mq">
+									<label class="form-check-label" for="partial_mq">Points for incomplete answer on multiple-choice</label>
+									</div>
 								</div>
 							</div>
 						</div>
-						<button class="my-2 btn btn-success" onclick="submitQuestionnaire(event)">Build Questionnaire</button>
+						<button class="my-2 btn btn-success" onclick="submit_questionnaire(event)">Build Questionnaire</button>
 					</div>
 				</div>
 			</div>
