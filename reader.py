@@ -41,6 +41,9 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
             elif("is_fixed_equation" in v):
                 v.remove("is_fixed_equation")
                 new_data["is_fixed_equation"] = True
+            elif("is_single_equation" in v):
+                v.remove("is_single_equation")
+                new_data["is_single_equation"] = True
         if(k == "correct_id"): 
             try:
                 if("," in v):
@@ -56,7 +59,8 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
         new_data[k] = v
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
-    assert len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
+    # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
+    assert new_data.get("is_single_equation", False) or len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
     # if multiple-choice question with only a single selection, convert it to list 
     if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):
         new_data["correct_id"] = (new_data["correct_id"],)
