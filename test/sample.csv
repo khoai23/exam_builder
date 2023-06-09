@@ -7,7 +7,12 @@ Test question E,11,14,3,12,4,v2,"t1, t3"
 Test question F,13,10,5,11,3,v2,t2
 Test question G,6,9,1,10,2,v2,t3
 Test question H,2,3,7,12,"3, 4",v2,"t1, is_multiple_choice"
-Test Ajax \( 2x^2 > y \),\[ x \],$$ y $$,0,1,1,v4,"t4, is_multiple_choice"
+Test Ajax \( x^2 + y^2 = z^2 \),\[ x \],$$ y $$,0,1,1,v4,"t4, is_multiple_choice"
 Test DynamicKey {alpha_0}{alpha_1},{alpha_0},{alpha_1},Neither,Both,3,v3,"t4, is_dynamic_key"
 {x}{y}|||Test FixedEquation by division {x} / {y} =,{x/y},{y/x},{x*y},{1/x/y},1,v3,"t4, is_fixed_equation"
 {x}{y}|||Test SingleEquation (4 * {x} + 3 * {y}) =,{4*x+3*y},,,,1,v3,"t4, is_single_equation"
+"Trong chu kì tế bào, nhiễm sắc thể nhân đôi ở giai đoạn nào sau đây?",Pha S,Pha G1, Pha G2,Pha M,1,Sinh 10,Giua HKII
+"Trong quá trình làm tương, người ta sử dụng loại vi sinh vật nào?",Vi khuẩn lactic,Nấm men,Nấm mốc hoa cau,Vi khuẩn lam,3,Sinh 10,Giua HKII
+Đặc điểm nào sau đây có ở giảm phân mà không có ở nguyên phân?,Xảy ra sự tiếp hợp và có thể có hiện tượng trao đổi chéo.,Có sự phân chia của tế bào chất.,Có sự phân chia của nhân tế bào.,Các NST tự nhân đôi ở kì trung gian thành NST kép.,1,Sinh 10,Giua HKII
+"{k}|||Ở loài sinh vật, bộ nhiễm sắc thể lưỡng bội là 2n = {k*2}. Theo lý thuyết, số lượng nhiễm sắc thể có trong mỗi tế bào ở kì sau của quá trình nguyên phân là?",{k*2},{k*3},{k},{k*4},4,Sinh 10,"Giua HKII, is_fixed_equation"
+Ví dụ nào sau đây không phải là thành tựu của công nghệ tế bào động vật?,Nhân bản vô tính vật nuôi,Liệu pháp tế bào gốc,Lai tế bào sinh dưỡng,Liệu pháp gene.,3,Sinh 10,Giua HKII

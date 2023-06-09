@@ -187,6 +187,9 @@ function submit_questionnaire(event) {
 				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
 				var exam_link = $("#exam_link");
 				exam_link.attr("href", exam_path); exam_link.text(exam_path)
+				// also enable the admin link for "Manage Session" in the navbar 
+				$("#manage_session_link").attr("href", admin_path);
+				$("#manage_session_link_wrapper").show();
 				// also hiding the above panels
 				$("#data_table").collapse('hide'); 
 				$("#category_selector").collapse('hide');
@@ -209,7 +212,9 @@ function submit_questionnaire(event) {
 	// alert("Selection created:" + data.toString() )
 }
 
-function choose_file(event) {
+var replacement_mode = false;
+function choose_file(event, mode) {
+	replacement_mode = mode;
 	$("#import_file").click();
 }
 
@@ -217,7 +222,7 @@ function submit_file(event) {
 // $(document).on("ready", function() {
 //	console.log("Attempt override submit.")
 	var form = $("#import_form");
-	var actionUrl = form.attr('action');
+	var actionUrl = form.attr('action') + "?replace=" + replacement_mode.toString();
 	var data = new FormData(form[0])
 	console.log(data);
 	$.ajax({

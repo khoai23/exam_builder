@@ -21,39 +21,39 @@
 					<li class="nav-item">
 						<a class="nav-link" href="#">Data</a>
 					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="manage">Manage</a>
+					<li class="nav-item" id="manage_session_link_wrapper" style="display: none;">
+						<a class="nav-link" id="manage_session_link" href="manage">Manage Session</a>
 					</li>
 				</ul>
 			</div>
 		</nav> 
 	
-		<div class="accordion" id="accordion_main">
-			<div class="card">
+		<div class="accordion d-flex flex-column" id="accordion_main">
+			<div class="card flex-grow-2">
 				<div class="card-header" id="accordion_data_header"> 
 					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#data_table" aria-expanded="true" aria-controls="data_table">
 						Data Table 
 					</button>
 				</div>
 				<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="data_table">
-				<div class="table-responsive card-body" style="flex-grow: 1;">
-					<table class="table table-hover table-bordered" id="question_table">
+				<div class="table-responsive card-body">
+					<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 600px; overflow: auto;">
 						<thead class="thead-light">
 							<tr>
-								<th>ID</th>
-								<th class="flex-grow-4">Question</th>
-								<th class="flex-grow-2">Answer 1</th>
-								<th class="flex-grow-2">Answer 2</th>
-								<th class="flex-grow-2">Answer 3</th>
-								<th class="flex-grow-2">Answer 4</th>
-								<th class="flex-shrink-1">Correct Answer</th>
-								<th class="flex-shrink-1">Category &nbsp;
+								<th style="position: sticky; top: 0;">ID</th>
+								<th style="position: sticky; top: 0;" class="flex-grow-4">Question</th>
+								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 1</th>
+								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 2</th>
+								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 3</th>
+								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 4</th>
+								<th style="position: sticky; top: 0;" class="flex-shrink-1">Correct Answer</th>
+								<th style="position: sticky; top: 0;" class="flex-shrink-1">Category &nbsp;
 									<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
 										(X)
 									</button>
 								</th>
-								<th class="flex-shrink-1">Tag</th>
-								<th class="table-primary">Use</th>
+								<th style="position: sticky; top: 0;" class="flex-shrink-1">Tag</th>
+								<th style="position: sticky; top: 0;" class="table-primary">Use</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -101,9 +101,10 @@
 						<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
 							<input id="import_file" type="file" name="file" accept=".csv" onchange="submit_file(event)"></input>
 						</form>
-						<button class="mx-2 btn btn-info" onclick="choose_file(event)">Import</button>
+						<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
+						<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>
 						<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
-						<span id="mx-2 io_result"></span>
+						<span id="io_result"></span>
 						<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
 							<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
 							<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
@@ -120,7 +121,7 @@
 				</div>
 			</div>
 
-			<div class="card">
+			<div class="card flex-shrink-1">
 				<div class="card-header" id="accordion_category_header"> 
 					<button class="btn btn-link" type="button" id="category_selector_btn" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector" disabled>
 						Category Selector 

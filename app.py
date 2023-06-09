@@ -1,28 +1,15 @@
 import flask
 from flask import Flask, request, url_for
-from werkzeug.utils import secure_filename
-import secrets
+# from werkzeug.utils import secure_filename
 import time 
-from datetime import datetime
 import traceback
 
-from reader import read_file, DEFAULT_FILE_PATH
-from organizer import assign_ids, shuffle
+from session import data, current_data, session, submit_route 
+from session import reload_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
+from reader import DEFAULT_FILE_PATH
 
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
-
-data = {}
-data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
-data["id"] = id_data = assign_ids(current_data)
-data["session"] = session = dict()
-data["submit_route"] = submit_route = dict()
-
-def reload_data():
-    del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
-    id_data.clear(); id_data.update(assign_ids(current_data))
-    session.clear()
-    submit_route.clear()
 
 @app.route("/")
 def main():
@@ -43,6 +30,7 @@ def file_export():
 def file_import():
     """Allow overwriting the database file with a better variant."""
     try:
+        is_replace_mode = request.args.get("replace").lower() == "true"
         file = request.files["file"]
         file.save(DEFAULT_FILE_PATH)
         # TODO read and replace current data
@@ -58,23 +46,7 @@ def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
     print("Received template data:", data)
-    # format setting: cleaning dates; voiding nulled fields
-    setting = {k: v for k, v in data["setting"].items() if v is not None and (not isinstance(v, str) or v.strip() != "")}
-    if("session_start" in setting):
-        # format date & limit entrance
-        setting["true_session_start"] = datetime.strptime(setting["session_start"], "%H:%M %d/%m/%Y").timestamp()
-    if("session_end" in setting):
-        # format date & limit entrance
-        setting["true_session_end"] = datetime.strptime(setting["session_end"], "%H:%M %d/%m/%Y").timestamp()
-
-
-    # generate a random key for this session.
-    key = secrets.token_hex(8)
-    admin_key = secrets.token_hex(8)
-    # Maybe TODO check here if the template is valid?
-    # TODO add a timer to expire the session when needed
-    session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict()}
-    print("Session after modification: ", session)
+    key, admin_key = load_template(data)
     # return the key to be accessed by the browser
     return flask.jsonify(session_key=key, admin_key=admin_key)
 
@@ -90,32 +62,14 @@ def identify():
         # with a template key; try to format properly
         try:
             session_data = session[template_key]
-            if(template_key not in submit_route):
-                print("First trigger of identify, building corresponding submit route")
-                def receive_form_information(student_name=None, **kwargs):
-                    # refer to generic_submit for more detail
-                    # create unique student key for this specific format
-                    student_key = secrets.token_hex(8)
-                    # write to session retrieval 
-                    student_belong_to_session[student_key] = template_key
-                    # write to session data itself.
-                    selected, correct = shuffle(id_data, session_data["template"])
-                    session_data["student"][student_key] = student_data = {
-                            "student_name": student_name,
-                            "exam_data": selected,
-                            "correct": correct,
-                            "start_time": time.time()
-                    }
-                    print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
-                    # redirect to enter/ 
-                    return flask.redirect(url_for("enter", key=student_key))
-                # add this to the submit_route dictionary
-                submit_route[template_key] = receive_form_information
+            template_key = retrieve_submit_route(template_key)
+            # TODO do the route redirection out here
             # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
             return flask.render_template("generic_input.html", 
                     title="Enter Exam",
                     message="Enter name & submit to start your exam.", 
                     submit_key=template_key,
+                    # TODO make this dependent on session setting
                     input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}])
         except Exception as e:
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
@@ -128,46 +82,11 @@ def enter():
     TODO disallow entering when not in start_exam_date -> end_exam_date; or time had ran out."""
     student_key = request.args.get("key", None)
     if(student_key):
-        # retrieve the session key 
-        template_key = student_belong_to_session.get(student_key, None)
-        if(template_key is None):
-            # TODO return a warning that the student key is not correct/expired; also allow entering the key
-            return flask.render_template("error.html", error="Missing key; TODO allow input box", error_traceback=None)
-        # retrieve the generated test; TODO also keep backup of what was chosen
-        student_data = session[template_key]["student"][student_key]
-        print("Accessing existing key: ", student_key, " with data", student_data)
-        # return the exam page directly
-        # send 2 values: elapsed & remaining 
-        end_time = student_data["start_time"] + 3600.0 # 1 hr fixed for now 
-        elapsed = min(time.time() - student_data["start_time"], 3600.0)
-        remaining = 3600.0 - elapsed
-        print("Submitted answer? ", ("answers" in student_data))
-        if(time.time() > end_time):
-            flask.render_template("error.html", error="Exam time over.", error_traceback=None)
-        else:
-            # allow entering
-            return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, 
-                    exam_setting = session[template_key]["setting"])
+        return student_reaccess_session(student_key)
     else:
         template_key = request.args.get("template_key", None)
-        session_data = session.get(template_key, None)
-        if(template_key is None or session_data is None):
-            # TODO return a warning that session is not correct/expired; also enter the key as above
-            return flask.render_template("error.html", error="Missing key or missing exam session; TODO allow input box", error_traceback=None)
-        # create the new student key 
-        student_key = secrets.token_hex(8)
-        # write to session retrieval 
-        student_belong_to_session[student_key] = template_key
-        # write to session data itself.
-        selected, correct = shuffle(id_data, session_data["template"])
-        session_data["student"][student_key] = student_data = {
-                "exam_data": selected,
-                "correct": correct,
-                "start_time": time.time()
-        }
-        print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
-        # redirect to self 
-        return flask.redirect(url_for("enter", key=student_key))
+        return student_first_access_session(template_key)
+
 
 @app.route("/submit", methods=["POST"])
 def submit():
@@ -175,31 +94,8 @@ def submit():
     Must be accomodated by the student_key."""
     try:
         student_key  = request.args.get("key")
-        template_key = student_belong_to_session[student_key]
         submitted_answers = request.get_json()
-#        assert isinstance(submitted_answers, list), "answers must be list of [1-4]; but is {}".format(submitted_answers)
-        student_data = session[template_key]["student"][student_key]
-        print(student_data)
-        if("answers" in student_data):
-            return flask.jsonify(result=False)
-        else:
-            # record to the student info
-            student_data["answers"] = submitted_answers 
-            # calculate scores immediately 
-            score = 0.0
-            for sub, crt, qst in zip(submitted_answers, student_data["correct"], student_data["exam_data"]):
-                if(isinstance(crt, (tuple, list))):
-                    if(all((s in crt for s in sub))):
-                        # upon all correct answers, add to the student score 
-                        # TODO partial score mode 
-                        score += qst["score"]
-                else:
-                    if(sub == crt): 
-                        # upon a correct answer submitted; add to the student score
-                        score += qst["score"]
-            print("Calculated score: ", score)
-            student_data["score"] = score 
-            return flask.jsonify(result=True)
+        return submit_exam_result(submitted_answers, student_key)
     except Exception as e:
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 

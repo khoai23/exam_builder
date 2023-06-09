@@ -1,0 +1,404 @@
+﻿www.mathx.vn	Toán lớp 6
+
+ĐỀ CƯƠNG ÔN TẬP HỌC KÌ I
+TOÁN 6
+ LÍ THUYẾT:
+
+I. SỐ HỌC:
+
+1. Viết dạng tổng quát các tính chất cơ bản của phép cộng, phép nhân số tự nhiên.
+2. Phát biểu, viết dạng tổng quát các tính chất chia hết của một tổng.
+3. Định nghĩa luỹ thừa bậc n của a.
+4. Phát biểu, viết công thức nhân, chia hai luỹ thừa cùng cơ số.
+5. Nêu dấu hiệu chia hết cho 2; 3; 5; 9.
+6. Khi nào ta nói a chia hết cho b.
+7. Thế nào là ƯCLN, BCNN? So sánh cách tìm ƯCLN, BCNN của hai hay nhiều số?
+
+8. Thế nào là số nguyên tố, hợp số, số nguyên tố cùng nhau? Cho ví dụ?
+9. Thế nào là số nguyên âm, số nguyên dương, tập hợp số nguyên? Giá trị tuyệt đối của một số nguyên là gì?
+
+10. Các quy tắc: cộng hai số nguyên cùng dấu, cộng hai số nguyên khác dấu, trừ hai số nguyên, quy tắc dấu ngoặc.
+II. HÌNH HỌC:
+1. Đoạn thẳng AB là gì?
+
+2. Thế nào là tia gốc O?
+3. Thế nào là hai tia đối nhau, trùng nhau?
+
+4. Nêu các dấu hiệu nhận biết một điểm nằm giữa hai điểm.
+5. Trung điểm M của đoạn thẳng AB là gì?
+ BÀI TẬP
+
+
+
+Học toán online cùng thầy Trần Hữu Hiếu1Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+I. TRẮC NGHIỆM
+Bài 1. Khoanh tròn vào chữ cái trước câu trả lời đúng:
+1. Ba số nào sau đây là ba số tự nhiên liên tiếp tăng dần:
+A. b – 1; b; b + 1 (b(N)B. b; b + 1; b + 2(b(N)C. 2b; 3b; 4b (bN)D. b + 1; b; b – 1(bN)2. Giá trị của tổng M = 1 + 3 + 5 + 7 + …+ 97 + 99 là:
+A. 5050	B. 2500	C. 5000	D. 2450
+3. M là tập hợp các số tự nhiên lớn hơn 10 và nhỏ hơn 9.
+A. M có 2 phần tử.B. M có 1 phần tử.C.M=D. M4. Kết quả của phép tính 57 .18.. 57 .13 bằng:
+A.5	B.58	C.57	D.56
+5. Biếtttttt xxx 333222 7777 .2.. 14. Vậy giá trị của x là:
+ 
+A. x = 0	B. x = 3	C. x = 7	D. x = 3 và x = 7
+
+6. Cho số MMM 16 * 0 chữ số thích hợp để M chia hết 3, 5, 7 là:
+7. Nếu a 5 và b 5 (a > b) thì:
+A.AAaaa bbb 5	B.BBaaa bbb 5	C.CC2a22 bbb 5 D. Cả A, B, C đúng.
+8. Nếu a 2 và b 4(a > b) thì:
+A.AAaaa bbb 4	B.BBaaa bbb 2	C.Caaa bbb 6  D. Cả A, B, C sai.
+9. Nếu M = 12a + 14b thì:
+
+10. A là tập các số tự nhiên chia hết cho 3. B là tập hợp các số tự nhiên chia hết cho 9. Khi đó tập hợp CCC AAA B biểu thị
+A. Tập hợp các số chia hết cho 9.B. Tập hợp các số chia hết cho 3.C. Tập hợp các số chia hết cho 27.D. CHọc toán online cùng thầy Trần Hữu Hiếu2Hotline: 091.269.8216
+
+www.mathx.vn	Toán lớp 6
+
+11. Nếu a m và b m và mmN * thì:
+
+A. m là bội chung của a và b. B. m là ước chung của a và b. C. m = ƯCLN(a;b) D. m = BCNN(a;b)
+12. m là số tự nhiên nhỏ nhất khác 0 mà m đều chia hết cho cả a và b thì:
+A. mmmBC(a;b)	B. mBB ƯC(a;b)
+C. m = ƯCLN(a;b)	D. m = BCNN(a;b)
+13. Trong các tập hợp sau, tập hợp nào có các phần tử đều là số nguyên tố?
+A.AA1;3;5;7;111	B.BB3;5;7;11;293
+
+C.CC3;5;7;11;1113
+
+D.DD0;3;5;7;130
+
+14. Cho aaa 23.3; bbb 32.52 ; ccc 2.5. Khi đó ƯCLN(a,b,c) là:
+A. 23.3.5	B. 1	C. 23.32.52	D. 30
+15. Cho số AAA 54 .132.17 . Số các ước của A là:
+A.3	B.7	C.15	D.30
+
+16. Trong các tập hợp sau, tập hợp nào có các phần tử được xếp theo thứ tự tăng dần:
+A.AA2;22 17;5;1;11 2;02B.BBB2;217;0;1;2;51C.CCC 17;11 2;0;1;2;52C.CC0;1;2;5;0017117. Nếuabthì:A. a = b	B. a = -b	C. a = b = 0	D. a = b hoặc a = -b
+18. Tổng các số nguyên x thỏa mãnaa1011 xxx 13 là:
+A.33	B. 47	C. 23	D. 46
+19. BCNN(10;14;18) là:
+A. 24 .5.7B. 2.32.5.7C. 24 .5.7D. 5.720. Cho A = {x ∈ N / 24  x, 60x và 5 ≤ x ≤ 10}. Viết tập hợp A bằng cáchliệt kê các phần tử. Tập hợp A được viết là:Học toán online cùng thầy Trần Hữu Hiếu3Hotline: 091.269.8216
+
+www.mathx.vn
+
+
+Toán lớp 6
+
+A. AAAA66
+
+B. AAAA5;6;75
+
+C. AAAAA6;126
+
+D. AAAAA8;9;108
+
+Bài 2. Trong các câu sau đây, câu nào đúng, câu nào sai?
+1. Nếu mỗi số hạng của tổng chia hết cho 5 thì tổng chia hết cho 5.
+
+2. Nếu mỗi số hạng của tổng không chia hết cho 7 thì tổng không chia hết cho 7.
+
+3. Nếu tổng của hai số chia hết cho 7 và một trong hai số đó chia hết cho 7 thì số còn lại cũng chia hết cho 7.
+
+4. Nếu hiệu của hai số chia hết cho 5 và một trong hai số đó chia hết cho 5 thì số còn lại cũng chia hết cho 5.
+
+5. Số chia hết cho 7 là hợp số.
+
+6. Số chẵn không là số nguyên tố.
+7. Số nguyên tố lớn hơn 5 thì không chia hết cho 5.
+8. Ước chung lớn nhất của hai số lớn hơn 1 là số nguyên tố.
+9. Số chia hết cho 9 thì chia hết cho 3.
+
+10. Số chia hết cho 3 thì chia hết cho 9.
+11. Nếu một thừa số của tích chia hết cho 7 thì tích chia hết cho 7.
+12. Tổng 673 + 957 chia hết cho 2 và 5.
+13. Số 97 là số nguyên tố.
+14. Số (2.5.6 - 2.29) là hợp số.
+15. ƯCLN(15, 45, 60) = 15.
+16. BC(4, 45, 60) = 15.
+17. Hai số 237 và 873 là hai số nguyên tố cùng nhau.
+18. Mọi số nguyên tố lớn hơn 5 chỉ có thể tận cùng là 1; 3; 7; 9.
+1. Có vô số điểm thuộc một đường thẳng.
+
+
+Học toán online cùng thầy Trần Hữu Hiếu4Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+
+2. Trong ba điểm thẳng hàng có một và chỉ một điểm nằm giữa hai điểm còn lại.
+
+3. Có vô số đường thẳng phân biệt đi qua hai điểm.
+4. Hai đường thẳng phân biệt thì cắt nhau.
+5. Hai tia chung gốc thì đối nhau hoặc trùng nhau.
+6. Nếu điểm M thuộc đoạn thẳng AB thì M nằm giữa A và B.
+
+7. Nếu AM + MB = AB thì M nằm giữa A và B.
+8. Nếu điểm A thuộc tia Ox, điểm B thuộc tia Oy mà hai tia Ox và Oy đối nhau thì điểm O nằm giữa hai điểm A và B.
+
+9. Nếu điểm A thuộc tia Ox, OA < OB thì điểm B nằm giữa hai điểm O và A.
+10. Nếu điểm M là trung điểm của đoạn thẳng AB thì AM = MB = AB/2.
+1. Nếu a 3 thì a là hợp số.
+
+2. xxx 0 với mọi xxx  .
+
+3. a 2  7 thì (a 222 49) 49 .
+4. Mọi số nguyên tố lớn hơn 2 đều là số lẻ.
+5. Hai tia chung gốc thì đối nhau.
+6. Cho KA + KB = 8cm và KA = 4cm thì K là trung điểm của đoạn thẳng AB.
+7. Ba điểm O, A, B thuộc đường thẳng d, nếu OA < OB thì điểm A nằm giữa hai điểm O và B.
+
+8. Hai đường thẳng phân biệt thì cắt nhau.
+
+9. Nếu AM = MB = AB2 thì M là trung điểm đoạn thẳng AB.
+
+II. TỰ LUẬN A. SỐ HỌC
+
+Bài 1. Thực hiện các phép tính sau (tính hợp lí nếu có thể)
+a) 18.711 65:13b) 78577 (323(( 148):311 2784Học toán online cùng thầy Trần Hữu Hiếu5Hotline: 091.269.8216
+
+www.mathx.vn691322Toán lớp 6c) 70328)d)135.33 .130140:(4217 .17 :1712.2448.2222: 82e)ee23.9493.45.::92.109222f)ff20.24
+Bài 2. Thực hiện các phép tính sau:
+a) 1024 :2555 140 :11 3833 25555 723 :721b) 36.5533 185.1111 121.5:2c) 98.4299 505555 1811 23:2:322d) 407444444 19011 17011 : 4 999e)ee23.3622 17.3611 :36f) 3.5222 27 :3222 52.4.. 18 :32Bài 3. Thực hiện các phép tính sau một cách hợp lý: 76(53)5a)aa461((78)4044(461)4b)bb53( 76)(c)cc5645555(((724)77 56455 2242d)dd8788 (((12)11 (((487)44 512e) 9429256722 2563 1942
+f) 1711((20)2 23 ((26)2 ... 535((56)
+
+g) 11521(374((1152)1((656374)
+
+h) h200522 (((2122 7577 2005)
+Bài 4. Tìm xsao cho:b) 72xa)aax11121649 128c)cc2x22 16117d) 56555 13.x11 370e) 1051 1351117x77 : 9:: 97f) 2752222 11311 xxxxx 6366 158g)gg3.33 xxx 222 :7:: .4.. 120h) x(xxx 1)11 0  3333i)x2x40k):7.xxxx14032 .33283x 32222l) x2:2sao cho:m) 332.3Bài 5.Tìmxa) x 15; x 20 và50x70 .b) x 20; x 35 vàx500.Học toán online cùng thầy Trần Hữu Hiếu6Hotline: 091.269.8216
+
+www.mathx.vnToán lớp 6c) 30 x; 45 x và xxx 10d) 150 x; 84 x; 30 x và 000 xxx 16.e) x ∈ Ư(300) và x ∈ B(25).f) 64fx ; 48xx ; 88xx và x lớn nhất.g) 9 (x2)h)  x17 :x3Bài 6. Tìm ƯC thông qua tìm ƯCLN của các cặp số sau:d) 16; 42 và 86a) 40 và 24b) 12 và 52c) 36 và 990Bài 7. Tìm BCNN của:c) 18; 24 và 30d) 144; 25 và 36a) 9 và 24b) 14; 21 và 56
+Bài 8. Không tính kết quả, xét xem tổng (hiệu) sau là số nguyên tố hay hợp
+
+số?
+a) AAA30231501826
+c) CCC 19.21.23  21.25.27
+Bài 9. Tìm xxx	biết:
+a)x 1005b)d)3x33 15 0e)g)xxx 1xxx 1 2h)Bài10.Tìmxxbiết:b) 
+BBB 15.19.137  225
+d) DD555222533354
+
+x x 1511 22; x22 0c) xxx 1211 25; x22 0
+
+ xxx 2 4f) xxx3133((89) 14x 5i)555x 7
+a) 33(17x)289(36289)b) 25(x5)415(15415)(c) (x)(62)( 46)14d) 484x632548)e) 1711111 x       x   (   x)     16
+
+ 
+f) xxxxxxx x   (x   3)     (x(( 3)   (x   2)    0
+
+    
+Bài 11. Tìm x, yxx	biết:
+a) (x(1)(y2)4b) (2x1)(y1)7d) 2xy6xc) x6y(x1)y1Bài 12. Tìm x, yxx	biết:
+
+
+Học toán online cùng thầy Trần Hữu Hiếu7Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+
+a)
+c)
+
+
+xxx 1yyy 2 0b)xxx 3yyyy 12 0xxx 3yyy 4 1d)(3x(( 1)222yyy 5 1
+
+Bài 13. Lớp 6A có 18 bạn nam và 24 bạn nữ. Trong một buổi sinh hoạt lớp, bạn lớp trưởng dự kiến chia các bạn thành từng nhóm sao cho số bạn nam trong mỗi nhóm đều bằng nhau và số bạn nữ cũng vậy. Hỏi lớp có thể chia được nhiều nhất bao nhiêu nhóm? Khi đó mỗi nhóm có bao nhiêu bạn nam, bao nhiêu bạn nữ?
+
+Bài 14. Học sinh khối 6 có 195 nam và 117 nữ tham gia lao động. Thầy phụ trách muốn chia ra thành các tổ sao cho số nam và nữ mỗi tổ đều bằng nhau. Hỏi có thể chia nhiều nhất mấy tổ? Mỗi tổ có bao nhiêu nam, bao nhiêu nữ? Bài 15. Một đội y tế có 24 người bác sĩ và có 208 người y tá. Có thể chia đội y tế thành nhiều nhất bao nhiêu tổ? Mổi tổ có mấy bác sĩ, mấy y tá?
+
+Bài 16. Cô Lan phụ trách đội cần chia số trái cây trong đó 80 quả cam; 36 quả quýt và 104 quả mận vào các đĩa bánh kẹo trung thu sao cho số quả mỗi loại trong các đĩa là bằng nhau. Hỏi có thể chia thành nhiều nhất bao nhiêu đĩa? Khi đó mỗi đĩa có bao nhiêu trái cây mỗi loại?
+
+Bài 17. Người ta muốn chia 374 quyển vở, 68 cái thước và 340 nhãn vở thành một số phần thưởng như nhau. Hỏi có thể chia được nhiều nhất là bao nhiêu phần thưởng? Trong đó mỗi phần thưởng có bao nhiêu quyển vở, thước và nhãn vở?
+
+Bài 18. Số học sinh khối 6 của một trường khi xếp hàng 15, 20, 25 đều thiếu 1 người. Tính số học sinh khối 6 của trường đó biết rằng số học sinh đó chưa đến 400.
+
+Bài 19. Một đơn vị bộ đội khí xếp hàng 10; 12 hoặc 15 đều thừa ra 5 người, biết số người của đơn vị trong khoảng từ 320 đến 400 người. Tính số người của đơn vị đó.
+
+
+Học toán online cùng thầy Trần Hữu Hiếu8Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+
+Bài 20. Một người đem cam ra chợ bán, khi đếm theo chục hoặc theo tá thì đều thiếu 5 quả. Hỏi số cam là bao nhiêu quả? Biết rằng số cam lớn hơn 350 và nhỏ hơn 400.
+
+Bài 21. Bạn Tuấn, Hoàng, Vũ cùng học một trường nhưng khác lớp. Tuấn cứ 5 ngày trực nhật một lần, Hoàng 6 ngày một lần, Vũ 10 ngày một lần. Lần đầu cả 3 bạn cùng trực nhật 1 ngày. Hỏi ít nhất đến ngày thứ bao nhiêu sau ngày đầu thì ba bạn lại cùng trực nhật?
+
+Bài 22. Trong thúng có một số quả cam là số tự nhiên nhỏ nhất khác 0 sao cho nếu xếp vào mỗi đĩa 6 quả, 10 quả, 14 quả thì vừa đủ. Hỏi có bao nhiêu quả cam trong thùng?
+Bài 23. Tìm số tự nhiên n có 3 chữ số, biết rằng số đó chia 20; 25; 30 đều dư 15 nhưng chia 41 thì không dư.
+
+Bài 24. Tìm số tự nhiên n nhỏ nhất biết khi chia cho 11; 17; 29 thì có số dư lần lượt là 6; 12; 24.
+
+Bài 25. Tìm số tự nhiên nhỏ nhất có chữ số tận cùng là 7; chia 13 dư 8; chia 19 dư 14.
+
+* MỘT SỐ BÀI TOÁN NÂNG CAO Bài 26.
+a) Chứng minh: A = 21 + 22 + 23 + 24 + … + 22010 chia hết cho 3 và 7.
+b) Chứng minh: B = 31 + 32 + 33 + 34 + … + 32010 chia hết cho 4 và 13.
+c) Chứng minh: C = 51 + 52 + 53 + 54 + … + 52010 chia hết cho 6 và 31.
+d) Chứng minh: D = 71 + 72 + 73 + 74 + … + 72010 chia hết cho 8 và 57.
+Bài 27. Cho MMM 111 333 3222 ..... 39999 3100. Tìm số dư khi chia M cho 13; 40.
+Bài 28. So sánh:
+a) AAA 2000 2111 2222 2333 ...   22010 và B   2201122 1.
+b) 2009.2011 và 20102 .
+
+c) 1030  và 2100 .
+
+Học toán online cùng thầy Trần Hữu Hiếu9Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+d) 333444 và 444333 .
+36và24572nvà3n  *)e) 51115g) 625và 125h) 32(n9và2020101010i) 199và 2003k) 99và 9999l) 199019901991Bài 29. Cho S1222.....22019 . Hãy so sánh S và 5.22018 .Bài 30. Tìm chữ số tận cùng của các số sau:d) (198 )1945a) 21000b) 4161c) 4567Bài 31. Tổng (hiệu) sau có chia hết cho 2; 3; 5; 9 hay không?14a) 1020012b)1020011c) 1020108d)102010a) Tìm chữ số tận cùng của A.
+
+b) A có chia hết cho 5 không?
+
+Bài 33. Chứng tỏ rằng với mọi số tự nhiên n, các số sau đây là hai số nguyên tố cùng nhau:
+a) n + 2 và n + 3.	b) 2n + 3 và 3n + 5.
+Bài 34.
+a) Tìm số tự nhiên a, b biết: a > b, ƯCLN(a;b) = 4 và a + b = 48.
+b) Cho (a + 5b) 7 (a, b((  ). Chứng minh: (10a + b) 7.
+Bài 35. Tìm số tự nhiên n sao cho:
+a) (4n4)b) (n23n1)7) (5n1) (na) p + 10, p + 14 là các số nguyên tố.
+b) q + 2, q + 10 là các số nguyên tố.
+Bài 38. Chứng minh rằng: Nếuuuabaa cdcc egee 11 thì abcdeg 11.
+
+Bài 39. Cho n = 7a5 + 8b4. Biết aaa b = 6 và n 9. Tìm a và b.
+
+Học toán online cùng thầy Trần Hữu Hiếu10Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+Bài 40. Tìm số tự nhiên n sao cho 1! + 2! + 3! +…+ n! là một số chính
+phương.
+Bài 41. Các số sau có phải là số chính phương không?
+a) A = 5 + 52+ 53+…+ 520 .
+
+b) BB1111122211333....1150.
+Bài 42. Tìm số nguyên tố p sao cho 3p33 7 là số nguyên tố.
+Bài 43. Chứng minh rằng với mọi số tự nhiên n khác 0 thì số:
+A = 111…111 2 111…111 là hợp số.
+
+n số 1n số 1a;b1 thì8a3b;5a2b1Bài 44. Chứng minh rằng nếuBài 45. Có hơn 20 học sinh xếp thành một vòng tròn. Khi đếm theo chiều kim đồng hồ, bắt đầu từ số 1 thì số 24 và số 900 rơi vào cùng một học sinh. Hỏi ít nhất có bao nhiêu học sinh?
+B. HÌNH HỌC
+
+Bài 46. Cho tia Ox. Trên tia Ox lấy hai điểm M và N sao cho OM = 3,5cm và ON = 7cm.
+a) Trong ba điểm O, M, N thì điểm nào nằm giữa ba điểm còn lại?
+b) Tính độ dài đoạn thẳng MN?
+
+c) Điểm M có phải là trung điểm ON không? Vì sao?
+Bài 47. Trên đoạn thẳng AB dài 8cm, lấy điểm M sao cho AM = 4cm.
+a) Tính độ dài đoạn thẳng MB.
+b) Điểm M có phải là trung điểm của đoạn thẳng AB không? Vì sao?
+c) Trên tia đối của tia AB lấy điểm K sao cho AK = 4cm. So sánh MK với AB.
+
+Bài 48. Cho tia Ox. Trên tia Ox lấy hai điểm M, N sao cho OM = 2cm, ON = 8cm.
+a) Tính độ dài đoạn thẳng MN.
+
+
+Học toán online cùng thầy Trần Hữu Hiếu11Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+
+b) Trên tia đối của tia NM, lấy một điểm P sao cho NP = 6cm. Chứng tỏ điểm N là trung điểm của đoạn thẳng MP.
+
+
+Bài 49. Vẽ đoạn thẳng AB dài 7cm. Lấy điểm C nằm giữa A, B sao cho AC = 3cm.
+a) Tính độ dài đoạn thẳng CB.
+b) Vẽ trung điểm I của đoạn thẳng AC. Tính IA, IC.
+
+c) Trên tia đối của tia CB lấy điểm D sao cho CD = 7cm. So sánh CB và DA?
+
+Bài 50. Cho đoạn thẳng AB = 6cm. Gọi O là một điểm nằm giữa hai điểm A và B sao cho OA = 4cm.
+a) Tính độ dài đoạn thẳng OB?
+b) Gọi M, N lần lượt là trung điểm của OA và OB. Tính độ dài đoạn thẳng MN?
+
+Bài 51. Cho hai tia đối nhau Ox, Ox’. Trên tia Ox lấy hai điểm A và B sao cho OA = 1cm, OB = 4cm. Trên tia Ox’ lấy điểm C sao cho OC = 2cm.
+a) Trong ba điểm A, O, B điểm nào nằm giữa hai điểm còn lại?
+b) Điểm A có phải là trung điểm của đoạn thẳng BC không?
+
+Bài 52. Cho đoạn thẳng AB = 8cm. Trên tia AB lấy hai điểm P và Q sao cho AP = 4cm; AQ = 6cm.
+a) Tính độ dài các đoạn thẳng PQ; QB.
+
+b) P có phải là trung điểm của đoạn thẳng AB hay không? Tại sao?
+
+Điểm Q có là trung điểm của đoạn thẳng PB hay không? Tại sao? Bài 53. Trên tia Ax vẽ hai điểm B và C sao cho AB = 5cm; AC = 7cm.
+a) Tính BC.
+
+b) Trên tia đối của tia Ax lấy điểm D sao cho AD = 2,5cm. Tính BD.
+c) Trên tia đối của tia CB lấy điểm E sao cho CE = 3cm. B có phải là trung điểm của đoạn thẳng AE hay không? Giải thích tại sao?
+
+Bài 54. Cho đoạn thẳng AC = 5cm. Điểm B nằm giữa A và C sao cho BC = 3cm.
+
+Học toán online cùng thầy Trần Hữu Hiếu12Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+a) Tính AB.
+
+b) Trên tia đối của tia BA lấy điểm D sao cho BD = 5cm. So sánh AB và CD.
+
+Bài 55. Cho đoạn thẳng AB = 6 cm. Lấy 2 điểm C và D thuộc đoạn thẳng AB sao cho AC = BD = 2cm. Gọi M là trung điểm của AB.
+a) Điểm M có là trung điểm của đoạn thẳng CD hay không? Vì sao?
+
+b) Tìm trên hình vẽ các điểm khác cũng là trung điểm của đoạn thẳng. Giải
+thích?
+* MỘT SỐ BÀI TOÁN NÂNG CAO
+Bài 56. Cho đoạn thẳng AB = 1cm. Lấy A1 là trung điểm của AB, A2 là trung điểm của AA1 , A 3 là trung điểm của AA2 ,... Cứ tiếp tục như vậy cho đến A20 là trung điểm của AA19 . Tính độ dài AA20 .
+
+Bài 57. Cho n điểm (n(( 2). Nối từng cặp hai điểm trong n điểm đó thành các đoạn thẳng.
+
+a) Hỏi có bao nhiêu đoạn thẳng, nếu trong n điểm đó không có ba điểm nào thẳng hàng?
+b) Hỏi có bao nhiêu đoạn thẳng, nếu trong n điểm đó có đúng ba điểm thẳng hàng?
+
+c) Tính n biết có tất cả 17770 đoạn thẳng.
+
+Bài 58. Cho n đường thẳng trong đó bất cứ hai đường thẳng nào cũng cắt nhau và không có ba đường thẳng nào đồng quy. Biết rằng số giao điểm của các đường thẳng đó là 780. Tính n?
+
+Bài 59. Cho 20 điểm, trong đó có a điểm thẳng hàng. Cứ 2 điểm, ta vẽ một đường thẳng. Tìm a, biết vẽ được tất cả 170 đường.
+
+Bài 60. Cho n điểm A 1 , A 2 ,..., An (n(( 2) trong đó không có ba điểm nào thẳng hàng. Cứ qua hai điểm, ta kẻ một đường thẳng. Tính n biết số đường thẳng kẻ được là 1128.
+
+
+Học toán online cùng thầy Trần Hữu Hiếu13Hotline: 091.269.8216
+www.mathx.vn	Toán lớp 6
+
+
+Bài 61. Cho 100 điểm trong đó có đúng bốn điểm thẳng hàng. Qua hai điểm vẽ được một đường thẳng. Hỏi vẽ được tất cả bao nhiêu đường thẳng?
+
+Bài 62. Cho n điểm trong đó không có ba điểm nào thẳng hàng. Cứ qua hai điểm ta vẽ một đường thẳng. Biết rằng có tất cả 105 đường thẳng. Tính n. Bài 63. Cho n điểm. Nối từng cặp hai điểm trong n điểm đó thành các đoạn thẳng. Tính n biết rằng có tất cả 435 đoạn thẳng.
+
+Bài 64. Cho 101 đường thẳng, trong đó bất cứ hai đường thẳng nào cũng cắt nhau, không có ba đường thẳng nào đồng quy. Tính số giao điểm của chúng. Bài 65. Cho 10 điểm. Nối từng cặp hai điểm trong 10 điểm đó thành các đoạn thẳng. Tính số đoạn thẳng mà hai mút thuộc tập 10 điểm đã cho nếu trong các điểm đã cho:
+a) Không có ba điểm nào thẳng hàng.
+b) Có đúng ba điểm thẳng hàng.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Học toán online cùng thầy Trần Hữu Hiếu14Hotline: 091.269.8216

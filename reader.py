@@ -10,7 +10,7 @@ DEFAULT_FILE_PATH = "test/sample.csv"
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []
-    with io.open(filepath, "r") as rf:
+    with io.open(filepath, "r", encoding="utf-8") as rf:
         reader = csv.DictReader(rf, fieldnames=headers)
         for row in reader:
             data.append(process_field(row))

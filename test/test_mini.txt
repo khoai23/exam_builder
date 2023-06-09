@@ -1,0 +1,87 @@
+Câu 11: Cho biểu đồ tranh ở Hình 3:
+
+Đề thi học kì 2 Toán lớp 6 CTST
+
+Số học sinh (HS) yêu thích Cam là:
+
+A. 50 HS.
+B. 55 HS.
+C. 40 HS.
+D. 45 HS.
+
+Câu 12: Biểu đồ cột kép thể hiện số học sinh nam, nữ ở mỗi lớp của khối 6 ở một trường THCS như sau:
+
+Đề thi học kì 2 lớp 6 sách CTST
+
+Số học sinh nam/nữ của lớp 6/4 là:
+
+A. 19/19.
+B. 20/19.
+C. 19/20.
+D. 20/20.
+
+Câu 13: Khi gieo hai con xúc sắc, gọi T là tổng số chấm trên hai con xúc sắc thì kết quả nào sau đây không thể xảy ra?
+
+A. T = 4.
+B. T = 3.
+C. T = 2.
+D. T = 1.
+
+Câu 14: Cô giáo tổ chức trò chơi chiếc nón kì diệu, bạn A tham gia quay chiếc nón 5 lần thì được 2 lần vào ô may mắn. Hỏi xác suất thực nghiệm của sự kiện quay vào ô may mắn là:
+
+A. \frac{2}{5}
+B. \frac{5}{2}
+C. \frac{3}{5}
+D. \frac{5}{3}
+
+Đề thi học kì 2 lớp 6 sách CTST
+
+Câu 15: Cho hình vẽ: Có bao nhiêu tia gốc A trong hình vẽ đã cho:
+
+A. 1
+B. 2
+C.3
+D. 4
+
+Đề thi Toán lớp 6 học kì 2 CTST
+
+Câu 16: Cho góc \widehat{\mathrm{xOy}}=60^{\circ}Hỏi số đo của \widehat{\mathrm{xOy}} bằng mấy phần số đo của góc bẹt?
+
+A. \frac{1}{4}
+B. \frac{2}{3}
+C. \frac{3}{4}
+D. \frac{1}{3}
+
+Câu 17: Xem hình 4:
+
+A. Điểm C là trung điểm của đoạn thẳng AB.
+B. Điểm C là trung điểm của đoạn thẳng BD.
+C. Điểm C là trung điểm của đoạn thẳng AD.
+D. Điểm B là trung điểm của đoạn thẳng AC.
+
+Đề thi học kì 2 Toán 6 CTST
+
+Câu 18: Hình gồm hai tia chung gốc Ox, Oy được gọi là:
+
+A. Góc xOy.
+B. Góc Oxy.
+C. Góc xyO.
+D. Góc bẹt.
+
+Câu 19: Góc nhọn là góc :
+
+A. Nhỏ hơn góc bẹt.
+B. Nhỏ hơn góc vuông.
+C. Có số đo bằng 90^{\circ}.
+D. Có số đo 180^{\circ}.
+
+Câu 20: Xem hình 5:
+
+Đề thi học kì 2 lớp 6 môn Toán CTST
+
+Hình đặt thước đo góc đúng và số đo của \widehat{\mathrm{ABC}}là:
+
+A. (1), \widehat{\mathrm{ABC}}=40^{\circ}
+B. (1), \widehat{\mathrm{ABC}}=140^{\circ}
+C. (2), \widehat{\mathrm{ABC}}=35^{\circ}
+D. (2), \widehat{\mathrm{ABC}}=155^{\circ}
