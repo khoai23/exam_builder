@@ -3,9 +3,11 @@ from flask import Flask, request, url_for
 # from werkzeug.utils import secure_filename
 import time 
 import traceback
+import re
 
 from session import data, current_data, session, submit_route 
 from session import reload_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
+from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH
 
 app = Flask("exam_builder")
@@ -119,6 +121,28 @@ def manage():
     except Exception as e:
         print("Error: ", e)
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+
+@app.route("/convert")
+def convert():
+    """Page to do a conversion from text file to a table to be imported."""
+    return flask.render_template("convert.html")
+
+@app.route("/convert_text_to_table", methods=["POST"])
+def convert_text_to_table():
+    """Submitted text file and receive the loadout support.
+    TODO migrate this to pure js to lessen server workload"""
+    try:
+        json_data = request.get_json()
+        assert all((field in json_data for field in ["text", "cues"])), "Missing field in data: {}".format(json_data)
+        # convert cues to pattern variant (for re.finditer); and nulling out empty field
+        qcue, *acue = [re.escape(c).strip() if len(c.strip()) > 0 else None for c in json_data["cues"]]
+        text = json_data["text"]
+        problems = read_and_convert(text, question_cue=qcue, answer_cues=acue)
+        return flask.jsonify(result=True, problems=problems)
+    except Exception as e:
+        print("Error: ", e)
+        return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
+    
 
 @app.route("/generic_submit", methods=["POST"])
 def generic_submit():

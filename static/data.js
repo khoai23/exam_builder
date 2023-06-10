@@ -338,4 +338,4 @@ $(document).ready(function() {
 		$("#category_selector").collapse('hide'); 
 		$("#result_frame").collapse('hide');
 	});
-})
+});

@@ -5,14 +5,17 @@ import io, re
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Pattern, IO
 
-def read_and_convert(text_filepath: Union[str, IO], question_cue: Optional[Union[str, Pattern]]=None, answer_cues: List[str]=(r"A\.", r"B\.", r"C\.", r"D\."), keep_question_cue: bool=False, keep_answer_cue: bool=False, question_bw_endline: int=5):
-    """Find all possible section, and return data in an iterative manner.
-    Data will be re-vetted by an user, so this can have some wiggle room."""
+def read_and_convert_file(text_filepath: Union[str, IO], **kwargs):
     if(isinstance(text_filepath, str)):
         with io.open(text_filepath, "r", encoding="utf-8") as tf:
             text = tf.read()
     else:
         text = text_filepath.read()
+    return read_and_convert(text, **kwargs)
+
+def read_and_convert(text: str, question_cue: Optional[Union[str, Pattern]]=None, answer_cues: List[Union[str, Pattern]]=(r"A\.", r"B\.", r"C\.", r"D\."), keep_question_cue: bool=False, keep_answer_cue: bool=False, question_bw_endline: int=5):
+    """Find all possible section, and return data in an iterative manner.
+    Data will be re-vetted by an user, so this can have some wiggle room."""
     # find all positions of first answer (A.) in the text 
     first_cue, second_cue, third_cue, fourth_cue = answer_cues
     anchor_indices = [m.start() for m in re.finditer(first_cue, text)]
@@ -27,8 +30,7 @@ def read_and_convert(text_filepath: Union[str, IO], question_cue: Optional[Union
             qidx = next((qi for qi in question_indices if qi < aidx), 0)
             problems.append({"question": text[qidx:aidx], "qidx": qidx, "aidx": aidx})
     else:
-        # no cue; search upward until 5 endline text, without encountering any answer cues 
-        questions = []
+        # no cue; search upward until 5 endline text, without encountering any answer cues
         for aidx in anchor_indices:
             prior_endlines = [ei for ei in endline_indices if ei < aidx][::-1][:question_bw_endline]
             if len(prior_endlines) < question_bw_endline:
@@ -44,8 +46,10 @@ def read_and_convert(text_filepath: Union[str, IO], question_cue: Optional[Union
                     current_qidx = pei 
             # after check, put into the rest
             problems.append({"question": text[current_qidx:aidx], "qidx": current_qidx, "aidx": aidx})
+    # print(problems, anchor_indices, answer_cues)
     # on answers; A. -> C. will be ranged by nearest indices of next question 
     # D. will be decided by maximum num of endline in A., B. and C., minimum to 1
+    # print(answer_cues)  
     answer_i1, answer_i2, answer_i3, answer_i4 = answer_indices = [anchor_indices] + [ [m.start() for m in re.finditer(ac, text)] for ac in answer_cues[1:] ]
 #    print("Section indices: ",  list(zip(*answer_indices)))
     for problem in problems:
@@ -78,7 +82,7 @@ def read_and_convert(text_filepath: Union[str, IO], question_cue: Optional[Union
 blank_regex = "\s{2,}"
 if __name__ == "__main__":
     path = "test/test_mini.txt"
-    problems = read_and_convert(path, question_cue="Câu")
+    problems = read_and_convert_file(path, question_cue="Câu")
     for p in problems:
         print("Question: " + re.sub(blank_regex, " ", p["question"]).strip())
         print("Answer 1: " + re.sub(blank_regex, " ", p["answer1"]).strip())
