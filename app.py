@@ -135,7 +135,12 @@ def convert_text_to_table():
         json_data = request.get_json()
         assert all((field in json_data for field in ["text", "cues"])), "Missing field in data: {}".format(json_data)
         # convert cues to pattern variant (for re.finditer); and nulling out empty field
-        qcue, *acue = [re.escape(c).strip() if len(c.strip()) > 0 else None for c in json_data["cues"]]
+        if(json_data.get("cue_is_regex", False)):
+            to_regex = lambda c: c
+        else:
+            to_regex = lambda c: re.escape(c)
+        qcue, *acue = [to_regex(c).strip() if len(c.strip()) > 0 else None for c in json_data["cues"]]
+        print(qcue, acue)
         text = json_data["text"]
         problems = read_and_convert(text, question_cue=qcue, answer_cues=acue)
         return flask.jsonify(result=True, problems=problems)

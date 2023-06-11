@@ -28,7 +28,7 @@ def read_and_convert(text: str, question_cue: Optional[Union[str, Pattern]]=None
         # find closest questions to each anchor 
         for aidx in anchor_indices:
             qidx = next((qi for qi in question_indices if qi < aidx), 0)
-            problems.append({"question": text[qidx:aidx], "qidx": qidx, "aidx": aidx})
+            problems.append({"question": text[qidx:aidx].strip(), "qidx": qidx, "aidx": aidx})
     else:
         # no cue; search upward until 5 endline text, without encountering any answer cues
         for aidx in anchor_indices:
@@ -45,23 +45,27 @@ def read_and_convert(text: str, question_cue: Optional[Union[str, Pattern]]=None
                     # no answer cue; can safely put into 
                     current_qidx = pei 
             # after check, put into the rest
-            problems.append({"question": text[current_qidx:aidx], "qidx": current_qidx, "aidx": aidx})
+            problems.append({"question": text[current_qidx:aidx].strip(), "qidx": current_qidx, "aidx": aidx})
     # print(problems, anchor_indices, answer_cues)
     # on answers; A. -> C. will be ranged by nearest indices of next question 
     # D. will be decided by maximum num of endline in A., B. and C., minimum to 1
     # print(answer_cues)  
     answer_i1, answer_i2, answer_i3, answer_i4 = answer_indices = [anchor_indices] + [ [m.start() for m in re.finditer(ac, text)] for ac in answer_cues[1:] ]
 #    print("Section indices: ",  list(zip(*answer_indices)))
+    endline_indices = endline_indices[::-1] # revert back to front-first
     for problem in problems:
         aidx = problem["aidx"]
         # bind nearest i2, i3, i4 to this answer 
         a1_end = a2_start = next((i for i in answer_i2 if i > aidx), None)
         a2_end = a3_start = next((i for i in answer_i3 if i > aidx), None)
         a3_end = a4_start = next((i for i in answer_i4 if i > aidx), None)
+        # handle case where 1st and 3rd are on one line, 2nd and 4th on the next (a3_start > a2_start)
+        if(a3_start < a2_start):
+            a1_end = a3_start; a3_end = a2_start; a2_end = a4_start
         if(a1_end is None or a2_end is None or a3_end is None):
             print("Failed finding endpoint for answer 1/2/3: {} {} {}; aborting for this question".format(a1_end, a2_end, a3_end))
             continue 
-        problem.update(answer1=text[aidx:a1_end], answer2=text[a2_start:a2_end], answer3=text[a3_start:a3_end])
+        problem.update(answer1=text[aidx:a1_end].strip(), answer2=text[a2_start:a2_end].strip(), answer3=text[a3_start:a3_end].strip())
         # with a1/2/3 regioned; a4 will be decided by the endline 
         max_endline_count = max(1, len(re.findall("\n", problem["answer1"])), len(re.findall("\n", problem["answer2"])), len(re.findall("\n", problem["answer3"])))
         a4_end = None 
@@ -69,6 +73,7 @@ def read_and_convert(text: str, question_cue: Optional[Union[str, Pattern]]=None
         next_question_index = min((p["qidx"] for p in problems if p["qidx"] > problem["qidx"]), default=len(text))
         for _ in range(max_endline_count):
             endpoint = next(after_a4_endline, None)
+            print("Checking endpoint {} for q: {}, qidx {} vs nextqidx {}".format(endpoint, problem["question"], problem["qidx"], next_question_index))
             if(endpoint is None):
                 # no more endline after a4; use current 
                 break  
@@ -77,6 +82,11 @@ def read_and_convert(text: str, question_cue: Optional[Union[str, Pattern]]=None
                 break
             a4_end = endpoint 
         problem.update(answer4=text[a4_start:] if a4_end is None else text[a4_start:a4_end])
+        
+        for aprt, aname in zip(answer_cues, ["answer1", "answer2", "answer3", "answer4"]):
+            if(not keep_answer_cue):
+                problem[aname] = re.sub(aprt, "", problem[aname])
+            problem[aname] = problem[aname].strip()
     return problems
         
 blank_regex = "\s{2,}"
