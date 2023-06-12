@@ -30,6 +30,7 @@ def append_data(location=DEFAULT_FILE_PATH):
     """Append - update the data after the current one; sessions will be kept since id would not be moved"""
     current_data.extend(read_file(location))
     id_data.clear(); id_data.update(assign_ids(current_data))
+#    print([r["correct_id"] for r in current_data])
 
 def load_template(data: Dict):
     # format setting: cleaning dates; voiding nulled fields

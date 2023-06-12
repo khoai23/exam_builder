@@ -3,6 +3,7 @@ Basic code to read data from a csv file.
 """
 import os, io, csv 
 import glob
+import shutil
 import openpyxl
 
 from typing import Optional, List, Tuple, Any, Union, Dict
@@ -118,6 +119,8 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     """All processing of fields is done here."""
     new_data = {"is_multiple_choice": False}
     for k, v in row.items():
+        if(v is None):
+            continue
         v = v.strip()
         if(lowercase_field):
             k = k.lower()

@@ -38,9 +38,7 @@ def file_import():
     try:
         is_replace_mode = request.args.get("replace").lower() == "true"
         file = request.files["file"]
-        _, file_extension = os.path.splitext(file.name)
-        # backup the current file
-        app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
+        _, file_extension = os.path.splitext(file.filename)
         # use timestamp as filename for temporary file
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
@@ -49,15 +47,21 @@ def file_import():
             # TODO read and replace current data
             print("File saved to default path; reload data now.")
             reload_data(location=temporary_filename)
-            # if reload success, create backup and move file away 
+            # if reload success, backup the current file
+            app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
+            # then move file into current  
             app._current_file = move_file(temporary_filename, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
         else:
+            print("File saved to temporary; append and try to write combined")
             # read data as add-on to current data 
             append_data(location=temporary_filename)
             # extract the combination to disk in xlsx
-            combined_file = os.path.join(_DEFAULT_FILE_PREFIX, ".xlsx")
+            combined_file = _DEFAULT_FILE_PREFIX + ".xlsx"
+            # if reload success, backup the current file
+            app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
+            # then write the combined variant
             write_file_xlsx(combined_file, current_data)
-            # delete the file 
+            # delete the temporary file 
             os.remove(temporary_filename)
         return flask.jsonify(result=True)
     except Exception as e:
