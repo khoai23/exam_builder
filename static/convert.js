@@ -228,7 +228,7 @@ function save_csv(event) {
 	if(rows.length > 0) {
 		//console.log(rows);
 		filename = $("#file_import")[0].files[0].name.replaceAll(" ", "_").split(".")[0] + ".csv";
-		export_to_csv(filename, rows, ["Question", "Answer 1", "Answer 2", "Answer 3", "Answer 4"]);
+		export_to_csv(filename, rows, ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]);
 		$("#save_status").show().text("Exported to \"" + filename + "\"");
 	} else {
 		alert("No row selected; cannot export");
