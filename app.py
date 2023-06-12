@@ -23,7 +23,7 @@ def main():
 @app.route("/data")
 def data():
     "Enter the data page, where we can modify the bank and build a new template for an exam"
-    print(current_data)
+#    print([r["correct_id"] for r in current_data])
     return flask.render_template("data.html", questions=current_data)
 
 @app.route("/export")

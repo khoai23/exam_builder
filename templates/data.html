@@ -102,7 +102,7 @@
 						
 					<div class="container-fluid d-flex p-2">
 						<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
-							<input id="import_file" type="file" name="file" accept=".csv" onchange="submit_file(event)"></input>
+							<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
 						</form>
 						<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
 						<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>

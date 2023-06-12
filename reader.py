@@ -105,7 +105,9 @@ def write_file_xlsx(filepath: str, data: List[Dict], headers: List[str]=HEADERS)
 
 
 def reconvert_field(row: Dict):
-    """Reconvert data row back into valid writable in csv/xlsx here"""
+    """Reconvert data row back into valid writable in csv/xlsx here.
+    MUST CREATE NEW DICT from this to prevent backporting into good data."""
+    row = dict(row)
     special = [s for s in SPECIAL_TAGS if row.pop(s, None)]
     row["special"] = ", ".join(special)
     # reconvert tag & correct_id to corresponding format if necessary

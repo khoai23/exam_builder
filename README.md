@@ -20,9 +20,12 @@ Remaining bugfix/missing features:
 - [x] Force submission when exam ends
 - [x] Conditional variables for template problem (range, attributes e.g prime)
 - [x] Table auto-scroll upon large screen
-- [ ] Import in append vs replace mode
+- [x] Import in append vs replace mode
+- [ ] Finishing import should automatically reload the table
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter direct import and copy content to clipboard 
+- [ ] Import supporting xls file by xlrd
+- [ ] Allow rollback in case of crappy import 
 - [ ] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 
