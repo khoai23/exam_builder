@@ -18,11 +18,18 @@ data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
 student_belong_to_session = dict()
 
-def reload_data():
-    del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
+def reload_data(location=DEFAULT_FILE_PATH):
+    """Reload - clear everything and then re-load the data. No session will be kept, since id would likely be completely screwed"""
+    del current_data[:]; current_data.extend(read_file(location))
     id_data.clear(); id_data.update(assign_ids(current_data))
     session.clear()
     submit_route.clear()
+    student_belong_to_session.clear()
+
+def append_data(location=DEFAULT_FILE_PATH):
+    """Append - update the data after the current one; sessions will be kept since id would not be moved"""
+    current_data.extend(read_file(location))
+    id_data.clear(); id_data.update(assign_ids(current_data))
 
 def load_template(data: Dict):
     # format setting: cleaning dates; voiding nulled fields

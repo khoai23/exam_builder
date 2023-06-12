@@ -1,12 +1,39 @@
 """
 Basic code to read data from a csv file.
 """
-import io, csv 
+import os, io, csv 
+import glob
 import openpyxl
 
-from typing import Optional, List, Tuple, Any, Union
+from typing import Optional, List, Tuple, Any, Union, Dict
 
-DEFAULT_FILE_PATH = "test/sample.xlsx"
+_DEFAULT_FILE_PREFIX = "test/sample"
+
+TEMPORARY_FILE_DIR = "test"
+# no longer hardfix - now try to load file by a prefix, xlsx first
+# DEFAULT_FILE_PATH = "test/sample.xlsx"
+def get_file_by_prefix(prefix: str, prefer_cue: Optional[str]=None):
+    valid_file = glob.glob(prefix + "*")
+    if(len(valid_file) == 0):
+        raise FileNotFoundError("Cannot find file of prefix {}. Check your input".format(prefix))
+    if(prefer_cue):
+        for f in valid_file:
+            if(prefer_cue in f):
+                return f 
+    return valid_file[0]
+DEFAULT_FILE_PATH = get_file_by_prefix(_DEFAULT_FILE_PREFIX, prefer_cue=".xlsx")
+
+def move_file(source: str, target: str, is_target_prefix: Optional[bool]=True):
+    # move file. is_target_prefix=true will have target appending the extension of the source 
+    # return the location of the target 
+    if(is_target_prefix):
+        _, ext = os.path.splitext(source)
+        target = target + ext 
+    shutil.move(source, target)
+    return target
+
+HEADERS = ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]
+SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation"]
 
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     if(".csv" in filepath):
@@ -25,7 +52,7 @@ def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool
             data.append(process_field(row))
     if(strict):
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
-        valid_data = lambda row: all(field in row for field in fields)
+        valid_data = lambda row: all(field in row for field in fields) or row["is_single_equation"]
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
     return data
 
@@ -48,7 +75,45 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
     return data
 
-SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation"]
+def write_file_csv(filepath: str, data: List[Dict], headers: List[str]=HEADERS):
+    # write a csv file using the current read data. Useful when importing in append mode
+    # newline to prevent duplicate writing
+    with io.open(filepath, "w", encoding="utf-8", newline="") as wf:
+        writer = csv.DictWriter(wf, fieldnames=headers)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(reconvert_field(row))
+    return filepath
+
+def write_file_xlsx(filepath: str, data: List[Dict], headers: List[str]=HEADERS):
+    # write a xlsx file using the current read data.
+    # TODO write the help sheet to it as well 
+    # TODO keep formatting
+    workbook = openpyxl.Workbook()
+    data_sheet = workbook.create_sheet("QuestionSheet", 0)
+    # write header 
+    data_sheet.append(headers)
+    # write data 
+    for row in data:
+        row = reconvert_field(row)
+        data_row = [row.get(h, None) for h in headers ]
+        data_sheet.append(data_row)
+    # save 
+    workbook.save(filepath)
+    return filepath
+
+
+def reconvert_field(row: Dict):
+    """Reconvert data row back into valid writable in csv/xlsx here"""
+    special = [s for s in SPECIAL_TAGS if row.pop(s, None)]
+    row["special"] = ", ".join(special)
+    # reconvert tag & correct_id to corresponding format if necessary
+    if("tag" in row):
+        row["tag"] = ", ".join(row["tag"])
+    if(isinstance(row["correct_id"], tuple)):
+        row["correct_id"] = ", ".join([str(i) for i in row["correct_id"]])
+    return row
+
 def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     """All processing of fields is done here."""
     new_data = {"is_multiple_choice": False}
@@ -94,4 +159,8 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     return new_data
 
 if __name__ == "__main__":
-    print(read_file("test/sample.xlsx"))
+    data = read_file("test/sample.xlsx")
+    print(data)
+#    write_file_csv("test/test_write_sample.csv", data, HEADERS)
+    write_file_xlsx("test/test_write_sample.xlsx", data, HEADERS)
+    print("Tested writing.")

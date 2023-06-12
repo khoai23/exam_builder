@@ -1,17 +1,19 @@
 import flask
 from flask import Flask, request, url_for
 # from werkzeug.utils import secure_filename
-import time 
-import traceback
-import re
+import os, time, re
+import traceback 
+import shutil
 
 from session import data, current_data, session, submit_route, student_belong_to_session
-from session import reload_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
+from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
 from convert_file import read_and_convert
-from reader import DEFAULT_FILE_PATH
+from reader import DEFAULT_FILE_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
 
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
+app._current_file = DEFAULT_FILE_PATH 
+app._backup_file = None
 
 @app.route("/")
 def main():
@@ -26,19 +28,37 @@ def data():
 
 @app.route("/export")
 def file_export():
-    """Allow access to the database file."""
-    return flask.send_file(DEFAULT_FILE_PATH, as_attachment=True)
+    """Allow downloading the database file."""
+    return flask.send_file(app._current_file, as_attachment=True)
 
 @app.route("/import", methods=["POST"])
 def file_import():
-    """Allow overwriting the database file with a better variant."""
+    """Allow overwriting or appending to the database file.
+    TODO """
     try:
         is_replace_mode = request.args.get("replace").lower() == "true"
         file = request.files["file"]
-        file.save(DEFAULT_FILE_PATH)
-        # TODO read and replace current data
-        print("File saved to default path; reload data now.")
-        reload_data()
+        _, file_extension = os.path.splitext(file.name)
+        # backup the current file
+        app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
+        # use timestamp as filename for temporary file
+        temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
+        file.save(temporary_filename)
+        # backup the current file
+        if(is_replace_mode):
+            # TODO read and replace current data
+            print("File saved to default path; reload data now.")
+            reload_data(location=temporary_filename)
+            # if reload success, create backup and move file away 
+            app._current_file = move_file(temporary_filename, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
+        else:
+            # read data as add-on to current data 
+            append_data(location=temporary_filename)
+            # extract the combination to disk in xlsx
+            combined_file = os.path.join(_DEFAULT_FILE_PREFIX, ".xlsx")
+            write_file_xlsx(combined_file, current_data)
+            # delete the file 
+            os.remove(temporary_filename)
         return flask.jsonify(result=True)
     except Exception as e:
         return flask.jsonify(result=False, error=str(e))

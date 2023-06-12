@@ -37,6 +37,7 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], s
             q = data[qid]
             answer_shuffle = random.sample(list(range(1, 5)), 4)
             if(q.get("is_dynamic_key", False)):
+                # TODO allow dynamic_key with fixed/single equation
                 q = convert_dynamic_key_problem(q)
             elif(q.get("is_fixed_equation", False)):
                 q = convert_fixed_equation_problem(q)

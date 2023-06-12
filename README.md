@@ -23,5 +23,6 @@ Remaining bugfix/missing features:
 - [ ] Import in append vs replace mode
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
-- [ ] Converter direct import and copy content to clipboard
+- [ ] Converter direct import and copy content to clipboard 
+- [ ] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 
