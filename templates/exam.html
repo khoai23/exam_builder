@@ -12,11 +12,12 @@
 				<div id="timer" class="row progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">00h00s</div>
 			</div>
 		</nav> 
-		<div class="container-fluid">
+		<div class="container-fluid" style="position: sticky; top: 0;">
 			<h1>Exam Page</h1>
 			<span>Test name: <b>{{ exam_setting["session_name"] }}</b></span><br />
 			<span>Duration: <b>{{ exam_setting["exam_duration"] }}</b>min</span>
 			<p>You are advised to save <a href="#">the current link</a> somewhere, or you risk losing all your progress.</p>
+			<span class="text-danger" id="autosubmit_warning" style="display: none;"> Exam will be auto-submitted soon, finalize your work! </span>
 		</div>
 		<div id="exam_region">
 			{% for item in exam_data %}

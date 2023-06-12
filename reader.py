@@ -2,12 +2,21 @@
 Basic code to read data from a csv file.
 """
 import io, csv 
+import openpyxl
 
 from typing import Optional, List, Tuple, Any, Union
 
-DEFAULT_FILE_PATH = "test/sample.csv"
+DEFAULT_FILE_PATH = "test/sample.xlsx"
 
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
+    if(".csv" in filepath):
+        return read_file_csv(filepath, headers=headers, strict=strict)
+    elif(".xlsx" in filepath):
+        return read_file_xlsx(filepath, headers=headers, strict=strict)
+    else:
+        raise ValueError("Unusable filepath: {}; check the extension (must be .csv/.xlsx)".format(filepath))
+
+def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []
     with io.open(filepath, "r", encoding="utf-8") as rf:
@@ -20,6 +29,26 @@ def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=Fal
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
     return data
 
+def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
+    workbook = openpyxl.load_workbook(filepath)
+    data_sheet = workbook[workbook.sheetnames[0]]
+    print("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
+    data = []
+    for i, row in enumerate(data_sheet.iter_rows(values_only=True)):
+        if(i == 0 and headers is None):
+            # if header is None, load it from the excel 
+            headers = row;
+            continue 
+        # only add the data field in when value is not empty 
+        # have to re-convert back to string right now; TODO code to skip this
+        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }))
+    if(strict):
+        fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
+        valid_data = lambda row: all(field in row for field in fields)
+        assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
+    return data
+
+SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation"]
 def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     """All processing of fields is done here."""
     new_data = {"is_multiple_choice": False}
@@ -31,19 +60,17 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
             # for tag field, split it by delimiter 
             v = [] if v == "" else [v.strip()] if delimiter not in v else [t.strip() for t in v.split(delimiter)]
 #            print("Tag: ", v)
+            # backward compatibility
+            for st in SPECIAL_TAGS:
+                if(st in v):
+                    v.remove(st)
+                    new_data[st] = True
+        if(k == "special"):
             # if has tag for multiple choice, swap it to is_multiple_choice
-            if("is_multiple_choice" in v):
-                v.remove("is_multiple_choice")
-                new_data["is_multiple_choice"] = True 
-            if("is_dynamic_key" in v):
-                v.remove("is_dynamic_key")
-                new_data["is_dynamic_key"] = True 
-            elif("is_fixed_equation" in v):
-                v.remove("is_fixed_equation")
-                new_data["is_fixed_equation"] = True
-            elif("is_single_equation" in v):
-                v.remove("is_single_equation")
-                new_data["is_single_equation"] = True
+            # TODO enforce mutual exclusivity
+            for st in SPECIAL_TAGS:
+                if(st in v):
+                    new_data[st] = True
         if(k == "correct_id"): 
             try:
                 if("," in v):
@@ -67,4 +94,4 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     return new_data
 
 if __name__ == "__main__":
-    print(read_file("test/sample.csv"))
+    print(read_file("test/sample.xlsx"))

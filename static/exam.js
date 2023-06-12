@@ -1,3 +1,5 @@
+var submitted = false;
+
 var getUrlParameter = function getUrlParameter(sParam) {
 	var sPageURL = window.location.search.substring(1),
 		sURLVariables = sPageURL.split('&'), sParameterName;
@@ -13,17 +15,31 @@ var getUrlParameter = function getUrlParameter(sParam) {
 function runTimer(elapsed, remaining) {
 	var total = elapsed + remaining;
 	var id = setInterval(function() {
-		let percentage = Math.min(elapsed / total, 100.0);
+		let percentage = Math.min(elapsed / total, 1.0);
 		if(elapsed >= total) {
 			// quit increasing 
 			clearInterval(id);
 			// enforce submission here.
+			if(!submitted) {
+				// force closing all regions
+				$("#finished_region").show();
+				$("#exam_region").hide();
+				$("#submit_region").hide();
+				// send the submission command
+				submit(null, true);
+			}
 		}
 		// set the value for the bar 
 		//$("#timer").attr('aria-valuenow', percentage);
 		$("#timer").css("width", (percentage * 100.0).toFixed(2) + "%")
 		let rm = Math.floor(total - elapsed)
 		$("#timer").text(`${Math.floor(rm / 60)}m${(rm % 60)}s`);
+		if(0.8 < percentage && percentage <= 0.95) {
+			$("#timer").addClass("bg-warning")
+		} else if(0.95 < percentage) {
+			$("#timer").removeClass("bg-warning").adddClass("bg-danger")
+			$("#autosubmit_warning").show()
+		}
 		elapsed += 0.25;
 	}, 250); // every 1/4 sec
 }
@@ -93,7 +109,7 @@ $(document).ready(function() {
 	// $("#confirmation_modal").on("show.bs.modal", updateModal); 
 });
 
-function submit(event) {
+function submit(event, autosubmit) {
 	// the modal confirmed submission; compile the answer list
 	var answers = listAnswers();
 	var submission = [];
@@ -102,7 +118,7 @@ function submit(event) {
 		submission.push(answers[i]);
 	}
 	console.log(submission); // view for now
-	var base = window.location.origin;
+	// var base = window.location.origin;
 	var submit_link = "submit?key=" + getUrlParameter("key");
 	// send 
 	$.ajax({
@@ -118,18 +134,28 @@ function submit(event) {
 				$("#finished_region").show();
 				$("#exam_region").hide();
 				$("#submit_region").hide();
-				$("#finished_message").text("Answers had been submitted. Close the browser and await teacher responses.");
+				if(autosubmit) {
+					$("#finished_message").text("Answers had been auto-submitted. Close the browser and await teacher responses.");
+				} else {
+					$("#finished_message").text("Answers had been submitted. Close the browser and await teacher responses.");
+				}
+				submitted = true;
 			} else {
 				// something is wrong 
 				if("error" in data) {
 					// generic error; display 
 					$("#finished_message").text("Error during submission: " + data["error"] + "\nYou may try again after a short delay.");
+					// in autosubmit, re-enable the submit regions; in case that submission fails somehow and can be recovered.
+					if(autosubmit)
+						$("submit_region").show();
+					submitted = false;
 				} else {
 					// without error = already submitted 
 					$("#finished_region").show();
 					$("#exam_region").hide();
 					$("#submit_region").hide();
 					$("#finished_message").text("Answers had already been submitted before.");
+					submitted = true;
 				}
 			}
 		}

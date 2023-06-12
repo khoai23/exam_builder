@@ -1,8 +1,10 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
-import flask
+import flask 
+from flask import url_for
 import secrets
-from datetime import datetime
+from datetime import datetime 
+import time
 
 from reader import read_file, DEFAULT_FILE_PATH
 from organizer import assign_ids, shuffle 
@@ -14,6 +16,7 @@ data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
 data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
+student_belong_to_session = dict()
 
 def reload_data():
     del current_data[:]; current_data.extend(read_file(DEFAULT_FILE_PATH))
@@ -89,8 +92,9 @@ def retrieve_submit_route(template_key: str):
             # refer to generic_submit for more detail
             # create unique student key for this specific format
             student_key = secrets.token_hex(8)
-            # write to session retrieval 
+            # write to session retrieval
             student_belong_to_session[student_key] = template_key
+            session_data = session.get(template_key, None)
             # write to session data itself.
             selected, correct = shuffle(id_data, session_data["template"])
             session_data["student"][student_key] = student_data = {

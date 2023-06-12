@@ -5,7 +5,7 @@ import time
 import traceback
 import re
 
-from session import data, current_data, session, submit_route 
+from session import data, current_data, session, submit_route, student_belong_to_session
 from session import reload_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
 from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH
@@ -21,6 +21,7 @@ def main():
 @app.route("/data")
 def data():
     "Enter the data page, where we can modify the bank and build a new template for an exam"
+    print(current_data)
     return flask.render_template("data.html", questions=current_data)
 
 @app.route("/export")
@@ -41,6 +42,7 @@ def file_import():
         return flask.jsonify(result=True)
     except Exception as e:
         return flask.jsonify(result=False, error=str(e))
+        print(traceback.format_exc())
 #    raise NotImplementedError
 
 @app.route("/build_template", methods=["POST"])
@@ -52,7 +54,6 @@ def build_template():
     # return the key to be accessed by the browser
     return flask.jsonify(session_key=key, admin_key=admin_key)
 
-student_belong_to_session = dict()
 @app.route("/identify")
 def identify():
     """First part of entering the exam; this link will allow student to input necessary info to be monitored by /manage
@@ -75,6 +76,7 @@ def identify():
                     input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}])
         except Exception as e:
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+            print(traceback.format_exc())
 
 @app.route("/enter")
 def enter():
@@ -100,6 +102,7 @@ def submit():
         return submit_exam_result(submitted_answers, student_key)
     except Exception as e:
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
+        print(traceback.format_exc())
 
 @app.route("/manage")
 def manage():
@@ -147,6 +150,7 @@ def convert_text_to_table():
     except Exception as e:
         print("Error: ", e)
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
+        print(traceback.format_exc())
     
 
 @app.route("/generic_submit", methods=["POST"])
@@ -173,6 +177,7 @@ def generic_submit():
             # TODO differentiate between result=True and result=False
             return flask.jsonify(result=result, error=data_or_error, data=data_or_error)
     except Exception as e:
+        print("Error: {} - {}".format(e, traceback.format_exc()))
         return flask.jsonify(result=False, error=str(e))
 
 if __name__ == "__main__":

@@ -28,6 +28,69 @@ def convert_dynamic_key_problem(problem: Dict, generator_mode=False):
             new_problem[field] = new_problem[field].replace(plh, rpl)
     return new_problem
 
+range_regex = re.compile(r"\[(\d+),\s*(\d+)\]")
+
+N = 1000
+_PRIME, _SQUARE = [], []
+for n in range(2, N):
+    # prime
+    is_prime = True
+    for p in _PRIME:
+        if(n % p == 0):
+            is_prime = False
+            break
+    if(is_prime):
+        _PRIME.append(n)
+    # square 
+    if(int(n ** 0.5) ** 2 == n):
+        _SQUARE.append(n)
+_PRIME = set(_PRIME)
+_SQUARE = set(_SQUARE)
+
+PROPERTIES_FILTER = {
+    "prime":     lambda v: v in _PRIME,
+    "square":    lambda v: v in _SQUARE,
+    "nonprime":  lambda v: v not in _PRIME,
+    "nonsquare": lambda v: v not in _SQUARE,
+}
+def create_variable_set(variable_and_limitation: str, duplicate_set: Optional[int]=None, check_validity: bool=False):
+    """Variables will be specified with range [start, end], and other possible properties (square, prime, nonprime)
+    Format will be variable: specification1 specification2..
+    If the specification is empty, the variables will be assigned with range [1, 100].
+    TODO: add conditional option between variables"""
+    if(duplicate_set):
+        result = [dict() for _ in range(duplicate_set)]
+    else:
+        result = dict()
+    for variable_spec in (variable_and_limitation.split("\n") if "\n" in variable_and_limitation else [variable_and_limitation]):
+        name, spec = variable_spec.split(":")
+        range_match = re.search(range_regex, spec)
+        if(range_match is None):
+            start, end = 1, 100 
+        else:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2))
+            if(start > end):
+                start, end = end, start
+        varrange = range(start, end+1) # turn to list after every filter 
+        spec = [s.strip() for s in spec.split() if s.strip()]
+        for key, filter_fn in PROPERTIES_FILTER.items():
+            if key not in spec:
+                continue 
+            varrange = filter(filter_fn, varrange)
+        # after filtering, condense to list and choose randomly 
+        choices = list(varrange)
+        if(check_validity):
+            # choice should have more than one option 
+            # TODO check composite  
+            assert len(choices) > 1, "Variable {} must have at least 2 different choices to generate differing question, but only have {}.".format(name.strip(), choices)
+        if(duplicate_set):
+            for i in range(duplicate_set):
+                result[i][name.strip()] = random.choice(choices)
+        else:
+            result[name.strip()] = random.choice(choices)
+    return result
+
 var_exp_regex = re.compile(r"{(.+?)}")
 def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mode=False):
     """Designated fixed-equation format (e.g algebraic) will be `{variable}` and `{expression}` with the same 4 answers format, expression can only uses the designated variables.
@@ -35,12 +98,21 @@ def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mod
     TODO catch variables dynamically instead
         generator_mode: see above"""
     # find all instances of curly brackets 
-    variable_section, question_section = problem["question"].split(separator)
+    if(separator in problem["question"]):
+        variable_section, question_section = problem["question"].split(separator)
+        variables = set([catch for catch in re.findall(var_exp_regex, variable_section)])
+    else:
+        variable_section, question_section = None, problem["question"]
     answer_section = "\n".join(problem["answer{}".format(i)] for i in range(1, 5))
-    variables = set([catch for catch in re.findall(var_exp_regex, variable_section)])
     expressions = set([catch for catch in re.findall(var_exp_regex, question_section + "\n" + answer_section)])
-    # assign value to variables; TODO add value designation (e.g x_int, y_square_int, z_prime etc.)
-    assigned_variables = {k: random.randint(1, 100) for k in variables}
+    if(problem.get("variable_limitation", "").strip()):
+        # has a valid limitation; use it to create the variable
+        assigned_variables = create_variable_set(problem["variable_limitation"])
+    elif(variable_section is not None):
+        print("Problem {} is in deprecated mode (with |||); please convert to the `variable_limitation` format.")
+        assigned_variables = {k: random.randint(1, 100) for k in variables}
+    else:
+        raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
     # TODO enforce expression type
     assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
     # replace all the assigned expression with transfered values 
@@ -54,8 +126,11 @@ def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mod
 
 def convert_single_equation_problem(problem: Dict, separator="|||", generator_mode=True):
     """Designated single-equation format (e.g chemistry), will have similar format for fixed_equation; except that only have one correct answer by expression. Use 4 different variable formats & generator mode by default."""
-    variable_section, question_section = problem["question"].split(separator)
-    variables = set([catch for catch in re.findall(var_exp_regex, variable_section)])
+    if(separator in problem["question"]):
+        variable_section, question_section = problem["question"].split(separator)
+        variables = set([catch for catch in re.findall(var_exp_regex, variable_section)])
+    else:
+        variable_section, question_section = None, problem["question"]
     # answer1 will contain the correct expression
     answer_section = problem["answer1"]
     expressions = set([catch for catch in re.findall(var_exp_regex, question_section + "\n" + answer_section)])
@@ -64,7 +139,17 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
     four_problems = [dict(problem) for _ in range(4)]
     i = 0
     while i < 4: # this to allow rerolling variables; in case where generated result ran into duplication
-        assigned_variables = {k: random.randint(1, 100) for k in variables}
+        # TODO use the `duplicate_set` generatively
+        if(problem.get("variable_limitation", "").strip()):
+            # has a valid limitation; use it to create the variable
+            assigned_variables = create_variable_set(problem["variable_limitation"])
+        elif(variable_section is not None):
+            print("Problem {} is in deprecated mode (with |||); please convert to the `variable_limitation` format.")
+            assigned_variables = {k: random.randint(1, 100) for k in variables}
+        else:
+            raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
+        print(assigned_variables)
+#        assigned_variables = {k: random.randint(1, 100) for k in variables}
         assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
         # format for corresponding problem and id 
         asw_i = answer_section
