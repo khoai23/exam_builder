@@ -345,10 +345,12 @@ function update_student_list(event) {
 				// add checkboxes, each has corresponding id and value
 				student_list.append($("<input class=\"m-1\" type=\"checkbox\" id=\"" + r[0] + "\">(" 
 					+ r[0] + ") " + r[1] + "</input>").prop("checked", true));
+				student_list.append($("<br />"));
 			}
 			// enable button to dropdown
 			$("#toggle_student_list").prop("disabled", false);
 			// TODO put this data into template making
+			$("#load_student_list_result").text("Student List loaded");
 		}
 	}
 	reader.onerror = function(e) {
