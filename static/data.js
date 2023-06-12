@@ -321,6 +321,42 @@ function toggle_select_tag(event) {
 	}
 }
 
+var number_regex = /^\+?\d+$/
+function update_student_list(event) {
+	// upon selected file; attempt to parse and load the student list.
+	var target_file = event.currentTarget.files[0];
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var data = reader.result;
+		const workbook = XLSX.read(data, {type: "binary"});
+		const first_sheet = workbook.Sheets[workbook.SheetNames[0]];
+		// expecting data at column 2-3 (ID and name) and from row 3. Maybe allow customizing?
+		data = XLSX.utils.sheet_to_json(first_sheet, {range: "B3:C103", header:1});
+		// filter out fields that are incomplete or wrong
+		data = data.filter(r => r.length == 2).filter(r => typeof(r[0]) == "number" || number_regex.test(r[0].trim()));
+		console.log("Parsed data: ", data)
+		if(data.length == 0) {
+			alert("Invalid supplied data: excel must have ID+Name range B3:C-, and ID must be numerical")
+		} else {
+			// populate the dropdown with the supplied units
+			var student_list = $("#student_list");
+			for(r of data) {
+				console.log(r);
+				// add checkboxes, each has corresponding id and value
+				student_list.append($("<input class=\"m-1\" type=\"checkbox\" id=\"" + r[0] + "\">(" 
+					+ r[0] + ") " + r[1] + "</input>").prop("checked", true));
+			}
+			// enable button to dropdown
+			$("#toggle_student_list").prop("disabled", false);
+			// TODO put this data into template making
+		}
+	}
+	reader.onerror = function(e) {
+		console.log("Encounter read error: ", e);
+	}
+	reader.readAsBinaryString(target_file);
+}
+
 $(document).ready(function() {
 	console.log("Document ready, initializing");
 	// bind the grace period checkbox to the input 
