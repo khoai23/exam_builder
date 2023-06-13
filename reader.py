@@ -4,7 +4,12 @@ Basic code to read data from a csv file.
 import os, io, csv 
 import glob
 import shutil
-import openpyxl
+import string
+import openpyxl, openpyxl_image_loader 
+import base64
+
+from image import DefaultClient, check_and_write_image
+from utils import cell_name_xl_to_tuple
 
 from typing import Optional, List, Tuple, Any, Union, Dict
 
@@ -62,6 +67,23 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
     data_sheet = workbook[workbook.sheetnames[0]]
     print("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
     data = []
+    image_loader = openpyxl_image_loader.SheetImageLoader(data_sheet)
+    # old images will be read written in as |||{image_key}|||; b64 format
+    # new images will be read and converted to same format as above
+#    print(image_loader._images)
+#    image_loader.get("B2").show()
+    image_dictionary = dict()
+    for key in image_loader._images:
+        img_buffer = io.BytesIO()
+        image_loader.get(key).save(img_buffer, format="PNG")
+        img_data = img_buffer.getvalue()
+        number_key = row, col = cell_name_xl_to_tuple(key)
+        # print("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
+        row_dict = image_dictionary[row] = image_dictionary.get(row, dict())
+        # col is actually corresponding to answer1-4 already, lucky!
+        row_dict[col] = check_and_write_image(img_data)
+#    print(image_dictionary)
+#    return
     for i, row in enumerate(data_sheet.iter_rows(values_only=True)):
         if(i == 0 and headers is None):
             # if header is None, load it from the excel 
@@ -69,7 +91,7 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
             continue 
         # only add the data field in when value is not empty 
         # have to re-convert back to string right now; TODO code to skip this
-        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }))
+        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }, image_dictionary=image_dictionary[i]))
     if(strict):
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields)
@@ -117,8 +139,11 @@ def reconvert_field(row: Dict):
         row["correct_id"] = ", ".join([str(i) for i in row["correct_id"]])
     return row
 
-def process_field(row, lowercase_field: bool=True, delimiter: str=","):
-    """All processing of fields is done here."""
+def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dictionary: Optional[Dict]=None, image_format: str="|||{}|||"):
+    """All processing of fields is done here.
+    image_dictionary: if supplied, is reading & converting from external xlsx; image is already uploaded and can be referred by link
+    image_format: image links will be wrapped by this update
+    """
     new_data = {"is_multiple_choice": False}
     for k, v in row.items():
         if(v is None):
@@ -154,6 +179,10 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
                 print("The correct id `{}` cannot be parsed".format(v))
                 raise e
         new_data[k] = v
+    # If there is an image present in cell, replace it wholesale. TODO allow insertion 
+    if(image_dictionary):
+        for col, image_info in image_dictionary.items():
+            new_data["answer{}".format(col)] = image_format.format(image_info["link"])
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
     # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
@@ -164,8 +193,11 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=","):
     return new_data
 
 if __name__ == "__main__":
-    data = read_file("test/sample.xlsx")
-    print(data)
-#    write_file_csv("test/test_write_sample.csv", data, HEADERS)
-    write_file_xlsx("test/test_write_sample.xlsx", data, HEADERS)
-    print("Tested writing.")
+    # normal test
+#    data = read_file("test/sample.xlsx")
+#    print(data)
+##    write_file_csv("test/test_write_sample.csv", data, HEADERS)
+#    write_file_xlsx("test/test_write_sample.xlsx", data, HEADERS)
+#    print("Tested writing.")
+    # image read test
+    print(read_file_xlsx("test/sample_with_image.xlsx"))

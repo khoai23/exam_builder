@@ -1,3 +1,5 @@
 flask
 
-openpyxl
+openpyxl 
+openpyxl-image-loader
+imgurpython
