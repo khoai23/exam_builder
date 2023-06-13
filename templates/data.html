@@ -76,7 +76,13 @@
 											<td class="table-info"> 
 										{% else %}
 											<td> 
-										{% endif %} {{q["answer{}".format(i)]}}</td>
+										{% endif %} 
+										{% if "|||" not in q["answer{}".format(i)] %}
+											{{q["answer{}".format(i)]}}
+										{% else %}
+											<img src="{{q["answer{}".format(i)] | replace("|||", "")}}" class="img-thumbnail"></img>
+										{% endif %}
+										</td>
 									{% endfor %}
 									<td>{{q["correct_id"]}}</td>
 								{% endif %}

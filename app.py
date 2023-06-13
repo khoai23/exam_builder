@@ -65,8 +65,8 @@ def file_import():
             os.remove(temporary_filename)
         return flask.jsonify(result=True)
     except Exception as e:
-        return flask.jsonify(result=False, error=str(e))
         print(traceback.format_exc())
+        return flask.jsonify(result=False, error=str(e))
 #    raise NotImplementedError
 
 @app.route("/build_template", methods=["POST"])

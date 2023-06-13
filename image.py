@@ -103,7 +103,7 @@ def check_and_write_image(image: Union[str, bytes]):
     if(not isinstance(image, bytes)):
         # convert it back to b64 format
         image = base64.b64decode(image)
-    img_hash = hashlib.md5(image, usedforsecurity=False).hexdigest()
+    img_hash = hashlib.md5(image).hexdigest()
     if(img_hash in DefaultImageRegistry):
         # very very very likely a duplication.
         # TODO what to do if it's not? load image and check.

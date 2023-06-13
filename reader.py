@@ -91,7 +91,7 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
             continue 
         # only add the data field in when value is not empty 
         # have to re-convert back to string right now; TODO code to skip this
-        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }, image_dictionary=image_dictionary[i]))
+        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }, image_dictionary=image_dictionary.get(i, None)))
     if(strict):
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields)

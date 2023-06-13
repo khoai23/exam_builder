@@ -34,10 +34,18 @@
 				<div class="col-sm-12 col-md-6 col-lg-3">
 					{% if item["is_multiple_choice"] %}
 						<input class="form-check-input" type="checkbox" name="q_{{question_loop.index0}}" id="qc_{{question_loop.index0}}_{{loop.index0}}" />
-						<label class="form-check-label" for="qc_{{question_loop.index0}}_{{loop.index0}}"> {{answer}} </label>
+						{% if "|||" in answer %}
+							<img src="{{answer | replace("|||", "")}}" class="img-thumbnail" for="qc_{{question_loop.index0}}_{{loop.index0}}"></img>
+						{% else %}
+							<label class="form-check-label" for="qc_{{question_loop.index0}}_{{loop.index0}}"> {{answer}} </label>
+						{% endif %}
 					{% else %}
 						<input class="form-check-input" type="radio" name="q_{{question_loop.index0}}" id="qr_{{question_loop.index0}}_{{loop.index0}}" />
-						<label class="form-check-label" for="qr_{{question_loop.index0}}_{{loop.index0}}"> {{answer}} </label>
+						{% if "|||" in answer %}
+							<img src="{{answer | replace("|||", "")}}" class="img-thumbnail" for="qr_{{question_loop.index0}}_{{loop.index0}}"></img>
+						{% else %}
+							<label class="form-check-label" for="qr_{{question_loop.index0}}_{{loop.index0}}"> {{answer}} </label>
+						{% endif %}
 					{% endif %}
 				</div>
 				{% endfor %}
