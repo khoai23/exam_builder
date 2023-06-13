@@ -9,7 +9,7 @@ import time
 from reader import read_file, DEFAULT_FILE_PATH
 from organizer import assign_ids, shuffle 
 
-from typing import Optional, Dict, List, Tuple, Any, Union
+from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
 data = {}
 data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
@@ -46,8 +46,10 @@ def load_template(data: Dict):
     key = secrets.token_hex(8)
     admin_key = secrets.token_hex(8)
     # Maybe TODO check here if the template is valid?
-    # TODO add a timer to expire the session when needed
-    session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict()}
+    # TODO add a timer to expire the session when needed 
+    # calculate maximum score using current data 
+    max_score = sum((count * score for count, score, ids in data["template"]))
+    session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
     print("Session after modification: ", session)
     return key, admin_key
 
@@ -145,3 +147,22 @@ def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_scor
             if(return_score):
                 return flask.jsonify(result=True, score=score)
         return flask.jsonify(result=True)
+
+def remove_session(session_key: str, verify: bool=False, verify_admin_key: Optional[str]=None, callback: Optional[Callable[[str], Any]]=None):
+    """This is to remove session. Wipe the session data and all corresponding key related to it.
+    If cannot find session by key, or verification failed, return false accordingly.
+    Can be feed a callback which receives the deleted session as argument; useful if want to remove & archive it somehow"""
+    session_data = session.get(session_key, None)
+    if(session_data is None):
+        return flask.jsonify(result=False, deleted=True, error="Session key not found, might have deleted/expired already.")
+    elif(verify and session_data["admin_key"] != verify_admin_key):
+        return flask.jsonify(result=False, deleted=False, error="Secret key incorrect, you do not have right to delete this session.")
+    # passed here means ok, start deleting the session, submit_route, and student id
+    session_data = session.pop(session_key)
+    submit_route.pop(session_key, None)
+    for student_key in session_data["student"]:
+        student_belong_to_session.pop(student_key, None)
+    # once finished deletion, if callback exist, send the session data over 
+    if(callback):
+        callback(session_data)
+    return flask.jsonify(result=True, deleted=True)

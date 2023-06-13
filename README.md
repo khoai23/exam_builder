@@ -4,7 +4,8 @@ All possible extension regard the builder, unlikely first:
 - [x] Template problems (replacing variables)
 - [x] LaTeX-type formatting
 - [ ] Data source
-- [ ] Statistics for session managing
+- [ ] Statistics for session managing 
+- [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
 - [x] Filter for question category/tags
@@ -16,7 +17,7 @@ All possible extension regard the builder, unlikely first:
 
 Remaining bugfix/missing features:
 - [ ] Session expiration & wipe 
-- [ ] Manager panel to delete/kill sessions manually
+- [x] Manager panel to delete/kill sessions manually
 - [x] Force submission when exam ends
 - [x] Conditional variables for template problem (range, attributes e.g prime)
 - [x] Table auto-scroll upon large screen

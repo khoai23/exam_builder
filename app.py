@@ -6,7 +6,7 @@ import traceback
 import shutil
 
 from session import data, current_data, session, submit_route, student_belong_to_session
-from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result
+from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result, remove_session
 from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
 
@@ -88,7 +88,9 @@ def identify():
     else:
         # with a template key; try to format properly
         try:
-            session_data = session[template_key]
+            session_data = session.get(template_key, None)
+            if(session_data is None):
+                return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
             template_key = retrieve_submit_route(template_key)
             # TODO do the route redirection out here
             # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
@@ -136,7 +138,9 @@ def manage():
         template_key = request.args.get("template_key")
         admin_key = request.args.get("key")
         if(template_key is None or admin_key is None):
-            return flask.render_template("error.html", error="Missing key specified; TODO allow input box", error_traceback=None)
+#            print(session)
+            return flask.render_template("session_manager.html", all_session_data=session)
+#            return flask.render_template("error.html", error="Missing key specified; TODO allow input box", error_traceback=None)
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
@@ -149,6 +153,17 @@ def manage():
         print("Error: ", e)
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
 
+@app.route("/delete_session", methods=["DELETE"])
+def delete_session():
+    """Only work with a valid admin_key, to prevent some smart mf screwing up sessions."""
+    try:
+        template_key = request.args.get("template_key")
+        admin_key = request.args.get("key")
+        return remove_session(template_key, verify=True, verify_admin_key=admin_key)
+    except Exception as e:
+        print("Error: ", e)
+        return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+    
 @app.route("/convert")
 def convert():
     """Page to do a conversion from text file to a table to be imported."""

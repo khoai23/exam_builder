@@ -23,7 +23,7 @@ def organize(data: List[Dict], default_category: str="unknown"):
 
 shared_generator = {}
 # TODO wipe this upon data reload
-def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, int, List]], seed=None):
+def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]], seed=None):
     # handle multiple questions already selected 
     # the selected should already been sub-divided to its minor section; this process will shuffle both the choices and the order of the answers and provide correct answer ids for them.
     # for specific dynamic problem; propels it into corresponding dynamic_problem function

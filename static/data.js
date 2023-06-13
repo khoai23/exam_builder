@@ -236,7 +236,7 @@ function submit_file(event) {
 			$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.");
 		},
 		error: function(jqXHR, textStatus, error){
-			console.log(error);
+			console.log("Received error", error);
 			$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed.")
 		}
 	});
@@ -312,6 +312,20 @@ function toggle_select_tag(event) {
 		return $(this).find(".tag_cell:contains('" + target_tag + "')").length > 0;
 	}).find("[id^=use_question_]");
 	//console.log(boxes);
+	if(boxes.filter(":checked").length == boxes.length) {
+		// all box checked; deselect 
+		boxes.each(function() { $(this).prop("checked", false); })
+	} else {
+		// zero/some box checked; select
+		boxes.each(function() { $(this).prop("checked", true); })
+	}
+}
+
+function toggle_all_tag(event) {
+	// select/deselect the visible items.
+	var boxes = $("tbody").find("tr").filter(function(index) {
+		return $(this).is(":visible"); // get only the visible boxes
+	}).find("[id^=use_question_]");
 	if(boxes.filter(":checked").length == boxes.length) {
 		// all box checked; deselect 
 		boxes.each(function() { $(this).prop("checked", false); })

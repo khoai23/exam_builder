@@ -43,25 +43,27 @@
 					<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 600px; overflow: auto;">
 						<thead class="thead-light">
 							<tr>
-								<th style="position: sticky; top: 0;">ID</th>
-								<th style="position: sticky; top: 0;" class="flex-grow-4">Question</th>
-								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 1</th>
-								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 2</th>
-								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 3</th>
-								<th style="position: sticky; top: 0;" class="flex-grow-2">Answer 4</th>
-								<th style="position: sticky; top: 0;" class="flex-shrink-1">Correct Answer</th>
-								<th style="position: sticky; top: 0;" class="flex-shrink-1">Category &nbsp;
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Category &nbsp;
 									<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
 										(X)
 									</button>
 								</th>
-								<th style="position: sticky; top: 0;" class="flex-shrink-1">Tag</th>
-								<th style="position: sticky; top: 0;" class="table-primary">Use</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for q in questions %}
-							<tr>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Tag</th>
+								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
+									<button class="btn btn-link p-0" onclick="toggle_all_tag(event)">Use</button>
+								</th>
+							</tr>    
+						</thead>    
+						<tbody>     
+							{% for  q in questions %}
+							<tr>    
 								<td>{{q["id"]}}</td>
 								<td>{{q["question"]}}</td>
 								{% if "is_single_equation" in q or q["is_single_equation"] %}

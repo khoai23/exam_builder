@@ -12,7 +12,7 @@
 			<p>Internal server error happened: </p>
 			<p><b>{{error}}</b></p>
 			{% if error_traceback %} 
-				<p display="white-space: pre-wrap;">{{ error_traceback | safe }} </p>
+				<pre>{{ error_traceback | safe }} </pre>
 			{% endif %}
 			<a href="/">Return Home</a>
 		</div>
