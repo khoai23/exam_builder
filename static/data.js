@@ -221,6 +221,7 @@ function choose_file(event, mode) {
 function submit_file(event) {
 // $(document).on("ready", function() {
 //	console.log("Attempt override submit.")
+	//$(event.currentTarget).attr("disabled", true);
 	var form = $("#import_form");
 	var actionUrl = form.attr('action') + "?replace=" + replacement_mode.toString();
 	var data = new FormData(form[0])
@@ -234,12 +235,38 @@ function submit_file(event) {
 		success: function(data, textStatus, jqXHR) {
 			console.log("Form submitted: ", data);
 			$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.");
+			//$(event.currentTarget).attr("disabled", false);
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
 			$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed.")
-		}
+			//$(event.currentTarget).attr("disabled", false);
+		},
+		// always: function() { $(event.currentTarget).prop("disabled", false); } // doesnt work
 	});
+}
+
+function rollback(event) {
+	//$(event.currentTarget).attr("disabled", true);
+	$.ajax({
+		type: "GET",
+		url: "rollback",
+		success: function(data, textStatus, jqXHR) {
+			if(data["result"]) {
+				$("#io_result").removeClass("text-danger").addClass("text-success").text("Rollback done, old data had been loaded.");
+			} else {
+				$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.")
+				console.log("Error: ", data["error"]);
+			}
+			//$(event.currentTarget).attr("disabled", false);
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log("Received error", error);
+			$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.")
+			//$(event.currentTarget).attr("disabled", false);
+		},
+		// always: function() { $(event.currentTarget).prop("disabled", false); } // doesnt work
+	})
 }
 
 function select_category(event) {

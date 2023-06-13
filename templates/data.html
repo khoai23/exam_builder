@@ -115,7 +115,8 @@
 						<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
 						<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>
 						<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
-						<span id="io_result"></span>
+						<button class="mx-2 btn btn-warning" onclick="rollback(event)">Rollback</button>
+						<span class="m-2" id="io_result"></span>
 						<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
 							<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
 							<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>

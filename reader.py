@@ -14,6 +14,7 @@ from utils import cell_name_xl_to_tuple
 from typing import Optional, List, Tuple, Any, Union, Dict
 
 _DEFAULT_FILE_PREFIX = "test/sample"
+_DEFAULT_BACKUP_PREFIX = "test/backup"
 
 TEMPORARY_FILE_DIR = "test"
 # no longer hardfix - now try to load file by a prefix, xlsx first
@@ -28,13 +29,19 @@ def get_file_by_prefix(prefix: str, prefer_cue: Optional[str]=None):
                 return f 
     return valid_file[0]
 DEFAULT_FILE_PATH = get_file_by_prefix(_DEFAULT_FILE_PREFIX, prefer_cue=".xlsx")
+try:
+    DEFAULT_BACKUP_PATH = get_file_by_prefix(_DEFAULT_BACKUP_PREFIX, prefer_cue=".xlsx")
+except FileNotFoundError:
+    DEFAULT_BACKUP_PATH = None
 
-def move_file(source: str, target: str, is_target_prefix: Optional[bool]=True):
+def move_file(source: str, target: str, is_target_prefix: Optional[bool]=True, autoremove_target: bool=True):
     # move file. is_target_prefix=true will have target appending the extension of the source 
     # return the location of the target 
     if(is_target_prefix):
         _, ext = os.path.splitext(source)
         target = target + ext 
+    if(os.path.isfile(target) and autoremove_target):
+        os.remove(target)
     shutil.move(source, target)
     return target
 

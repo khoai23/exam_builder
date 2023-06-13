@@ -8,12 +8,12 @@ import shutil
 from session import data, current_data, session, submit_route, student_belong_to_session
 from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result, remove_session
 from convert_file import read_and_convert
-from reader import DEFAULT_FILE_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
+from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
 
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
 app._current_file = DEFAULT_FILE_PATH 
-app._backup_file = None
+app._backup_file = DEFAULT_BACKUP_PATH # if(os.path.isfile(DEFAULT_BACKUP_PATH)) else None # no need; the backup will work here
 
 @app.route("/")
 def main():
@@ -68,6 +68,22 @@ def file_import():
         print(traceback.format_exc())
         return flask.jsonify(result=False, error=str(e))
 #    raise NotImplementedError
+
+@app.route("/rollback")
+def rollback():
+    """Attempt to do a rollback on previous backup."""
+    try:
+        if(app._backup_file and os.path.isfile(app._backup_file)):
+            # TODO maybe need to switch xlsx?
+            app._current_file = move_file(app._backup_file, DEFAULT_FILE_PATH, is_target_prefix=False)
+            app._backup_file = None
+            reload_data(location=app._current_file)
+            return flask.jsonify(result=True)
+        else:
+            return flask.jsonify(result=False, error="No backup available")
+    except Exception as e:
+        print(traceback.format_exc())
+        return flask.jsonify(result=False, error=str(e))
 
 @app.route("/build_template", methods=["POST"])
 def build_template():
