@@ -1,325 +1,311 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<title>Data</title>
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-	<!--
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css">
-	-->
-		<link id="bsdp-css" href="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker3.min.css" rel="stylesheet">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-	</head>
-
-	<body>
-		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-			<a class="navbar-brand" href="/">Navbar</a>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
-				<span class="navbar-toggler-icon"></span>
+{% extends 'shared/base.html' %}
+{% block content %}
+<div class="accordion d-flex flex-column" id="accordion_main">
+	<div class="card flex-grow-2">
+		<div class="card-header" id="accordion_data_header"> 
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#data_table" aria-expanded="true" aria-controls="data_table">
+				Data Table 
 			</button>
-			<div class="collapse navbar-collapse" id="collapsibleNavbar">
-				<ul class="navbar-nav">
-					<li class="nav-item">
-						<a class="nav-link" href="#">Data</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="convert">Converter Tool</a>
-					</li>
-					<li class="nav-item" id="manage_session_link_wrapper" style="display: none;">
-						<a class="nav-link" id="manage_session_link" href="manage">Manage Session</a>
-					</li>
-				</ul>
-			</div>
-		</nav> 
-	
-		<div class="accordion d-flex flex-column" id="accordion_main">
-			<div class="card flex-grow-2">
-				<div class="card-header" id="accordion_data_header"> 
-					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#data_table" aria-expanded="true" aria-controls="data_table">
-						Data Table 
-					</button>
-				</div>
-				<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="data_table">
-				<div class="table-responsive card-body">
-					<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 600px; overflow: auto;">
-						<thead class="thead-light">
-							<tr>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Category &nbsp;
-									<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
-										(X)
-									</button>
-								</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Tag</th>
-								<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
-									<button class="btn btn-link p-0" onclick="toggle_all_tag(event)">Use</button>
-								</th>
-							</tr>    
-						</thead>    
-						<tbody>     
-							{% for  q in questions %}
-							<tr>    
-								<td>{{q["id"]}}</td>
-								<td>{{q["question"]}}</td>
-								{% if "is_single_equation" in q or q["is_single_equation"] %}
-									<td colspan='5'> {{ q["answer1"] }}</td>
+		</div>
+		<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="data_table">
+		<div class="table-responsive card-body">
+			<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 600px; overflow: auto;">
+				<thead class="thead-light">
+					<tr>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Category &nbsp;
+							<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
+								(X)
+							</button>
+						</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Tag</th>
+						<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
+							<button class="btn btn-link p-0" onclick="toggle_all_tag(event)">Use</button>
+						</th>
+					</tr>    
+				</thead>    
+				<tbody>     
+					{% for  q in questions %}
+					<tr>    
+						<td>{{q["id"]}}</td>
+						<td>{{q["question"]}}</td>
+						{% if "is_single_equation" in q or q["is_single_equation"] %}
+							<td colspan='5'> {{ q["answer1"] }}</td>
+						{% else %}
+							{% for i in range(1, 5) %}
+								{% if q["correct_id"] == i %} 
+									<td class="table-success"> 
+								{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
+									<td class="table-info"> 
 								{% else %}
-									{% for i in range(1, 5) %}
-										{% if q["correct_id"] == i %} 
-											<td class="table-success"> 
-										{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
-											<td class="table-info"> 
-										{% else %}
-											<td> 
-										{% endif %} 
-										{% if "|||" not in q["answer{}".format(i)] %}
-											{{q["answer{}".format(i)]}}
-										{% else %}
-											<img src="{{q["answer{}".format(i)] | replace("|||", "")}}" class="img-thumbnail"></img>
-										{% endif %}
-										</td>
-									{% endfor %}
-									<td>{{q["correct_id"]}}</td>
+									<td> 
+								{% endif %} 
+								{% if "|||" not in q["answer{}".format(i)] %}
+									{{q["answer{}".format(i)]}}
+								{% else %}
+									<img src="{{q["answer{}".format(i)] | replace("|||", "")}}" class="img-thumbnail"></img>
 								{% endif %}
-								<td class="category_cell">
-									<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
-										{{q.get("category", "N/A")}}
-									</button>
 								</td>
-								<td>
-									{% if "tag" in q %}
-										{% for tag in q["tag"] %}
-											<button class="m-0 p-0 btn btn-link tag_cell" onclick="toggle_select_tag(event)">{{tag}}</button>&nbsp;
-										{% endfor %}
-									{% else %} 
-										-
-									{% endif %}
-								</td>
-								<td class="custom-checkbox">
-									<input type="checkbox" class="custom-control" id="use_question_{{q["id"]}}">
-								</td>
-							</tr>
 							{% endfor %}
-						</tbody>
-					</table>
-						
-					<div class="container-fluid d-flex p-2">
-						<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
-							<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
-						</form>
-						<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
-						<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>
-						<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
-						<button class="mx-2 btn btn-warning" onclick="rollback(event)">Rollback</button>
-						<span class="m-2" id="io_result"></span>
-						<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
-							<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
-							<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
-							<ul class="dropdown-menu">
-								<li><button type="button" class="btn btn-link" onclick="switch_add_group(1)">To Group 1 (Blue)</button></li>
-								<li><button type="button" class="btn btn-link" onclick="switch_add_group(2)">To Group 2 (Green)</button></li>
-								<li><button type="button" class="btn btn-link" onclick="switch_add_group(3)">To Group 3 (Red)</button></li>
-								<li><button type="button" class="btn btn-link" onclick="switch_add_group(4)">To Group 4 (Yellow)</button></li>
-							</ul>
-						</div>
-						<button class="mx-2 btn btn-success" onclick="create_questionnaire(event)">Use Selected</button>
-					</div>
+							<td>{{q["correct_id"]}}</td>
+						{% endif %}
+						<td class="category_cell">
+							<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
+								{{q.get("category", "N/A")}}
+							</button>
+						</td>
+						<td>
+							{% if "tag" in q %}
+								{% for tag in q["tag"] %}
+									<button class="m-0 p-0 btn btn-link tag_cell" onclick="toggle_select_tag(event)">{{tag}}</button>&nbsp;
+								{% endfor %}
+							{% else %} 
+								-
+							{% endif %}
+						</td>
+						<td class="custom-checkbox">
+							<input type="checkbox" class="custom-control" id="use_question_{{q["id"]}}">
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+				
+			<div class="container-fluid d-flex p-2">
+				<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
+					<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
+				</form>
+				<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
+				<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>
+				<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
+				<button class="mx-2 btn btn-warning" onclick="rollback(event)">Rollback</button>
+				<span class="m-2" id="io_result"></span>
+				<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
+					<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
+					<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
+					<ul class="dropdown-menu">
+						<li><button type="button" class="btn btn-link" onclick="switch_add_group(1)">To Group 1 (Blue)</button></li>
+						<li><button type="button" class="btn btn-link" onclick="switch_add_group(2)">To Group 2 (Green)</button></li>
+						<li><button type="button" class="btn btn-link" onclick="switch_add_group(3)">To Group 3 (Red)</button></li>
+						<li><button type="button" class="btn btn-link" onclick="switch_add_group(4)">To Group 4 (Yellow)</button></li>
+					</ul>
 				</div>
-				</div>
-			</div>
-
-			<div class="card flex-shrink-1">
-				<div class="card-header" id="accordion_category_header"> 
-					<button class="btn btn-link" type="button" id="category_selector_btn" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector" disabled>
-						Category Selector 
-					</button>
-				</div>
-				<div class="collapse" aria-labelledby="accordion_category_header" data-bs-parent="#accordion_main" id="category_selector">
-					<div id="classifier_wrapper">
-						<label id="questionnaire_items"> Waiting for button click...</label>
-						<br />
-						<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
-						<div class="d-flex border border-dark" id="barebone_classifier"></div>
-						<label class="mt-3"> Questionnaire setting: </label>
-						<br />
-						<div class="container-fluid" id="disposition"> 
-							<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
-							{% for border_type in ["border-primary", "border-success", "border-danger", "border-warning"] %}
-								{% if loop.index0 % 2 == 0 %}
-									<div class="row">
-								{% endif %}
-								<div class="col-sm-12 col-md-6 p-1">
-									<div class="border {{border_type}} p-1">
-									<div class="input-group">
-										<input type="number" class="form-control" id="group_{{loop.index0}}" maxlength="2" /> 
-										<div class="input-group-append">
-											<div class="input-group-text"> 
-												<span>question /</span> <b><span id="group_count_{loop.index0}">0</span></b> <span>&nbsp;total with&nbsp;</span>
-											</div>
-										</div>
-										<input type="number" class="form-control" id="score_{{loop.index0}}" maxlength="5" />
-										<div class="input-group-append">
-											<div class="input-group-text"> 
-												 <span>PPC</span>
-											</div>
-										</div>
-									</div>
-									</div>
-								</div>
-								{% if loop.index0 % 2 != 0 %}
-									</div>
-								{% endif %}
-							{% endfor %}
-							<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
-						</div>
-						<div class="container-fluid" id="setting">
-							<div class="row align-middle col-sm-12 m-1">Setting:</div>
-							<div class="row my-2">
-								<div class="col-sm-12 col-md-6 input-group">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="session_name">Exam name</span>
-									</div>
-									<input type="text" class="form-control" id="session_name"></input>
-								</div>
-								<div class="col-sm-12 col-md-6 input-group">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="id_name">Identification field</span>
-									</div>
-									<input type="text" class="form-control" id="id_name" value="Student Name" disabled></input>
-								</div>
-							</div>
-							<div class="row my-2">
-								<div class="col-sm-12 col-md-6 input-group">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="session_duration">Exam length</span>
-									</div>
-									<input type="number" class="form-control" id="session_duration"></input>
-									<div class="input-group-append">
-										<span class="input-group-text" for="session_duration">min</span>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-6 input-group">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="grace_duration">Grace
-											<input type="checkbox" id="allow_grace" for="grace_duration" class="mx-1"></input>
-										</span>
-									</div>
-									<input type="number" class="form-control" id="grace_duration"></input>
-									<div class="input-group-append">
-										<span class="input-group-text" for="grace_duration">min</span>
-									</div>
-								</div>
-							</div>
-							<div class="row my-2">
-								<div class="col-sm-12 col-md-6 input-group date" id="start_date_picker">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="start_exam_time"> Exam start </span>
-									</div>
-									<input type="time" class="form-control" id="start_exam_time">
-									<input data-provide="datepicker" class="form-control" id="start_exam_date"  data-date-format="dd/mm/yyyy">
-									<div class="input-group-addon" />
-										<span class="glyphicon glyphicon-calendar" />
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-6 input-group date" id="end_date_picker">
-									<div class="input-group-prepend">
-										<span class="input-group-text" for="end_exam_date"> Exam end </span>
-									</div>
-									<!-- <input type="text" class="form-control" id="end_date_text"/> -->
-									<input type="time" class="form-control" id="end_exam_time">
-									<input data-provide="datepicker" class="form-control" id="end_exam_date"  data-date-format="dd/mm/yyyy">
-									<div class="input-group-addon" />
-										<span class="glyphicon glyphicon-calendar" />
-									</div>
-								</div>
-							</div>
-							<div class="row my-2">
-								<div class="col-sm-12 col-md-3 pl-2">
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" value="" id="allow_result">
-										<label class="form-check-label" for="allow_result">Show correct answers when exam finishes</label>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-3 pl-2">
-									<div class="form-check">
-									<input class="form-check-input" type="checkbox" value="" id="allow_score">
-									<label class="form-check-label" for="allow_score">Show score when exam finishes</label>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-3 pl-2">
-									<div class="form-check">
-									<input class="form-check-input" type="checkbox" value="" id="show_score">
-									<label class="form-check-label" for="show_score">Show each question's score during exam</label>
-									</div>
-								</div>
-								<div class="col-sm-12 col-md-3 pl-2">
-									<div class="form-check">
-									<input class="form-check-input" type="checkbox" value="" id="partial_mq">
-									<label class="form-check-label" for="partial_mq">Points for incomplete answer on multiple-choice</label>
-									</div>
-								</div>
-							</div>
-							<div class="row my-2">
-								<div class="input-group col-sm-12 col-md-6 pl-2 dropup">
-									<div class="input-group-prepend">
-										<button class="btn btn-outline-secondary dropdown-toggle" id="toggle_student_list" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled>View Student List</button>
-										<div class="dropdown-menu" id="student_list"">
-										</div>
-									</div>
-									<div class="custom-file">
-										<input type="file" class="custom_file_input" id="load_student_list" onchange="update_student_list(event)"></input>
-										<label class="custom-file-label" for="load_student_list" id="load_student_list_result"></label>
-									</div>
-								</div>
-							</div>
-						</div>
-						<button class="my-2 btn btn-success" onclick="submit_questionnaire(event)">Build Questionnaire</button>
-					</div>
-				</div>
-			</div>
-
-			<div id="classifier" hidden> 
-				<p>WIP, delay for now.</p>
-				{% for i in range(5) %}
-				<div class="m-2 p-2 border border-3" id="section{{i}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
-					<div class="bg-secondary" draggable="true" ondragstart="drag(event)" id="{{i*2}}" width="336">Test No.{{i}} </div>
-				</div>
-				{% endfor %}
-			</div>
-
-			<div class="card" id="result_panel" style="display: none;">
-				<div class="card-header" id="accordion_result_header"> 
-					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#result_frame" aria-expanded="true" aria-controls="result_frame">
-						Result
-					</button>
-				</div>
-				<div class="p-2 collapse show" aria-labelledby="accordion_result_header" data-bs-parent="#accordion_main" id="result_frame">
-					Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
-					<br />
-					Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
-					<br />
-					Make sure to copy them into a safe location; these values cannot be retrieved (for now).
-				</div>
+				<button class="mx-2 btn btn-success" onclick="create_questionnaire(event)">Use Selected</button>
 			</div>
 		</div>
-		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-		<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-		<script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-		<script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.1/moment.min.js"></script>
-		<script lang="javascript" src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-	<!--
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker3.standalone.min.css"> </script>
-	-->
-		<script src={{ url_for('static', filename="data.js") }}></script>
-	</body>
-</html> 
+		</div>
+	</div>
+
+	<div class="card flex-shrink-1">
+		<div class="card-header" id="accordion_category_header"> 
+			<button class="btn btn-link" type="button" id="category_selector_btn" data-toggle="collapse" data-target="#category_selector" aria-expanded="true" aria-controls="category_selector" disabled>
+				Category Selector 
+			</button>
+		</div>
+		<div class="collapse" aria-labelledby="accordion_category_header" data-bs-parent="#accordion_main" id="category_selector">
+			<div id="classifier_wrapper">
+				<label id="questionnaire_items"> Waiting for button click...</label>
+				<br />
+				<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
+				<div class="d-flex border border-dark" id="barebone_classifier"></div>
+				<label class="mt-3"> Questionnaire setting: </label>
+				<br />
+				<div class="container-fluid" id="disposition"> 
+					<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
+					{% for border_type in ["border-primary", "border-success", "border-danger", "border-warning"] %}
+						{% if loop.index0 % 2 == 0 %}
+							<div class="row">
+						{% endif %}
+						<div class="col-sm-12 col-md-6 p-1">
+							<div class="border {{border_type}} p-1">
+							<div class="input-group">
+								<input type="number" class="form-control" id="group_{{loop.index0}}" maxlength="2" /> 
+								<div class="input-group-append">
+									<div class="input-group-text"> 
+										<span>question /</span> <b><span id="group_count_{loop.index0}">0</span></b> <span>&nbsp;total with&nbsp;</span>
+									</div>
+								</div>
+								<input type="number" class="form-control" id="score_{{loop.index0}}" maxlength="5" />
+								<div class="input-group-append">
+									<div class="input-group-text"> 
+										 <span>PPC</span>
+									</div>
+								</div>
+							</div>
+							</div>
+						</div>
+						{% if loop.index0 % 2 != 0 %}
+							</div>
+						{% endif %}
+					{% endfor %}
+					<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
+				</div>
+				<div class="container-fluid" id="setting">
+					<div class="row align-middle col-sm-12 m-1">Setting:</div>
+					<div class="row my-2">
+						<div class="col-sm-12 col-md-6 input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="session_name">Exam name</span>
+							</div>
+							<input type="text" class="form-control" id="session_name"></input>
+						</div>
+						<div class="col-sm-12 col-md-6 input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="id_name">Identification field</span>
+							</div>
+							<input type="text" class="form-control" id="id_name" value="Student Name" disabled></input>
+						</div>
+					</div>
+					<div class="row my-2">
+						<div class="col-sm-12 col-md-6 input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="session_duration">Exam length</span>
+							</div>
+							<input type="number" class="form-control" id="session_duration"></input>
+							<div class="input-group-append">
+								<span class="input-group-text" for="session_duration">min</span>
+							</div>
+						</div>
+						<div class="col-sm-12 col-md-6 input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="grace_duration">Grace
+									<input type="checkbox" id="allow_grace" for="grace_duration" class="mx-1"></input>
+								</span>
+							</div>
+							<input type="number" class="form-control" id="grace_duration"></input>
+							<div class="input-group-append">
+								<span class="input-group-text" for="grace_duration">min</span>
+							</div>
+						</div>
+					</div>
+					<div class="row my-2">
+						<div class="col-sm-12 col-md-6 input-group date" id="start_date_picker">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="start_exam_time"> Exam start </span>
+							</div>
+							<input type="time" class="form-control" id="start_exam_time">
+							<input data-provide="datepicker" class="form-control" id="start_exam_date"  data-date-format="dd/mm/yyyy">
+							<div class="input-group-addon" />
+								<span class="glyphicon glyphicon-calendar" />
+							</div>
+						</div>
+						<div class="col-sm-12 col-md-6 input-group date" id="end_date_picker">
+							<div class="input-group-prepend">
+								<span class="input-group-text" for="end_exam_date"> Exam end </span>
+							</div>
+							<!-- <input type="text" class="form-control" id="end_date_text"/> -->
+							<input type="time" class="form-control" id="end_exam_time">
+							<input data-provide="datepicker" class="form-control" id="end_exam_date"  data-date-format="dd/mm/yyyy">
+							<div class="input-group-addon" />
+								<span class="glyphicon glyphicon-calendar" />
+							</div>
+						</div>
+					</div>
+					<div class="row my-2">
+						<div class="col-sm-12 col-md-3 pl-2">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" value="" id="allow_result">
+								<label class="form-check-label" for="allow_result">Show correct answers when exam finishes</label>
+							</div>
+						</div>
+						<div class="col-sm-12 col-md-3 pl-2">
+							<div class="form-check">
+							<input class="form-check-input" type="checkbox" value="" id="allow_score">
+							<label class="form-check-label" for="allow_score">Show score when exam finishes</label>
+							</div>
+						</div>
+						<div class="col-sm-12 col-md-3 pl-2">
+							<div class="form-check">
+							<input class="form-check-input" type="checkbox" value="" id="show_score">
+							<label class="form-check-label" for="show_score">Show each question's score during exam</label>
+							</div>
+						</div>
+						<div class="col-sm-12 col-md-3 pl-2">
+							<div class="form-check">
+							<input class="form-check-input" type="checkbox" value="" id="partial_mq">
+							<label class="form-check-label" for="partial_mq">Points for incomplete answer on multiple-choice</label>
+							</div>
+						</div>
+					</div>
+					<div class="row my-2">
+						<div class="input-group col-sm-12 col-md-6 pl-2 dropup">
+							<div class="input-group-prepend">
+								<button class="btn btn-outline-secondary dropdown-toggle" id="toggle_student_list" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled>View Student List</button>
+								<div class="dropdown-menu" id="student_list"">
+								</div>
+							</div>
+							<div class="custom-file">
+								<input type="file" class="custom_file_input" id="load_student_list" onchange="update_student_list(event)" accept=".csv,.xlsx"></input>
+								<label class="custom-file-label" for="load_student_list" id="load_student_list_result"></label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<button class="my-2 btn btn-success" onclick="submit_questionnaire(event)">Build Questionnaire</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="classifier" hidden> 
+		<p>WIP, delay for now.</p>
+		{% for i in range(5) %}
+		<div class="m-2 p-2 border border-3" id="section{{i}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
+			<div class="bg-secondary" draggable="true" ondragstart="drag(event)" id="{{i*2}}" width="336">Test No.{{i}} </div>
+		</div>
+		{% endfor %}
+	</div>
+
+	<div class="card" id="result_panel" style="display: none;">
+		<div class="card-header" id="accordion_result_header"> 
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#result_frame" aria-expanded="true" aria-controls="result_frame">
+				Result
+			</button>
+		</div>
+		<div class="p-2 collapse show" aria-labelledby="accordion_result_header" data-bs-parent="#accordion_main" id="result_frame">
+			Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
+			<br />
+			Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
+			<br />
+			Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<!--
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker3.standalone.min.css"> </script>
+-->
+<script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.1/moment.min.js"></script>
+<script lang="javascript" src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script src={{ url_for('static', filename="data.js") }}></script>
+<script>
+	$(document).ready(function() {
+		console.log("Document ready, initializing");
+		// bind the grace period checkbox to the input 
+		$("#allow_grace").click(function() {
+			$("#grace_duration").attr("disabled", $(this).is(":checked"));
+		});
+		// activate the datetimepicker options
+		//$("#start_date_picker").datetimepicker();
+		$(".datepicker").datepicker({
+			format: "dd-mm-yyyy",
+			todayHighlight: true,
+		});
+		// clicking the show of Data Table card will collapse the Category Selector & Result
+		$("#data_table").on("show.bs.collapse", function() { 
+			$("#category_selector").collapse('hide'); 
+			$("#result_frame").collapse('hide');
+		});
+	});
+</script>
+{% endblock %}
 

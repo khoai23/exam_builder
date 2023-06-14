@@ -79,23 +79,31 @@ def student_reaccess_session(student_key: str):
     if(template_key is None):
         # TODO return a warning that the student key is not correct/expired; also allow entering the key
         return flask.render_template("error.html", error="Invalid student key, please contact your teacher", error_traceback=None)
-    # retrieve the generated test; TODO also keep backup of what was chosen
-    student_data = session[template_key]["student"][student_key]
+    # retrieve the generated test; TODO also keep backup of what was chosen 
+    session_data = session[template_key]
+    student_data = session_data["student"][student_key]
     print("Accessing existing key: ", student_key, " with data", student_data)
     # return the exam page directly
-    # send 2 values: elapsed & remaining 
-    end_time = student_data["start_time"] + 3600.0 # 1 hr fixed for now 
-    elapsed = min(time.time() - student_data["start_time"], 3600.0)
-    remaining = 3600.0 - elapsed
+    if(session_data["setting"].get("exam_duration", None)):
+        # send 2 values: elapsed & remaining if there is a duration
+        exam_duration = session_data["setting"]["exam_duration"] * 60 # convert to s
+        end_time = student_data["start_time"] + exam_duration
+        elapsed = min(time.time() - student_data["start_time"], exam_duration)
+        remaining = exam_duration - elapsed 
+    else:
+        elapsed = remaining = 0.0
+        end_time = float("+inf")
     print("Submitted answer? ", ("answers" in student_data))
     if(time.time() > end_time):
-        flask.render_template("error.html", error="Exam over; cannot submit", error_traceback=None)
+        return flask.render_template("error.html", error="Exam over; cannot submit", error_traceback=None)
     else:
         # allow entering
-        return flask.render_template("exam.html", exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session[template_key]["setting"])
+        return flask.render_template("exam.html", student_name=student_data["student_name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session[template_key]["setting"], custom_navbar=True)
 
-def retrieve_submit_route(template_key: str):
-    """This is for submitting the student info; NOT for submitting the exam result"""
+def retrieve_submit_route_anonymous(template_key: str):
+    """This is for submitting the student info; NOT for submitting the exam result 
+    No restriction on student info, anybody can enter
+    """
     if(template_key not in submit_route):
         print("First trigger of identify, building corresponding submit route")
         def receive_form_information(student_name=None, **kwargs):
@@ -117,8 +125,59 @@ def retrieve_submit_route(template_key: str):
             # redirect to enter/ 
             return flask.redirect(url_for("enter", key=student_key))
         # add this to the submit_route dictionary
-        submit_route[template_key] = receive_form_information 
-    return template_key 
+        submit_route[template_key] = receive_form_information
+    return flask.render_template("generic_input.html", 
+            title="Enter Exam",
+            message="Enter name & submit to start your exam.", 
+            submit_key=template_key,
+            # TODO make this dependent on session setting
+            input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}]) 
+
+def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str, str]):
+    """In restricted mode, only valid keys of restricted_ids can be used.
+    For now only allow id: name; TODO expand on further properties
+    """
+    default_setting = dict(
+        title="Enter Exam",
+        message="Enter ID & submit to start your exam.", 
+        submit_key=template_key,
+        input_fields=[{"id": "student_id", "type": "text", "name": "Provided ID"}]
+    )
+    if(template_key not in submit_route):
+        student_id_to_key = dict() # shared dictionary to allow this particular function to re-refer to existing session
+        def receive_and_check_info(student_id=None, **kwargs):
+            student_id = student_id.strip()
+            if(student_id not in restricted_ids):
+#                return redirect(request.referrer)
+                # render with error message
+                return flask.render_template("generic_input.html", error="ID {} does not exist in the restriction list.".format(student_id), **default_setting)
+                # return flask.jsonify(result=False, error="ID {} does not exist in the restriction list.".format(id))
+            if(student_id in student_id_to_key):
+                print("Restricted mode: ID {} reaccessing its session")
+                student_key = student_id_to_key[id]
+            else:
+                print("Restricted mode: ID {} first-accessing its session")
+                student_key = secrets.token_hex(8)
+                # write to session retrieval
+                student_belong_to_session[student_key] = template_key
+                session_data = session.get(template_key, None)
+                # write to session data itself.
+                selected, correct = shuffle(id_data, session_data["template"])
+                session_data["student"][student_key] = student_data = {
+                        "student_id": student_id,
+                        "student_name": restricted_ids[student_id],
+                        "exam_data": selected,
+                        "correct": correct,
+                        "start_time": time.time()
+                }
+                print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
+                # after everything, record so subsequent accesses will work
+                student_id_to_key[student_id] = student_key
+            # redirect to enter/ 
+            return flask.redirect(url_for("enter", key=student_key))
+        submit_route[template_key] = receive_and_check_info
+
+    return flask.render_template("generic_input.html", **default_setting) 
 
 def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_score: bool=True, return_score: bool=None):
     template_key = student_belong_to_session[student_key]

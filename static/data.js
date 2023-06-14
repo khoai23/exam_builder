@@ -113,6 +113,11 @@ function update_group_count(event) {
 
 function readQuestionnaireSetting(event) {
 	// read non-critical setting associated with the questionnaire 
+	var checked_student_list = $("#student_list").find("input").filter((index, node) => $(node).is(":checked"));
+	// double bracket to prevent auto-flattening. Javascript.
+	var valid_student_arr = checked_student_list.map((index, node) => [[$(node).attr("id"), $(node).attr("st_name")]]).toArray();
+//	console.log(valid_student_arr);
+//	console.log(Object.fromEntries(valid_student_arr));
 	var setting = {
 		"session_name": $("#session_name").val(),
 		"student_identifier_name": $("#id_name").val(),
@@ -122,6 +127,7 @@ function readQuestionnaireSetting(event) {
 		"session_end": $("#end_exam_time").val() + " " + $("#end_exam_date").val(), 
 		"show_result": $("#allow_result").is(":checked"),
 		"show_score": $("#allow_score").is(":checked"),
+		"student_list": Object.fromEntries(valid_student_arr)
 	};
 	console.log("Chosen setting: ", setting)
 	return setting
@@ -188,8 +194,9 @@ function submit_questionnaire(event) {
 				var exam_link = $("#exam_link");
 				exam_link.attr("href", exam_path); exam_link.text(exam_path)
 				// also enable the admin link for "Manage Session" in the navbar 
-				$("#manage_session_link").attr("href", admin_path);
-				$("#manage_session_link_wrapper").show();
+				// TODO re-enable this feature again
+				// $("#manage_session_link").attr("href", admin_path);
+				// $("#manage_session_link_wrapper").show();
 				// also hiding the above panels
 				$("#data_table").collapse('hide'); 
 				$("#category_selector").collapse('hide');
@@ -374,7 +381,9 @@ function update_student_list(event) {
 		// expecting data at column 2-3 (ID and name) and from row 3. Maybe allow customizing?
 		data = XLSX.utils.sheet_to_json(first_sheet, {range: "B3:C103", header:1});
 		// filter out fields that are incomplete or wrong
-		data = data.filter(r => r.length == 2).filter(r => typeof(r[0]) == "number" || number_regex.test(r[0].trim()));
+		data = data.filter(r => r.length == 2).filter(r => !r.includes(undefined));
+		//		console.log(data);
+		data = data.filter(r => typeof(r[0]) == "number" || number_regex.test(r[0].trim()));
 		console.log("Parsed data: ", data)
 		if(data.length == 0) {
 			alert("Invalid supplied data: excel must have ID+Name range B3:C-, and ID must be numerical")
@@ -382,10 +391,10 @@ function update_student_list(event) {
 			// populate the dropdown with the supplied units
 			var student_list = $("#student_list");
 			for(r of data) {
-				console.log(r);
+				//console.log(r);
 				// add checkboxes, each has corresponding id and value
-				student_list.append($("<input class=\"m-1\" type=\"checkbox\" id=\"" + r[0] + "\">(" 
-					+ r[0] + ") " + r[1] + "</input>").prop("checked", true));
+				student_list.append($("<input class=\"m-1\" type=\"checkbox\" id=\"" + r[0] + "\" st_name=\"" + r[1]
+					+ "\">(" + r[0] + ") " + r[1] + "</input>").prop("checked", true));
 				student_list.append($("<br />"));
 			}
 			// enable button to dropdown
@@ -400,21 +409,3 @@ function update_student_list(event) {
 	reader.readAsBinaryString(target_file);
 }
 
-$(document).ready(function() {
-	console.log("Document ready, initializing");
-	// bind the grace period checkbox to the input 
-	$("#allow_grace").click(function() {
-		$("#grace_duration").attr("disabled", $(this).is(":checked"));
-	});
-	// activate the datetimepicker options
-	//$("#start_date_picker").datetimepicker();
-	$(".datepicker").datepicker({
-		format: "dd-mm-yyyy",
-		todayHighlight: true,
-	});
-	// clicking the show of Data Table card will collapse the Category Selector & Result
-	$("#data_table").on("show.bs.collapse", function() { 
-		$("#category_selector").collapse('hide'); 
-		$("#result_frame").collapse('hide');
-	});
-});

@@ -6,7 +6,7 @@ import traceback
 import shutil
 
 from session import data, current_data, session, submit_route, student_belong_to_session
-from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route, submit_exam_result, remove_session
+from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
 from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
 
@@ -24,7 +24,7 @@ def main():
 def data():
     "Enter the data page, where we can modify the bank and build a new template for an exam"
 #    print([r["correct_id"] for r in current_data])
-    return flask.render_template("data.html", questions=current_data)
+    return flask.render_template("data.html", title="Data", questions=current_data)
 
 @app.route("/export")
 def file_export():
@@ -107,15 +107,18 @@ def identify():
             session_data = session.get(template_key, None)
             if(session_data is None):
                 return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
-            template_key = retrieve_submit_route(template_key)
-            # TODO do the route redirection out here
+            student_list = session_data["setting"]["student_list"]
+            if(student_list is not None):
+                if(isinstance(student_list, dict) and len(student_list) > 0):
+                    # a valid student list; use restricted access 
+                    return retrieve_submit_route_restricted(template_key, student_list)
+                else:
+                    # invalid student list; voiding 
+                    print("Invalid student list found: {}; voiding".format(student_list))
+                    session_data["setting"]["student_list"] = None
             # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
-            return flask.render_template("generic_input.html", 
-                    title="Enter Exam",
-                    message="Enter name & submit to start your exam.", 
-                    submit_key=template_key,
-                    # TODO make this dependent on session setting
-                    input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}])
+            # use sorta anonymous access here
+            return retrieve_submit_route_anonymous(template_key)
         except Exception as e:
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
             print(traceback.format_exc())

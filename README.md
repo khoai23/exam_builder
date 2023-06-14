@@ -8,7 +8,7 @@ All possible extension regard the builder, unlikely first:
 - [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
-- [ ] Template usage for shared components (navigation bar, question table, etc)
+- [x] Template usage for shared components (navigation bar, question table, etc)
 - [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page 
 - [x] Converter from textfile variant into table variants
@@ -31,4 +31,6 @@ Remaining bugfix/missing features:
 - [ ] Allow rollback in case of crappy import 
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
+- [ ] Timer for each exam is hardcoded
+- [ ] Redirection for identify is still busted
 

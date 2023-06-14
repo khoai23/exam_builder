@@ -14,6 +14,12 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 function runTimer(elapsed, remaining) {
 	var total = elapsed + remaining;
+	if(total == 0) {
+		console.log("No timer, do not run pbar");
+		// happen with no timer; hide the timer bar and do not update 
+		$("#timer_wrapper").hide();
+		return;
+	}
 	var id = setInterval(function() {
 		let percentage = Math.min(elapsed / total, 1.0);
 		if(elapsed >= total) {
@@ -27,6 +33,11 @@ function runTimer(elapsed, remaining) {
 				$("#submit_region").hide();
 				// send the submission command
 				submit(null, true);
+				// reset the percentage 
+				$("#timer").css("width", "100%");
+				$("#timer").text("Finished.");
+				// hide the autosubmit again
+				$("#autosubmit_warning").hide()
 			}
 		}
 		// set the value for the bar 
@@ -37,7 +48,7 @@ function runTimer(elapsed, remaining) {
 		if(0.8 < percentage && percentage <= 0.95) {
 			$("#timer").addClass("bg-warning")
 		} else if(0.95 < percentage) {
-			$("#timer").removeClass("bg-warning").adddClass("bg-danger")
+			$("#timer").removeClass("bg-warning").addClass("bg-danger")
 			$("#autosubmit_warning").show()
 		}
 		elapsed += 0.25;
