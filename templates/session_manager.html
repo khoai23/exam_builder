@@ -33,7 +33,7 @@
 					{% endif %}
 					<td rowspan="{{srs if srs > 0 else 1}}">{{ "{} min, {} - {}".format(session["setting"].get("exam_duration", "unlimited"), session["setting"].get("session_start", "N/A"), session["setting"].get("session_end", "N/A")) }}</td>
 					<td rowspan="{{srs if srs > 0 else 1}}">
-						<a href="manage?template_key={{key}}&key={{session["admin_key"]}}">Manage Link</a>
+						<a href="single_manager?template_key={{key}}&key={{session["admin_key"]}}">Manage Link</a>
 					</td>
 					<td rowspan="{{srs if srs > 0 else 1}}">
 						<button type="button" class="close" aria-label="Close" onclick="show_confirmation_delete_session('{{key}}', '{{session["admin_key"]}}')"><span aria-hidden="true">&times;</span></button>

@@ -41,6 +41,9 @@ def load_template(data: Dict):
     if("session_end" in setting):
         # format date & limit entrance
         setting["true_session_end"] = datetime.strptime(setting["session_end"], "%H:%M %d/%m/%Y").timestamp()
+    if("student_list" in setting and len(setting["student_list"]) == 0):
+        # void the student list if no entry available 
+        setting.pop("student_list", None)
 
     # generate a random key for this session.
     key = secrets.token_hex(8)
@@ -154,7 +157,7 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
                 # return flask.jsonify(result=False, error="ID {} does not exist in the restriction list.".format(id))
             if(student_id in student_id_to_key):
                 print("Restricted mode: ID {} reaccessing its session")
-                student_key = student_id_to_key[id]
+                student_key = student_id_to_key[student_id]
             else:
                 print("Restricted mode: ID {} first-accessing its session")
                 student_key = secrets.token_hex(8)

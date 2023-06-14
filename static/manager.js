@@ -40,3 +40,58 @@ function delete_session() {
 	// also hide the modal
 	$("#confirm_modal").modal('hide');
 }
+
+function update_id_col(event) {
+	$("#id_col_dropdown").text($(event.currentTarget).text().trim());
+}
+
+function update_fill_col(event) {
+	$("#fill_col_dropdown").text($(event.currentTarget).text().trim());
+}
+
+function retrieve_student_score() {
+	// retrieve score from shown table, and throw it into a dictionary
+	let student_data = $("tbody").find("tr").map((index, node)=> [[$(node).attr("st_id"), $(node).attr("st_sc")]]);
+	return Object.fromEntries(student_data)
+}
+
+function open_fill_target(event) {
+	// check if column/row is correct 
+	if($("#id_col_dropdown").text().trim() == "?") {
+		$("#status_label").text("Must select ID column before using fill mode.").show();
+	} else if($("#fill_col_dropdown").text().trim() == "?") {
+		$("#status_label").text("Must select Fill column before using fill mode.").show();
+	} else {
+		// clicking the hidden file input to allow upload. Chain to fill_target_selected
+		$("#fill_target").click()
+	}
+}
+
+function fill_target_selected(event) {
+	// upon change, open the file in XLSX
+	var target_file = event.currentTarget.files[0];
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var data = reader.result;
+		const workbook = XLSX.read(data, {type: "binary"});
+		const first_sheet = workbook.Sheets[workbook.SheetNames[0]];
+		// read values for 100 rows for now, and with any matched result, put the corresponding score into the file 
+		let id_col =  $("#id_col_dropdown").text();
+		let fill_col = $("#fill_col_dropdown").text();
+		let scores = retrieve_student_score();
+		for(const index of [...Array(100).keys()]) {
+			let cell = first_sheet[id_col + index.toString()];
+			if(cell !== undefined && cell.w in scores) {
+				// console.log(cell.w, scores[cell.w]);
+				// write value into cell 
+				XLSX.utils.sheet_add_aoa(first_sheet, [[scores[cell.w]]], {origin: fill_col + index.toString()});
+			}
+			// console.log(cell);
+		}
+	};
+	reader.onerror = function(e) {
+		console.log("Encounter read error: ", e);
+		$("#status_label").text("Error: " + e.toString());
+	};
+	reader.readAsBinaryString(target_file);
+}

@@ -7,7 +7,7 @@
 		<ul class="navbar-nav">
 			{% if True or admin_right is defined %}
 			<li class="nav-item" id="manage_session_link_wrapper">
-				<a class="nav-link" id="manage_session_link" href="manage">Manage Sessions</a>
+				<a class="nav-link" id="manage_session_link" href="session_manager">Manage Sessions</a>
 			</li>
 			<li class="nav-item">
 				<a class="nav-link" href="data">Data</a>

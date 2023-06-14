@@ -141,7 +141,7 @@ function submit_questionnaire(event) {
 	var data = [0, 1, 2, 3].map(i => [parseInt($("#group_" + i).val()), parseFloat($("#score_" + i).val()), []]);
 	$("#barebone_classifier").find("label").each(function(index) {
 		let question_index = parseInt($(this).attr("qidx"));
-		console.log($(this), question_index)
+		// console.log($(this), question_index)
 		let qcl =  $(this)[0].className.split(/\s+/);
 		let question_category = check_group(qcl);
 		if(question_category < 0) {
@@ -154,7 +154,7 @@ function submit_questionnaire(event) {
 	console.log("Raw result", data);
 	// Check phase.
 	var err_type = data.map(function(item, index) {
-		console.log(item[2]);
+		// console.log(item[2]);
 		if(item[2].length > 0) {
 			if(isNaN(item[0]) || item[0] == 0)
 				return "Category " + index + " is valid but want zero question.";
@@ -187,7 +187,7 @@ function submit_questionnaire(event) {
 				// TODO add a button to do link copying
 				var base = window.location.origin;
 				// set the admin and exam link 
-				var admin_path = base + "/manage" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
+				var admin_path = base + "/single_manager" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
 				var admin_link = $("#admin_link");
 				admin_link.attr("href", admin_path); admin_link.text(admin_path)
 				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
@@ -402,10 +402,10 @@ function update_student_list(event) {
 			// TODO put this data into template making
 			$("#load_student_list_result").text("Student List loaded");
 		}
-	}
+	};
 	reader.onerror = function(e) {
 		console.log("Encounter read error: ", e);
-	}
+	};
 	reader.readAsBinaryString(target_file);
 }
 

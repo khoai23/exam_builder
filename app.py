@@ -107,7 +107,8 @@ def identify():
             session_data = session.get(template_key, None)
             if(session_data is None):
                 return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
-            student_list = session_data["setting"]["student_list"]
+            student_list = session_data["setting"].get("student_list", None)
+            print(student_list)
             if(student_list is not None):
                 if(isinstance(student_list, dict) and len(student_list) > 0):
                     # a valid student list; use restricted access 
@@ -115,7 +116,7 @@ def identify():
                 else:
                     # invalid student list; voiding 
                     print("Invalid student list found: {}; voiding".format(student_list))
-                    session_data["setting"]["student_list"] = None
+                    session_data["setting"].pop("student_list", None)
             # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
             # use sorta anonymous access here
             return retrieve_submit_route_anonymous(template_key)
@@ -149,28 +150,32 @@ def submit():
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
         print(traceback.format_exc())
 
-@app.route("/manage")
-def manage():
+@app.route("/single_manager")
+def single_manager():
     """Exam maker can access this page to track the current status of the exam; including the choices being made by the student (if chosen to be tracked)
-    Not implemented as of now"""
+    It should be able to modify settings of the exam"""
     try:
         template_key = request.args.get("template_key")
         admin_key = request.args.get("key")
         if(template_key is None or admin_key is None):
 #            print(session)
-            return flask.render_template("session_manager.html", all_session_data=session)
-#            return flask.render_template("error.html", error="Missing key specified; TODO allow input box", error_traceback=None)
+            return flask.render_template("error.html", error="Missing session key and/or template key", error_traceback=None)
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
         print("Access session data: ", session_data)
         if(admin_key == session_data["admin_key"]):
-            return flask.render_template("manage.html", session_data=session_data, template_key=template_key)
+            return flask.render_template("single_manager.html", session_data=session_data, template_key=template_key)
         else:
             return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
     except Exception as e:
         print("Error: ", e)
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+
+@app.route("/session_manager")
+def session_manager():
+    """Manage all sessions created here."""
+    return flask.render_template("session_manager.html", all_session_data=session)
 
 @app.route("/delete_session", methods=["DELETE"])
 def delete_session():
@@ -232,11 +237,14 @@ def generic_submit():
             return result_blob 
         else:
             result, data_or_error = result_blob 
-            # TODO differentiate between result=True and result=False
-            return flask.jsonify(result=result, error=data_or_error, data=data_or_error)
+            # result must ALWAYS be false in this case 
+            print("Error from submit_route: {}".format(data_or_error))
+            # TODO show the error 
+            return flask.redirect(request.referrer)
     except Exception as e:
         print("Error: {} - {}".format(e, traceback.format_exc()))
-        return flask.jsonify(result=False, error=str(e))
+        # back to the previous (identify page); TODO show the error
+        return flask.redirect(request.referrer)
 
 if __name__ == "__main__":
     app.run(debug=True)

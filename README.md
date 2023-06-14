@@ -28,9 +28,10 @@ Remaining bugfix/missing features:
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter direct import and copy content to clipboard (right now not working on Firefox)
 - [ ] Import supporting xls file by xlrd
-- [ ] Allow rollback in case of crappy import 
+- [x] Allow rollback in case of crappy import 
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
-- [ ] Timer for each exam is hardcoded
+- [x] Timer for each exam is hardcoded
 - [ ] Redirection for identify is still busted
-
+- [ ] Single manager capable of modifying settings (time limit, range, etc.)
+- [ ] Single manager can export list of student in excel format; should be in the format/order of the original list
