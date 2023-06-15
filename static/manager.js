@@ -69,12 +69,13 @@ function open_fill_target(event) {
 
 function fill_target_selected(event) {
 	// upon change, open the file in XLSX
-	var target_file = event.currentTarget.files[0];
+	const target_file = event.currentTarget.files[0];
+	// console.log(target_file, target_file.name);
 	var reader = new FileReader();
 	reader.onload = function(e) {
 		var data = reader.result;
-		const workbook = XLSX.read(data, {type: "binary"});
-		const first_sheet = workbook.Sheets[workbook.SheetNames[0]];
+		var workbook = XLSX.read(data, {type: "binary"});
+		var first_sheet = workbook.Sheets[workbook.SheetNames[0]];
 		// read values for 100 rows for now, and with any matched result, put the corresponding score into the file 
 		let id_col =  $("#id_col_dropdown").text();
 		let fill_col = $("#fill_col_dropdown").text();
@@ -85,9 +86,14 @@ function fill_target_selected(event) {
 				// console.log(cell.w, scores[cell.w]);
 				// write value into cell 
 				XLSX.utils.sheet_add_aoa(first_sheet, [[scores[cell.w]]], {origin: fill_col + index.toString()});
+				first_sheet[fill_col + index.toString()].w = scores[cell.w]
+				console.log("Written to", fill_col + index.toString(), "with", scores[cell.w], "true", first_sheet[fill_col + index.toString()]);
 			}
 			// console.log(cell);
 		}
+		// upon finish; create a blob object for this new file 
+		// cool, actually have no need to run blob conversion
+		XLSX.writeFileXLSX(workbook, target_file.name.split(".")[0] + "_filled.xlsx");
 	};
 	reader.onerror = function(e) {
 		console.log("Encounter read error: ", e);
