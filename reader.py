@@ -189,7 +189,24 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
     # If there is an image present in cell, replace it wholesale. TODO allow insertion 
     if(image_dictionary):
         for col, image_info in image_dictionary.items():
-            new_data["answer{}".format(col)] = image_format.format(image_info["link"])
+            if(0 < col <= 4):
+                # image IS cell; replace directly
+                new_data["answer{}".format(col)] = image_format.format(image_info["link"])
+            elif(10 <= col < 16):
+                # image is referred by cell, find and replace in question/answer1-4 
+                # image is going from 1 - 6
+                cue = "{image_" + (col - 10 + 1) + "}"
+                used = False
+                for field in ("question", "answer1", "answer2", "answer3", "answer4"):
+                    if cue in new_data.get(field, ""): # preventing issue with is_single_equation variant
+                        new_data[field] = new_data[field].replace(cue, image_format.format(image_info["link"]))
+                        used = True 
+                if not used:
+                    # print warning that image is not used anywhere.
+                    print("Image " + image_info["link"] + " has not been used; make sure to have a correct reference as {" + "image_" + (col - 10 + 1) + "} in either question or answer")
+            else:
+                # image is out of expected column, ignore
+                print("Image {} is at invalid column {} (should be put at image_1-image6/10-15); not used.".format(image_info["link"], col))
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
     # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning

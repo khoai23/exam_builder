@@ -1,4 +1,7 @@
 {% extends 'shared/base.html' %}
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.min.css" integrity="sha512-5Z+l18yUdjczY7Dd2MGiuq7F/qJub3qg4f49WJqiobQ+td/tXUFOUl2ivh5EtmpPBQtNXtsd8w7q7ardqADR6g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
 {% block content %}
 <div class="container-fluid m-2"> 
 	<h2>Session</h2>
@@ -46,10 +49,14 @@
 					<td> {{ student_key }} </td>
 					<td> {{ student_info["student_name"] }} </td>
 					{% if "answers" in student_info %}
-					<td> 
-						<span class="text-success">{{ student_info["score"] }} </span> 
-						<span> / {{ session_data.get("maximum_score", 10.0) }} </span>
-					</td>
+						<td>
+						{% if session_data["setting"]["visual_chart"] %}
+							<canvas id="graph_{{ student_key }}" chart_type="{{session_data["setting"]["visual_chart"]}}"></canvas>
+						{% else %}
+							<span class="text-success">{{ student_info["score"] }} </span> 
+							<span> / {{ session_data.get("maximum_score", 10.0) }} </span>
+						{% endif %}
+						</td>
 					{% else %}
 					<td> Working </td>
 					{% endif %}
@@ -58,6 +65,10 @@
 			{% endfor %}
 		</tbody>
 	</table>
+	<div>
+		<canvas id="graph_test_student" chart_type="radar">
+		</canvas>
+	</div>
 </div>
 <div class="container-fluid d-flex flex-row" id="button_bar">
 	{% if "student_list" in session_data["setting"] or True %}
@@ -89,6 +100,8 @@
 
 {% block script %}
 <script lang="javascript" src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.min.js" integrity="sha512-p6sLeOYPAD6ZErEYF14yMgFxpTV3B7tA4XVxRmzhlOSht4/YJ5JtYVEhAcl8mHQOZ9pKKoD4jvIIaeJl9Gv/WA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.pkgd.min.js" integrity="sha512-W6rv9SeEbkfttJTjzB6/BJCk8mmcfZzzFn1c8UsgO4UT+W+xvX5MhlcmZuIxVWal8XiJ+K2hwsaz/mcDXF262Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src={{ url_for('static', filename="manager.js") }}></script>
 <script>
 	$(document).ready(function() {
@@ -97,6 +110,8 @@
 			$("#id_col_dropdown_menu").append( $("<button class=\"m-1 btn btn-link\" onclick=\"update_id_col(event)\">" + character + "</button>") );
 			$("#fill_col_dropdown_menu").append( $("<button class=\"m-1 btn btn-link\" onclick=\"update_fill_col(event)\">" + character + "</button>") );
 		}
+		let test_graph = $("#graph_test_student");
+		draw_chart_for_student(test_graph);
 	});
 </script>
 {% endblock %}

@@ -12,7 +12,7 @@ All possible extension regard the builder, unlikely first:
 - [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page 
 - [x] Converter from textfile variant into table variants
-- [ ] Optional choice to use hashed info as student key (enabled by creator); choice to allow only specific key to enter (enabled by creator)
+- [x] Optional choice to use hashed info as student key (enabled by creator); choice to allow only specific key to enter (enabled by creator)
 - [x] Add more info to session template (name, comment, expiry time, grace time, try to force submission upon end)
 - [x] Image and/or graph support
 
@@ -32,6 +32,7 @@ Remaining bugfix/missing features:
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
 - [x] Timer for each exam is hardcoded
-- [ ] Redirection for identify is still busted
+- [ ] Redirection for identify is still (relatively) busted
 - [ ] Single manager capable of modifying settings (time limit, range, etc.)
-- [ ] Single manager can export list of student in excel format; should be in the format/order of the original list
+- [x] Single manager can export list of student in excel format; should be in the format/order of the original list
+- [ ] Student ID as key, which is not important considering the redirection

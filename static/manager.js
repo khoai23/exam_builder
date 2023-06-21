@@ -67,6 +67,7 @@ function open_fill_target(event) {
 	}
 }
 
+
 function fill_target_selected(event) {
 	// upon change, open the file in XLSX
 	const target_file = event.currentTarget.files[0];
@@ -101,3 +102,32 @@ function fill_target_selected(event) {
 	};
 	reader.readAsBinaryString(target_file);
 }
+
+// draw a chart by a specified elements 
+function draw_chart_for_student(element) {
+	let student_key = element.attr("id").replace("graph_");
+	if(student_key.length > 0) {
+		// valid key, started retrieving data 
+		let chart_type = element.attr("chart_type");
+		let chart = bb.generate({
+			bindto: "#" + element.attr("id"),
+			data: {
+				x: "x",
+				columns: [
+					["x", "Subject A", "Subject B", "Subject C"],
+					["Student", 5, 8, 5]
+				],
+				type: "radar",
+				labels: true
+			},
+			radar: {
+				axis: { max: 10 },
+				level: { depth: 5 }
+			}
+		});
+		chart.load();
+	} else {
+		console.log("No valid student key for ", element.attr("id"));
+	}
+}
+
