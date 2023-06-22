@@ -1,17 +1,5 @@
 var submitted = false;
 
-var getUrlParameter = function getUrlParameter(sParam) {
-	var sPageURL = window.location.search.substring(1),
-		sURLVariables = sPageURL.split('&'), sParameterName;
-	for (let i = 0; i < sURLVariables.length; i++) {
-		sParameterName = sURLVariables[i].split('=');
-		if (sParameterName[0] === sParam) {
-			return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
-		}
-	}
-	return false;
-};
-
 function runTimer(elapsed, remaining) {
 	var total = elapsed + remaining;
 	if(total == 0) {
@@ -169,6 +157,10 @@ function submit(event, autosubmit) {
 					submitted = true;
 				}
 			}
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log("Received error:", error);
+			$("#finished_message").text("Connection error: " + textStatus + "\nError type: " + error.toString() );
 		}
 	});
 }

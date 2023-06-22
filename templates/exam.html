@@ -86,6 +86,7 @@
 {% endblock %}
 
 {% block script %}
+<script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="exam.js") }}></script>
 <script>
 	var elapsed_time = {{ elapsed | safe }};

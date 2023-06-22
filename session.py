@@ -194,18 +194,26 @@ def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_scor
         # calculate scores immediately 
         if(calculate_score):
             score = 0.0
+            detailed_score = []
             for sub, crt, qst in zip(submitted_answers, student_data["correct"], student_data["exam_data"]):
                 if(isinstance(crt, (tuple, list))):
                     if(all((s in crt for s in sub))):
                         # upon all correct answers, add to the student score 
                         # TODO partial score mode 
                         score += qst["score"]
+                        detailed_score.append(qst["score"])
+                        continue
                 else:
                     if(sub == crt): 
                         # upon a correct answer submitted; add to the student score
                         score += qst["score"]
+                        detailed_score.append(qst["score"])
+                        continue
+                # if reached here, question is wrong 
+                detailed_score.append(0)
             print("Calculated score: ", score)
             student_data["score"] = score 
+            student_data["detailed_score"] = detailed_score
             if(return_score):
                 return flask.jsonify(result=True, score=score)
         return flask.jsonify(result=True)

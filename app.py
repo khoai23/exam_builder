@@ -163,7 +163,7 @@ def single_manager():
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
-        print("Access session data: ", session_data)
+        # print("Access session data: ", session_data)
         if(admin_key == session_data["admin_key"]):
             return flask.render_template("single_manager.html", session_data=session_data, template_key=template_key)
         else:
@@ -171,6 +171,20 @@ def single_manager():
     except Exception as e:
         print("Error: ", e)
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+
+@app.route("/single_session_data", methods=["GET"])
+def single_session_data():
+    """Retrieving the exact same data being ran on single_manager.
+    TODO use this to autoupdate result."""
+    template_key = request.args.get("template_key")
+    admin_key = request.args.get("key")
+    if(template_key is None or admin_key is None):
+        return flask.jsonify(result=False, error="Missing key, data cannot be retrieved.")
+    session_data = session[template_key]
+    if(admin_key == session_data["admin_key"]):
+        return flask.jsonify(result=True, data=session_data)
+    else:
+        return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
 
 @app.route("/session_manager")
 def session_manager():

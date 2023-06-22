@@ -103,29 +103,183 @@ function fill_target_selected(event) {
 	reader.readAsBinaryString(target_file);
 }
 
-// draw a chart by a specified elements 
+// retrieve_session_data; default to 3s timeout, can be extended
+function retrieve_session_data(timeout=3) {
+	$.ajax({
+		url: "single_session_data?key=" + getUrlParameter("key") + "&template_key=" + getUrlParameter("template_key"),
+		type: "GET",
+		success: function(data, textStatus, jqXHR){
+			if(data["result"]) {
+				data = data["data"]; // access internal field
+				// console.log("Received data: ", data);
+				// populate everything here.
+				let question_template = data["template"];
+				// console.log(data["student"]);
+				for(const [student_key, student_data] of Object.entries(data["student"])) {
+					// console.log("Drawing for ", student_key, " with data", student_data, "and template", question_template);
+					add_new_student(student_key, student_data);
+					draw_for_student(student_key, student_data, question_template, data["maximum_score"]);
+				}
+			} else {
+				console.log("Cannot get session data, error: ", data["error"]);
+			}
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log("Received error:", error);
+		},
+		timeout: timeout * 1000
+	})
+}
+
+// try to add a new student with specific key into existing table.
+// student will be in "Working" state, as draw_for_student will switch it over anyway 
+function add_new_student(key, obj) {
+	if($("#" + key).length == 0) {
+		console.log("Detected student with no corresponding row", key);
+		// only attempt to add when there is no such row 
+		// create row and respective cells
+		let row = $("<tr id=\"" + key +"\" st_id=\"" + obj["student_id"] + "\" st_sc=\"" + obj["score"] + "\"></tr>");
+		row.append( [  
+			$("<td>" + key + "</td>"),
+			$("<td>" + obj["student_name"] + "</td>"),
+			$("<td colspan=\"2\" id=\"working_" + key + "\"> Working </td>"),
+			$("<td><a href=\"enter?key=" + key + "\">Exam Link</a></td>"),
+		]);
+		// append the row to the tbody 
+		$("tbody").append(row);
+	}
+}
+
+// loop variant of retrieve_session_data; will trigger the function every {interval}s.
+var current_retrieve_id = null;
+function autoupdate_session_data(interval=30, start_first=true) {
+	if(current_retrieve_id !== null) {
+		console.log("Interval already set, interval id", current_retrieve_id);
+		return;
+	}
+	if(start_first) { // with this enable; run an instance immediately
+		retrieve_session_data();
+	}
+	current_retrieve_id = setInterval(retrieve_session_data, interval * 1000);
+}
+
+// removing the autoupdate; useful for later as toggle option
+function remove_autoupdate() {
+	if(current_retrieve_id === null) {
+		console.log("Interval is not set, nothing to clear");
+		return;
+	}
+	clearInterval(current_retrieve_id);
+	current_retrieve_id = null;
+}
+
+function draw_for_student(key, obj, question_template, maximum_score=10) {
+	// retrieve corresponding div to draw
+	if(obj["score"] === undefined) {
+		// No score; student should still be working 
+		console.log("Student with key " + key + " haven't submitted yet; ignoring")
+		return;
+	}
+	var graph_slot;
+	if($("#working_" + key).length > 0) {
+		// is a working slot; update it with graph+number 
+		let working_cell = $("#working_" + key);
+		graph_slot = $("<div id=\"graph_" + key + "\" style=\"max-width: 120px; max-height: 120px\"></div>");
+		let graph_cell = $("<td></td>").append(graph_slot);
+		graph_cell.insertAfter(working_cell);
+		let score_cell = $("<td><span class=\"text-success\"> " + obj["score"].toFixed(2) + " </span><span> / " + maximum_score.toFixed(2) + " </span></td>");
+		score_cell.insertAfter(graph_cell);
+		// insertion complete; throwing the original away
+		working_cell.remove();
+	} else {
+		graph_slot = $("#graph_" + key); 
+	}
+	if(graph_slot.length == 0) {
+		// No valid slot 
+		console.log("No valid slot for key " + key + ", check for failure");
+	} else if(graph_slot.attr("drawn")) {
+		// Slot found but already drawn
+		// console.log("Already drawn data for key " + key + "; ignoring");
+	} else {
+		// Slot found and draw-able; starting
+		// parsing data depending on the template 
+		let index = 0;
+		let detailed_score = obj["detailed_score"];
+		let draw_data = [["Section", "Score"]];
+		for(const [number, ppc, _] of question_template) {
+			let correct_score = 0; let wrong_score = 0;
+			for(let i=index; i < index + number; i++) {
+				if(detailed_score[i] == 0) {
+					wrong_score += ppc;
+				} else {
+					correct_score += ppc;
+				}
+				// TODO check score is equal to ppc in non-multiple, non-partialscore
+			}
+			let secname = "Section_" + (index+1).toString() + "_" + (index+number+1).toString();
+			draw_data.push( [secname + "_correct", correct_score], [secname + "_wrong", wrong_score] );
+			// set the index to the last 
+			index = index + number;
+		}
+		// draw the image appropriately; hiding the _wrong sections 
+		const data = google.visualization.arrayToDataTable(draw_data);
+		const options = {
+			legend: 'none',
+			tooltip: { trigger: 'none' },
+			slices: Object.fromEntries( [...draw_data.keys()].filter(x => (x % 2 == 1)).map(x => [x, {color: 'transparent'}]) ),
+			width: 100,
+			height: 100,
+		};
+		const chart = new google.visualization.PieChart(graph_slot[0]);
+		chart.draw(data, options);
+		// mark the slot drawn, so subsequent run dont waste effort
+		graph_slot.attr("drawn", true);
+	}
+}
+
+
+// draw a chart by a specified elements. Test function, throw away soon
 function draw_chart_for_student(element) {
 	let student_key = element.attr("id").replace("graph_");
 	if(student_key.length > 0) {
 		// valid key, started retrieving data 
 		let chart_type = element.attr("chart_type");
-		let chart = bb.generate({
-			bindto: "#" + element.attr("id"),
-			data: {
-				x: "x",
-				columns: [
-					["x", "Subject A", "Subject B", "Subject C"],
-					["Student", 5, 8, 5]
-				],
-				type: "radar",
-				labels: true
-			},
-			radar: {
-				axis: { max: 10 },
-				level: { depth: 5 }
+		//let chart = bb.generate({
+		//	bindto: "#" + element.attr("id"),
+		//	data: {
+		//		x: "x",
+		//		columns: [
+		//			["x", "Subject A", "Subject B", "Subject C"],
+		//			["Student", 5, 8, 5]
+		//		],
+		//		type: "radar",
+		//		labels: true
+		//	},
+		//	radar: {
+		//		axis: { max: 10 },
+		//		level: { depth: 5 }
+		//	}
+		//});
+		//chart.load();
+		const data = google.visualization.arrayToDataTable([
+			["Student Name", "Student Score"],
+			["Subject A", 5],
+			["Subject A Loss", 5],
+			["Subject B", 7],
+			["Subject B Loss", 3],
+			["Subject C", 8],
+			["Subject C Loss", 2],
+		]);
+		const options = { 
+			legend: 'none',
+			slices: {
+				1: { color: 'transparent' },
+				3: { color: 'transparent' },
+				5: { color: 'transparent' }
 			}
-		});
-		chart.load();
+		};
+		const chart = new google.visualization.PieChart(element[0]);
+		chart.draw(data, options);
 	} else {
 		console.log("No valid student key for ", element.attr("id"));
 	}

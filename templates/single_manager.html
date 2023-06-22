@@ -22,25 +22,14 @@
 	<p> TODO add statistics </p>
 	<p> Entry link for new enters: <a href="identify?template_key={{template_key}}">Link</a> </p>
 </div>
-<div class="table-responsive container-fluid p-2">
-	<table id="session_table" class="table table-hover table-bordered">
+<div class="table-responsive container-fluid m-2" style="max-height: 560px;">
+	<table id="session_table" class="table table-hover table-bordered overflow-auto">
 		<thead class="thead-light">
-			<!-- <tr>
-				<th colspan="2">Session ID</th>
-				<th rowspan="2">Students &amp; Status</th>
-				<th colspan="2">Scoreboard</th>
-				<th colspan="2">Links</th>
-			</tr>
 			<tr>
-				<th> Student </th>
-				<th> Status </th>
-			</tr> 
-			-->
-			<tr>
-				<th>Student ID</th>
-				<th>Student Name</th>
-				<th>Status</th>
-				<th>Links</th>
+				<th style="position: sticky; top: 0; z-index: 5;">Student ID</th>
+				<th style="position: sticky; top: 0; z-index: 5;">Student Name</th>
+				<th style="position: sticky; top: 0; z-index: 5;" colspan="2">Status</th>
+				<th style="position: sticky; top: 0; z-index: 5;">Links</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -49,16 +38,17 @@
 					<td> {{ student_key }} </td>
 					<td> {{ student_info["student_name"] }} </td>
 					{% if "answers" in student_info %}
-						<td>
-						{% if session_data["setting"]["visual_chart"] %}
-							<canvas id="graph_{{ student_key }}" chart_type="{{session_data["setting"]["visual_chart"]}}"></canvas>
-						{% else %}
-							<span class="text-success">{{ student_info["score"] }} </span> 
-							<span> / {{ session_data.get("maximum_score", 10.0) }} </span>
+						{% if True or "visual_chart" in session_data["setting"] %}
+							<td>
+								<div id="graph_{{ student_key }}" chart_type="{{session_data["setting"]["visual_chart"]}}" style="max-width: 120px; max-height: 120px;"></div>
+							</td>
 						{% endif %}
+						<td>
+							<span class="text-success">{{ "%.2f"|format(student_info["score"])}} </span> 
+							<span> / {{ "%.2f"|format(session_data.get("maximum_score", 10.0)) }} </span>
 						</td>
 					{% else %}
-					<td> Working </td>
+					<td colspan="2" id="working_{{ student_key }}"> Working </td>
 					{% endif %}
 					<td> <a href="enter?key={{student_key}}">Exam Link</a> </td>
 				</tr>
@@ -66,12 +56,12 @@
 		</tbody>
 	</table>
 	<div>
-		<canvas id="graph_test_student" chart_type="radar">
-		</canvas>
+		<div id="graph_test_student" chart_type="radar">
+		</div>
 	</div>
 </div>
 <div class="container-fluid d-flex flex-row" id="button_bar">
-	{% if "student_list" in session_data["setting"] or True %}
+	{% if "student_list" in session_data["setting"] %}
 		<input type="file" id="fill_target" onchange="fill_target_selected(event)" hidden></input>
 		<button class="mx-2 btn btn-success" onclick="open_fill_target(event)">Fill File</button>
 		<span class="m-2"> ID column: </span>
@@ -100,8 +90,13 @@
 
 {% block script %}
 <script lang="javascript" src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<!-- 
+<script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.min.js" integrity="sha512-p6sLeOYPAD6ZErEYF14yMgFxpTV3B7tA4XVxRmzhlOSht4/YJ5JtYVEhAcl8mHQOZ9pKKoD4jvIIaeJl9Gv/WA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.pkgd.min.js" integrity="sha512-W6rv9SeEbkfttJTjzB6/BJCk8mmcfZzzFn1c8UsgO4UT+W+xvX5MhlcmZuIxVWal8XiJ+K2hwsaz/mcDXF262Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.pkgd.min.js" integrity="sha512-W6rv9SeEbkfttJTjzB6/BJCk8mmcfZzzFn1c8UsgO4UT+W+xvX5MhlcmZuIxVWal8XiJ+K2hwsaz/mcDXF262Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
+-->
+<script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="manager.js") }}></script>
 <script>
 	$(document).ready(function() {
@@ -110,8 +105,13 @@
 			$("#id_col_dropdown_menu").append( $("<button class=\"m-1 btn btn-link\" onclick=\"update_id_col(event)\">" + character + "</button>") );
 			$("#fill_col_dropdown_menu").append( $("<button class=\"m-1 btn btn-link\" onclick=\"update_fill_col(event)\">" + character + "</button>") );
 		}
-		let test_graph = $("#graph_test_student");
-		draw_chart_for_student(test_graph);
+		google.charts.load('current',{packages:['corechart']});
+		google.charts.setOnLoadCallback(function () 
+				//{ draw_chart_for_student($("#graph_test_student")); });
+				// { retrieve_session_data(); });
+				{ autoupdate_session_data(); });
+//		let test_graph = $("#graph_test_student");
+//		draw_chart_for_student(test_graph);
 	});
 </script>
 {% endblock %}

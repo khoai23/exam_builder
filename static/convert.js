@@ -4,35 +4,35 @@ var current_text = "";
 
 // black magic section: taken from https://docxtemplater.com/faq/#how-can-i-retrieve-the-docx-content-as-text
 function str2xml(str) {
-    if (str.charCodeAt(0) === 65279) {
-        // BOM sequence
-        str = str.substr(1);
-    }
-    return new DOMParser().parseFromString(str, "text/xml");
+	if (str.charCodeAt(0) === 65279) {
+		// BOM sequence
+		str = str.substr(1);
+	}
+	return new DOMParser().parseFromString(str, "text/xml");
 }
 
 // get the docx content; apparently this wont even need docxtemplater
 function getParagraphs(content) {
-    const zip = new PizZip(content);
+	const zip = new PizZip(content);
 	console.log(zip);
-    const xml = str2xml(zip.files["word/document.xml"].asText());
-    const paragraphsXml = xml.getElementsByTagName("w:p");
-    const paragraphs = [];
+	const xml = str2xml(zip.files["word/document.xml"].asText());
+	const paragraphsXml = xml.getElementsByTagName("w:p");
+	const paragraphs = [];
 
-    for (let i = 0, len = paragraphsXml.length; i < len; i++) {
-        let fullText = "";
-        const textsXml =
-            paragraphsXml[i].getElementsByTagName("w:t");
-        for (let j = 0, len2 = textsXml.length; j < len2; j++) {
-            const textXml = textsXml[j];
-            if (textXml.childNodes) {
-                fullText += textXml.childNodes[0].nodeValue;
-            }
-        }
+	for (let i = 0, len = paragraphsXml.length; i < len; i++) {
+		let fullText = "";
+		const textsXml =
+			paragraphsXml[i].getElementsByTagName("w:t");
+		for (let j = 0, len2 = textsXml.length; j < len2; j++) {
+			const textXml = textsXml[j];
+			if (textXml.childNodes) {
+				fullText += textXml.childNodes[0].nodeValue;
+			}
+		}
 
-        paragraphs.push(fullText);
-    }
-    return paragraphs;
+		paragraphs.push(fullText);
+	}
+	return paragraphs;
 }
 
 // read the text from txt file and display it as is

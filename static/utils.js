@@ -1,3 +1,15 @@
+var getUrlParameter = function getUrlParameter(sParam) {
+	var sPageURL = window.location.search.substring(1),
+		sURLVariables = sPageURL.split('&'), sParameterName;
+	for (let i = 0; i < sURLVariables.length; i++) {
+		sParameterName = sURLVariables[i].split('=');
+		if (sParameterName[0] === sParam) {
+			return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+		}
+	}
+	return false;
+};
+
 function download_blob(blob, filename) {
 	// create a link and download a blob as a file
 	if (navigator.msSaveBlob) { // IE 10+
