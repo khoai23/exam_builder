@@ -330,7 +330,7 @@ function reupdate_questions(data, clear_table = true) {
 					// is image variant; put into img tag and put inside
 					answer = answer.replaceAll("|||", "");
 					answers.push($("<td>").append(
-						$("<img class=\"img-thumbnail\">").attr("src", answer)
+						$("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", answer)
 					));
 				} else {
 					// is text variant, push in directly

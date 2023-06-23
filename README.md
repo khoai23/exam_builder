@@ -23,7 +23,8 @@ Remaining bugfix/missing features:
 - [x] Conditional variables for template problem (range, attributes e.g prime)
 - [x] Table auto-scroll upon large screen
 - [x] Import in append vs replace mode
-- [ ] Finishing import should automatically reload the table
+- [x] Finishing import/rollback should automatically reload the table 
+- [ ] Loading icon while performing import/rollback
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter direct import and copy content to clipboard (right now not working on Firefox)

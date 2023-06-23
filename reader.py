@@ -81,8 +81,15 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
 #    image_loader.get("B2").show()
     image_dictionary = dict()
     for key in image_loader._images:
-        img_buffer = io.BytesIO()
-        image_loader.get(key).save(img_buffer, format="PNG")
+#        print("Converting image for cell {}, exist: {}".format(key, image_loader.image_in(key)))
+        try:
+            img_buffer = io.BytesIO()
+            image_loader.get(key).save(img_buffer, format="PNG")
+        except ValueError:
+            # due to some weird bug, subsequent file opening can have old references of other loader. It will output "I/O operation on closed file" if not checked 
+            # hence, when receiving this, simply ignore them 
+            print("Image at cell {} cannot be read. Ignoring.".format(key))
+            continue
         img_data = img_buffer.getvalue()
         number_key = row, col = cell_name_xl_to_tuple(key)
         # print("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
@@ -218,10 +225,10 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
 
 if __name__ == "__main__":
     # normal test
-#    data = read_file("test/sample.xlsx")
-#    print(data)
+    data = read_file("test/sample.xlsx")
+    print(data)
 ##    write_file_csv("test/test_write_sample.csv", data, HEADERS)
 #    write_file_xlsx("test/test_write_sample.xlsx", data, HEADERS)
 #    print("Tested writing.")
     # image read test
-    print(read_file_xlsx("test/sample_with_image.xlsx"))
+#    print(read_file_xlsx("test/sample_with_image.xlsx"))
