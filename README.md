@@ -7,6 +7,7 @@ All possible extension regard the builder, unlikely first:
 - [x] Statistics for session managing (student weakness by question category)
 - [x] Import check for duplication
 - [x] Split the current "build" page to "build", "edit" (for changing the data), and "table" (for generic display of the data)
+- [ ] Option to show relevant solution with wrong answers
 - [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
@@ -26,7 +27,7 @@ Remaining bugfix/missing features:
 - [x] Table auto-scroll upon large screen
 - [x] Import in append vs replace mode
 - [x] Finishing import/rollback should automatically reload the table 
-- [ ] Loading icon while performing import/rollback 
+- [ ] Loading icon while performing modifying action e.g import/rollback 
 - [ ] Commit-type import to prevent stupidity
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)

@@ -161,9 +161,10 @@ function reupdate_questions(data, clear_table = true) {
 	MathJax.typeset();
 }
 
+// TODO allow confirmation when doing Import & Replace as well
 // confirm deletion of a selected box. 
 // Populate and show a modal as needed
-function update_modal(event) {
+function update_modal_delete(event) {
 	$("#modal_body").text("Do you really want to delete the selected item?");
 }
 
@@ -183,7 +184,13 @@ function delete_selected(event) {
 		dataType: "json",
 		success: function(data, textStatus, jqXHR) {
 			// console.log(data["questions"]);
-			reupdate_questions(data["questions"]);
+			if(data["result"]) {
+				$("#io_result").removeClass("text-danger").addClass("text-success").text("Deleted selected questions.");
+				get_and_reupdate_question();
+			} else {
+				console.log("Received error:", data["error"]);
+				$("#io_result").removeClass("text-success").addClass("text-danger").text("Deletion failed.");
+			}
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);

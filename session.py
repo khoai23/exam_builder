@@ -1,12 +1,12 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
+import time, os 
 import flask 
 from flask import url_for
 import secrets
 from datetime import datetime 
-import time
 
-from reader import read_file, DEFAULT_FILE_PATH
+from reader import read_file, move_file, write_file_xlsx, DEFAULT_FILE_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX
 from organizer import assign_ids, shuffle, check_duplication_in_data
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
@@ -17,6 +17,9 @@ data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
 student_belong_to_session = dict()
+
+"""Section working with data: importing, deleting and rolling back will be put here.
+TODO put all this to a different corresponding files to debloat"""
 
 def reload_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     """Reload - clear everything and then re-load the data. No session will be kept, since id would likely be completely screwed"""
@@ -52,13 +55,14 @@ def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, pres
                 ids.remove(i)
             else:
                 # not found; re-add 
-                new_data.append(data)
+                new_data.append(q)
             # TODO create a refer (old_id -> new_id, and migrate all standing session using this dict)
         if(strict and len(ids) > 0):
             return {"result": False, "error": "Invalid list of id: {} not found".format(ids)}
         # put the new_data back in
         del current_data[:]
         current_data.extend(new_data)
+    print("Reupdated data: ", current_data)
     # re-set the question ids
     id_data.clear(); id_data.update(assign_ids(current_data))
     if(preserve_session):
@@ -82,6 +86,44 @@ def clear_mark_duplication(data: List[Dict]):
     for d in data:
         d.pop("has_duplicate", None)
         d.pop("duplicate_of", None)
+
+def create_backup(current_file: str, backup_prefix=_DEFAULT_BACKUP_PREFIX):
+    """Function will move the file to backup position while being mindful of its extension."""
+    return move_file(current_file, backup_prefix, is_target_prefix=True)
+
+
+def perform_import(import_file: str, current_file: str, replace_mode: bool=False, delete_import_after_done: bool=True):
+    """Performing appropriate importing protocol. Reloading/updating data as needed depending on replace_mode
+    Assuming an import file is created at {import_file}, and can be read by reload_data(); the file at {current_file} will be replaced with the latest update of each variant
+    Always return "backup_path" & "current_path"
+    """
+    backup_path = create_backup(current_file)
+    # add/replace the data
+    if(replace_mode):
+        print("Import and add the data to current")
+        reload_data(location=import_file)
+    else:
+        print("Import and replace the data to current")
+        append_data(location=import_file)
+    # regardless of mode; write the current data to the current path 
+    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
+    write_file_xlsx(current_path, current_data)
+    # clean up if flag is set
+    if(delete_import_after_done):
+        os.remove(import_file)
+    # done, only return correct 
+    return (backup_path, current_path)
+
+def perform_rollback(backup_file: str, current_path: str):
+    """Performing rollback. Just move the file back in and reload it."""
+    os.remove(current_path)
+    current_path = move_file(backup_file, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
+    backup_path = None
+    reload_data(location=current_path)
+    return current_path, backup_path
+
+
+"""This section is for redirecting & managing real session data, entry points & management"""
 
 def load_template(data: Dict):
     # format setting: cleaning dates; voiding nulled fields

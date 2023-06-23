@@ -18,10 +18,10 @@
 		<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
 	</form>
 	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
-	<button class="mx-2 btn btn-info" onclick="choose_file(event, true)">Import &amp; Replace</button>
+	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)">Import &amp; Replace</button>
 	<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
 	<button class="mx-2 btn btn-warning ml-auto" onclick="rollback(event)">Rollback</button>
-	<button class="mx-2 btn btn-danger" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal(event)">Delete Selected</button>
+	<button class="mx-2 btn btn-danger" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)">Delete Selected</button>
 </div>
 <div class="container-fluid d-flex p-1">
 	<span class="m-2" id="io_result"></span>

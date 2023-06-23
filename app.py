@@ -6,7 +6,8 @@ import traceback
 import shutil
 
 from session import data, current_data, session, submit_route, student_belong_to_session
-from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, mark_duplication
+from session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
+from session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
 from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
 from organizer import check_duplication_in_data
@@ -50,7 +51,8 @@ def questions():
 
 @app.route("/duplicate_questions", methods=["GET"])
 def duplicate_questions():
-    # TODO restrict access like data
+    # TODO restrict access like data 
+    # Deprecated for now
     duplicate = check_duplication_in_data(current_data)
     return flask.jsonify(duplicate_ids=duplicate)
 
@@ -79,27 +81,9 @@ def file_import():
         # use timestamp as filename for temporary file
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
-        # backup the current file
-        if(is_replace_mode):
-            # TODO read and replace current data
-            print("File saved to default path; reload data now.")
-            reload_data(location=temporary_filename)
-            # if reload success, backup the current file
-            app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
-            # then move file into current  
-            app._current_file = move_file(temporary_filename, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
-        else:
-            print("File saved to temporary; append and try to write combined")
-            # read data as add-on to current data 
-            append_data(location=temporary_filename)
-            # extract the combination to disk in xlsx
-            combined_file = _DEFAULT_FILE_PREFIX + ".xlsx"
-            # if reload success, backup the current file
-            app._backup_file = move_file(app._current_file, os.path.join(TEMPORARY_FILE_DIR, "backup"), is_target_prefix=True)
-            # then write the combined variant
-            write_file_xlsx(combined_file, current_data)
-            # delete the temporary file 
-            os.remove(temporary_filename)
+        # performing the importing procedure; ALWAYS creating backup to be used with rollback
+        paths = backup_path, current_path = perform_import(temporary_filename, app._current_file)
+        app._backup_file, app._current_file = paths 
         return flask.jsonify(result=True)
     except Exception as e:
         print(traceback.format_exc())
@@ -111,10 +95,8 @@ def rollback():
     """Attempt to do a rollback on previous backup."""
     try:
         if(app._backup_file and os.path.isfile(app._backup_file)):
-            # TODO maybe need to switch xlsx?
-            app._current_file = move_file(app._backup_file, DEFAULT_FILE_PATH, is_target_prefix=False)
-            app._backup_file = None
-            reload_data(location=app._current_file)
+            paths = current_path, backup_path = perform_rollback(app._backup_file, app._current_file)
+            app._current_file, app._backup_file = paths
             return flask.jsonify(result=True)
         else:
             return flask.jsonify(result=False, error="No backup available")
