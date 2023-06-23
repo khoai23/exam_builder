@@ -10,6 +10,8 @@ import ast
 
 from typing import Optional, List, Tuple, Any, Union, Dict
 
+MathJaxSymbols = re.compile(r"$$|\\\(|\\\)|\\\[|\\\]")
+
 VALID_ALPHABET_KEY = "ABCDEFGHIJKLMNOPQRSTUWVZ"
 alphabet_regex = re.compile(r"{alpha_\d}")
 def convert_dynamic_key_problem(problem: Dict, generator_mode=False):
@@ -115,6 +117,9 @@ def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mod
         raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
     # TODO enforce expression type
     assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+    if re.search(MathJaxSymbols, problem["question"]):
+        # keep symbols curly brackets 
+        assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}
     # replace all the assigned expression with transfered values 
     new_problem = dict(problem)
     for field in ["question", "answer1", "answer2", "answer3", "answer4"]:
@@ -151,6 +156,9 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
         print(assigned_variables)
 #        assigned_variables = {k: random.randint(1, 100) for k in variables}
         assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+        if re.search(MathJaxSymbols, problem["question"]):
+            # keep symbols curly brackets 
+            assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}
         # format for corresponding problem and id 
         asw_i = answer_section
         for plh, rpl in assigned_expressions.items(): # placeholder & replacement 
