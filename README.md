@@ -35,4 +35,5 @@ Remaining bugfix/missing features:
 - [ ] Redirection for identify is still (relatively) busted
 - [ ] Single manager capable of modifying settings (time limit, range, etc.)
 - [x] Single manager can export list of student in excel format; should be in the format/order of the original list
-- [ ] Student ID as key, which is not important considering the redirection
+- [ ] Student ID as key, which is not important considering the redirection 
+- [ ] Student showing correct answer and/or score if the option is enabled 

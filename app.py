@@ -22,9 +22,16 @@ def main():
 
 @app.route("/data")
 def data():
-    "Enter the data page, where we can modify the bank and build a new template for an exam"
+    """Enter the data page, where we can modify the bank and build a new template for an exam
+    TODO restrict access
+    """
 #    print([r["correct_id"] for r in current_data])
     return flask.render_template("data.html", title="Data", questions=current_data)
+
+@app.route("/questions", methods=["GET"])
+def questions():
+    # TODO restrict access like data
+    return flask.jsonify(questions=current_data)
 
 @app.route("/export")
 def file_export():
