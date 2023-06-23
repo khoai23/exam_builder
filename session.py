@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 
 from reader import read_file, DEFAULT_FILE_PATH
-from organizer import assign_ids, shuffle 
+from organizer import assign_ids, shuffle, check_duplication_in_data
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
@@ -18,19 +18,70 @@ data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
 student_belong_to_session = dict()
 
-def reload_data(location=DEFAULT_FILE_PATH):
+def reload_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     """Reload - clear everything and then re-load the data. No session will be kept, since id would likely be completely screwed"""
     del current_data[:]; current_data.extend(read_file(location))
     id_data.clear(); id_data.update(assign_ids(current_data))
     session.clear()
     submit_route.clear()
     student_belong_to_session.clear()
+    if(check_duplication):
+        mark_duplication(current_data)
 
-def append_data(location=DEFAULT_FILE_PATH):
+def append_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     """Append - update the data after the current one; sessions will be kept since id would not be moved"""
     current_data.extend(read_file(location))
     id_data.clear(); id_data.update(assign_ids(current_data))
+    if(check_duplication):
+        mark_duplication(current_data)
 #    print([r["correct_id"] for r in current_data])
+
+def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, preserve_session: bool=False):
+    """Deleting specific data. 
+    If safe, only allow deletion of uncommitted data (set with a specific flag).
+    If strict, will reject deletion if trying to delete strange id. Still allow duplicate though
+    For now allow deleting anything."""
+    if(safe):
+        raise NotImplementedError
+    else:
+        ids = set((int(i) for i in ids))
+        new_data = []
+        for i, q in enumerate(current_data):
+            if(i in ids):
+                # found; removing 
+                ids.remove(i)
+            else:
+                # not found; re-add 
+                new_data.append(data)
+            # TODO create a refer (old_id -> new_id, and migrate all standing session using this dict)
+        if(strict and len(ids) > 0):
+            return {"result": False, "error": "Invalid list of id: {} not found".format(ids)}
+        # put the new_data back in
+        del current_data[:]
+        current_data.extend(new_data)
+    # re-set the question ids
+    id_data.clear(); id_data.update(assign_ids(current_data))
+    if(preserve_session):
+        raise NotImplementedError
+    else:
+        session.clear()
+        submit_route.clear()
+        student_belong_to_session.clear()
+    return {"result": True}
+
+def mark_duplication(data: List[Dict]):
+    """Mark concerning rows of data with {has_duplicate} and {duplicate_of}."""
+    check_dictionary = check_duplication_in_data(data)
+    for dfr, dto in check_dictionary.items():
+        data[dto]["has_duplicate"] = True 
+        data[dfr]["duplicate_of"] = dto
+        
+def clear_mark_duplication(data: List[Dict]):
+    """Deleting all {has_duplicate} and {duplicate_of} mark. 
+    TODO add special {verified} mark to prevent deletion in the delete_data_by_ids's safe mode"""
+    for d in data:
+        d.pop("has_duplicate", None)
+        d.pop("duplicate_of", None)
 
 def load_template(data: Dict):
     # format setting: cleaning dates; voiding nulled fields
@@ -57,6 +108,7 @@ def load_template(data: Dict):
     return key, admin_key
 
 def student_first_access_session(template_key: str):
+    """Deprecated as retrieve_submit_route_anonymous & retrieve_submit_route_restricted will perform duty for this hardpoint"""
     session_data = session.get(template_key, None)
     if(template_key is None or session_data is None):
         # TODO return a warning that session is not correct/expired; also enter the key as above

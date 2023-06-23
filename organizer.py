@@ -1,7 +1,10 @@
 """Code to help organizing data by adding an unique ID, then dividing them by category, difficulty and/or tag."""
-from dynamic_problem import convert_dynamic_key_problem, convert_fixed_equation_problem, convert_single_equation_problem
+import re
 from collections import defaultdict
 import random 
+import unicodedata 
+
+from dynamic_problem import convert_dynamic_key_problem, convert_fixed_equation_problem, convert_single_equation_problem
 
 from typing import Optional, Dict, List, Tuple, Any, Union
 
@@ -68,6 +71,34 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]],
             selected.append(new_question)
             correct.append(new_correct_id)
     return selected, correct
+
+ignore_tokens_duplication = re.compile(r"\|\|\|.+?\|\|\||{.+?}|\W")
+# from https://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-normalize-in-a-python-unicode-string
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
+def remove_nonchar(input_str):
+    return remove_accents(re.sub(ignore_tokens_duplication, "", input_str))
+
+def check_duplication_in_data(data: List[Dict], deviation: Optional[int]=None):
+    """Perform check and find duplication.
+    Check question's static section only (word-based, no special token, no space), and only allow upto {deviation} difference. For now, only deviation=0 (exact match) is allowed."""
+    question_stripped = ( (q["id"], remove_nonchar(q["question"])) for q in data)
+    check_dictionary = {}
+    duplicate_dictionary = {}
+    for qid, qstr in question_stripped:
+        # TODO find closest deviation instead
+        if(qstr in duplicate_dictionary):
+            # found duplicate, record to check_dictionary
+            previous_qid = duplicate_dictionary[qstr]
+            check_dictionary[qid] = previous_qid
+        else:
+            # not found duplicate, add to duplicate_dictionary
+            duplicate_dictionary[qstr] = qid 
+    # result is dictionary for duplicate_new vs duplicate_old; since newer one should be removed
+    return check_dictionary
+
 
 if __name__ == "__main__":
     from reader import read_file, DEFAULT_FILE_PATH

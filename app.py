@@ -6,32 +6,62 @@ import traceback
 import shutil
 
 from session import data, current_data, session, submit_route, student_belong_to_session
-from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
+from session import reload_data, append_data, load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, mark_duplication
 from convert_file import read_and_convert
-from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx
+from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
+from organizer import check_duplication_in_data
 
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
 app._current_file = DEFAULT_FILE_PATH 
 app._backup_file = DEFAULT_BACKUP_PATH # if(os.path.isfile(DEFAULT_BACKUP_PATH)) else None # no need; the backup will work here
+### The import flow will be split in two parts:
+app._is_in_commit = False
 
 @app.route("/")
 def main():
     """Enter the index page"""
     return flask.render_template("main.html")
 
-@app.route("/data")
-def data():
-    """Enter the data page, where we can modify the bank and build a new template for an exam
+@app.route("/edit")
+def edit():
+    """Enter the edit page where we can submit new data to database; rollback and deleting data (preferably duplicated question)
     TODO restrict access
     """
 #    print([r["correct_id"] for r in current_data])
-    return flask.render_template("data.html", title="Data", questions=current_data)
+    return flask.render_template("edit.html", title="Modify", questions=[])
+
+@app.route("/build")
+def build():
+    """Enter the quiz build page where we can build a new template for an exam 
+    Modification is now in a separate page
+    TODO restrict access
+    """
+#    print([r["correct_id"] for r in current_data])
+    return flask.render_template("build.html", title="Data", questions=current_data)
 
 @app.route("/questions", methods=["GET"])
 def questions():
-    # TODO restrict access like data
+    # TODO restrict access like data 
+    with_duplicate = request.args.get("with_duplicate")
+    if(with_duplicate and with_duplicate.lower() == "true"):
+        mark_duplication(current_data)
     return flask.jsonify(questions=current_data)
+
+@app.route("/duplicate_questions", methods=["GET"])
+def duplicate_questions():
+    # TODO restrict access like data
+    duplicate = check_duplication_in_data(current_data)
+    return flask.jsonify(duplicate_ids=duplicate)
+
+@app.route("/delete_questions", methods=["DELETE"])
+def delete_questions():
+    # TODO restrict access 
+    delete_ids = request.get_json()
+    if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
+        return flask.jsonify(result=False, error="Invalid ids sent; try again.")
+    else:
+        return flask.jsonify(**delete_data_by_ids(delete_ids))
 
 @app.route("/export")
 def file_export():
