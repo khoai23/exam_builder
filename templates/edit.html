@@ -13,17 +13,23 @@
 	<div class="m-1 bg-danger border" style="width: 25px; height: 25px;"></div>
 	<span class="m-1">Newer</span>
 </div>
-<div class="container-fluid d-flex p-1">
-	<form id="import_form" method="POST" enctype="multipart/form-data" action="import" hidden>
-		<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
-	</form>
+<div class="container-fluid d-flex p-1" id="button_bar">
 	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
 	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)">Import &amp; Replace</button>
-	<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
+	<button class="mx-2 btn btn-info" onclick="export_file(event)">Export</button>
 	<button class="mx-2 btn btn-warning ml-auto" onclick="rollback(event)">Rollback</button>
 	<button class="mx-2 btn btn-danger" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)">Delete Selected</button>
 </div>
+<div hidden>
+	<a href="export" target="_blank" id="export_link" download>Export</a>
+	<form id="import_form" method="POST" enctype="multipart/form-data" action="import">
+		<input id="import_file" type="file" name="file" accept=".csv,.xlsx" onchange="submit_file(event)"></input>
+	</form>
+</div>
 <div class="container-fluid d-flex p-1">
+	<div class="spinner-border" role="status" id="spinner" style="display: none;">
+		<span class="sr-only">Loading...</span>
+	</div>
 	<span class="m-2" id="io_result"></span>
 </div>
 {% include 'shared/modal.tpl' %}

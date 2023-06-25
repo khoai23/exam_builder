@@ -5,7 +5,7 @@ import os, time, re
 import traceback 
 import shutil
 
-from session import data, current_data, session, submit_route, student_belong_to_session
+from session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
 from session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
 from session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
 from convert_file import read_and_convert
@@ -14,9 +14,7 @@ from organizer import check_duplication_in_data
 
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
-app._current_file = DEFAULT_FILE_PATH 
-app._backup_file = DEFAULT_BACKUP_PATH # if(os.path.isfile(DEFAULT_BACKUP_PATH)) else None # no need; the backup will work here
-### The import flow will be split in two parts:
+### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
 
 @app.route("/")
@@ -61,19 +59,24 @@ def delete_questions():
     # TODO restrict access 
     delete_ids = request.get_json()
     if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
-        return flask.jsonify(result=False, error="Invalid ids sent; try again.")
+        return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
     else:
-        return flask.jsonify(**delete_data_by_ids(delete_ids))
+        result = delete_data_by_ids(delete_ids)
+        if(result["true"]):
+            nocommit = request.args.get("nocommit")
+            if(not nocommit or nocommit.lower() != "true"):
+                # if nocommit is not enabled; push the current data to backup and write down new one 
+                perform_commit(filepath_dict["current_path"])
+        return flask.jsonify(**result)
 
 @app.route("/export")
 def file_export():
     """Allow downloading the database file."""
-    return flask.send_file(app._current_file, as_attachment=True)
+    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
 
 @app.route("/import", methods=["POST"])
 def file_import():
-    """Allow overwriting or appending to the database file.
-    TODO """
+    """Allow overwriting or appending to the database file."""
     try:
         is_replace_mode = request.args.get("replace").lower() == "true"
         file = request.files["file"]
@@ -82,8 +85,7 @@ def file_import():
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
         # performing the importing procedure; ALWAYS creating backup to be used with rollback
-        paths = backup_path, current_path = perform_import(temporary_filename, app._current_file)
-        app._backup_file, app._current_file = paths 
+        perform_import(temporary_filename, filepath_dict["current_path"])
         return flask.jsonify(result=True)
     except Exception as e:
         print(traceback.format_exc())
@@ -94,9 +96,8 @@ def file_import():
 def rollback():
     """Attempt to do a rollback on previous backup."""
     try:
-        if(app._backup_file and os.path.isfile(app._backup_file)):
-            paths = current_path, backup_path = perform_rollback(app._backup_file, app._current_file)
-            app._current_file, app._backup_file = paths
+        if(filepath_dict["backup_path"] and os.path.isfile(filepath_dict["backup_path"])):
+            perform_rollback(filepath_dict["backup_path"], filepath_dict["current_path"])
             return flask.jsonify(result=True)
         else:
             return flask.jsonify(result=False, error="No backup available")

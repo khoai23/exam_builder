@@ -6,7 +6,7 @@ from flask import url_for
 import secrets
 from datetime import datetime 
 
-from reader import read_file, move_file, write_file_xlsx, DEFAULT_FILE_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX
+from reader import read_file, move_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX
 from organizer import assign_ids, shuffle, check_duplication_in_data
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
@@ -16,6 +16,7 @@ data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
 data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
+data["paths"] = filepath_dict = {"backup_path": DEFAULT_BACKUP_PATH, "current_path": DEFAULT_FILE_PATH}
 student_belong_to_session = dict()
 
 """Section working with data: importing, deleting and rolling back will be put here.
@@ -91,6 +92,13 @@ def create_backup(current_file: str, backup_prefix=_DEFAULT_BACKUP_PREFIX):
     """Function will move the file to backup position while being mindful of its extension."""
     return move_file(current_file, backup_prefix, is_target_prefix=True)
 
+def perform_commit(current_file: str):
+    """After modifying the current data in some way, this action will put old data in backup and create a new one"""
+    backup_path = create_backup(current_file)
+    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
+    write_file_xlsx(current_path, current_data)
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
+    return backup_path, current_path
 
 def perform_import(import_file: str, current_file: str, replace_mode: bool=False, delete_import_after_done: bool=True):
     """Performing appropriate importing protocol. Reloading/updating data as needed depending on replace_mode
@@ -112,7 +120,8 @@ def perform_import(import_file: str, current_file: str, replace_mode: bool=False
     if(delete_import_after_done):
         os.remove(import_file)
     # done, only return correct 
-    return (backup_path, current_path)
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
+    return backup_path, current_path
 
 def perform_rollback(backup_file: str, current_path: str):
     """Performing rollback. Just move the file back in and reload it."""
@@ -120,6 +129,7 @@ def perform_rollback(backup_file: str, current_path: str):
     current_path = move_file(backup_file, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
     backup_path = None
     reload_data(location=current_path)
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
     return current_path, backup_path
 
 

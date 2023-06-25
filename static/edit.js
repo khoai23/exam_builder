@@ -1,3 +1,18 @@
+function set_buttons_state(working) {
+	// set all buttons in respective bar with to disabled/enabled accordingly
+	// also switch the spinner and text depending on which
+	// TODO set spinner color
+	if(working){
+		$("#button_bar").find("button").addClass("disabled");
+		$("#spinner").show();
+		$("#io_result").hide();
+	} else {
+		$("#button_bar").find("button").removeClass("disabled");
+		$("#spinner").hide();
+		$("#io_result").show();
+	}
+}
+
 var replacement_mode = false;
 function choose_file(event, mode) {
 	replacement_mode = mode;
@@ -12,6 +27,7 @@ function submit_file(event) {
 	var actionUrl = form.attr('action') + "?replace=" + replacement_mode.toString();
 	var data = new FormData(form[0])
 	console.log("Submitting: ", data);
+	set_buttons_state(true);
 	$.ajax({
 		type: "POST",
 		url: actionUrl,
@@ -23,18 +39,26 @@ function submit_file(event) {
 			$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.");
 			//$(event.currentTarget).attr("disabled", false);
 			get_and_reupdate_question(event);
+			set_buttons_state(false);
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
 			$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed.")
 			//$(event.currentTarget).attr("disabled", false);
+			set_buttons_state(false);
 		},
 		// always: function() { $(event.currentTarget).prop("disabled", false); } // doesnt work
 	});
 }
 
+function export_file(event) {
+	// simply transfer the click to the link 
+	$("#export_link").click();
+}
+
 function rollback(event) {
 	//$(event.currentTarget).attr("disabled", true);
+	set_buttons_state(true);
 	$.ajax({
 		type: "GET",
 		url: "rollback",
@@ -43,14 +67,16 @@ function rollback(event) {
 				$("#io_result").removeClass("text-danger").addClass("text-success").text("Rollback done, old data had been loaded.");
 				get_and_reupdate_question(event);
 			} else {
-				$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.")
+				$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.");
 				console.log("Error: ", data["error"]);
 			}
+			set_buttons_state(false);
 			//$(event.currentTarget).attr("disabled", false);
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
-			$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.")
+			$("#io_result").removeClass("text-success").addClass("text-danger").text("Rollback failed.");
+			set_buttons_state(false);
 			//$(event.currentTarget).attr("disabled", false);
 		},
 		// always: function() { $(event.currentTarget).prop("disabled", false); } // doesnt work
@@ -175,6 +201,7 @@ function perform_confirm_modal(event) {
 // delete the selected boxes. Sending the command and reload the data 
 // should be called by perform_confirm_modal
 function delete_selected(event) {
+	set_buttons_state(true);
 	var payload = JSON.stringify(get_selected_question_ids());
 	$.ajax({
 		type: "DELETE",
@@ -191,9 +218,11 @@ function delete_selected(event) {
 				console.log("Received error:", data["error"]);
 				$("#io_result").removeClass("text-success").addClass("text-danger").text("Deletion failed.");
 			}
+			set_buttons_state(false);
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
+			set_buttons_state(false);
 		},
 	})
 }
