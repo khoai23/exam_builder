@@ -30,6 +30,30 @@ def convert_dynamic_key_problem(problem: Dict, generator_mode=False):
             new_problem[field] = new_problem[field].replace(plh, rpl)
     return new_problem
 
+
+def convert_single_option_problem(problem: Dict, generator_mode=True):
+    """Designated single-option problem has a paired list of `{key}`|||`{value}`; `{key}` should be in question and `{value} should be in answer`
+    Upon generation, select a random 4 possible pairing and output accordingly i.e single-equation procedure"""
+    # problems need to be correct firsthand.
+    pairings = [lm.strip().split("|||") for lm in problem["variable_limitation"].strip().split("\n")]
+    assert len(pairings) >= 4, "Question {} must have at least 4 possible mutation, but instead is: {}".format(problem, len(pairings))
+    # TODO assert pairing values must NOT be duplicates of each other 
+    # assign value to variables in four-tuple
+    selected = random.sample(pairings, k=4)
+    problems = [(index+1, dict(problem)) for index in range(4)]
+    for (key, value), (i, new_problem) in zip(selected, problems):
+        new_problem["question"] = new_problem["question"].replace("{key}", key).replace("{value}", value)
+        for _, p in problems:
+            p["answer{}".format(i)] = problem["answer1"].replace("{key}", key).replace("{value}", value)
+        new_problem["correct_id"] = i 
+        
+    if(generator_mode): # on generator, return four variants sequentially
+        for p in problems:
+            yield p
+        return 
+    else:
+        return problems[0]  # on non-generator; just pump out one
+
 range_regex = re.compile(r"\[(\d+),\s*(\d+)\]")
 
 N = 1000
@@ -96,8 +120,6 @@ def create_variable_set(variable_and_limitation: str, duplicate_set: Optional[in
 var_exp_regex = re.compile(r"{(.+?)}")
 def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mode=False):
     """Designated fixed-equation format (e.g algebraic) will be `{variable}` and `{expression}` with the same 4 answers format, expression can only uses the designated variables.
-    Currently enforced listing all variables at the start of the question; separated by "|||".
-    TODO catch variables dynamically instead
         generator_mode: see above"""
     # find all instances of curly brackets 
     if(separator in problem["question"]):
@@ -153,7 +175,7 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
             assigned_variables = {k: random.randint(1, 100) for k in variables}
         else:
             raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
-        print(assigned_variables)
+        # print(assigned_variables)
 #        assigned_variables = {k: random.randint(1, 100) for k in variables}
         assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
         if re.search(MathJaxSymbols, problem["question"]):
@@ -203,7 +225,14 @@ if __name__ == "__main__":
     }
     print(convert_fixed_equation_problem(test_question_variable))
     test_question_single = {
-        "question": r"{x}{y}|||Test question single: {x}+{y} = ?",
+        "question": r"Test question single: {x}+{y} = ?",
         "answer1": "{x+y}",
+        "variable_limitation": "x: [2, 5] prime\ny: [3, 7]"
     }
     print([q for q in convert_single_equation_problem(test_question_single)])
+    test_question_template = {
+        "question": r"Test question template: {key} squared is",
+        "answer1": "{value}",
+        "variable_limitation": "one|||one\ntwo|||four\nthree|||nine\nfour|||sixteen"
+    }
+    print([q for q in convert_single_option_problem(test_question_template)])

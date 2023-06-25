@@ -4,7 +4,7 @@ from collections import defaultdict
 import random 
 import unicodedata 
 
-from dynamic_problem import convert_dynamic_key_problem, convert_fixed_equation_problem, convert_single_equation_problem
+from dynamic_problem import convert_dynamic_key_problem, convert_single_option_problem, convert_fixed_equation_problem, convert_single_equation_problem
 
 from typing import Optional, Dict, List, Tuple, Any, Union
 
@@ -25,6 +25,24 @@ def organize(data: List[Dict], default_category: str="unknown"):
     return categorized_data 
 
 shared_generator = {}
+def get_past_generator(qid: int, question_template: Dict, generator_fn: callable):
+    # try to retrieve past generator
+    q_generator = shared_generator.get(qid, None)
+    if(q_generator is not None):
+        q_test = next(q_generator, None) # try to draw another object from generator 
+        if(q_test is not None):
+            # has object, continue 
+            q = q_test
+        else:
+            # no object, create generator, draw it, and put back into generator library
+            shared_generator[qid] = q_generator = generator_fn(question_template)
+            q = next(q_generator)
+    else:
+        # no generator, draw and put back into the generator
+        shared_generator[qid] = q_generator = generator_fn(question_template)
+        q = next(q_generator)
+    return q
+
 # TODO wipe this upon data reload
 def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]], seed=None):
     # handle multiple questions already selected 
@@ -45,21 +63,9 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]],
             elif(q.get("is_fixed_equation", False)):
                 q = convert_fixed_equation_problem(q)
             elif(q.get("is_single_equation", False)):
-                # try to retrieve past generator
-                q_generator = shared_generator.get(qid, None)
-                if(q_generator is not None):
-                    q_test = next(q_generator, None) # try to draw another object from generator 
-                    if(q_test is not None):
-                        # has object, continue 
-                        q = q_test
-                    else:
-                        # no object, create generator, draw it, and put back into generator library
-                        shared_generator[qid] = q_generator = convert_single_equation_problem(q)
-                        q = next(q_generator)
-                else:
-                    shared_generator[qid] = q_generator = convert_single_equation_problem(q)
-                    q = next(q_generator)
-                    # no generator, draw and put back into 
+                q = get_past_generator(qid, q, convert_single_equation_problem)
+            elif(q.get("is_single_option", False)):
+                q = get_past_generator(qid, q, convert_single_option_problem)
             # shuffle to create the new_question
             new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle], "score": qsc, "is_multiple_choice": q["is_multiple_choice"] }
             if(q["is_multiple_choice"]):

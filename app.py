@@ -12,6 +12,9 @@ from convert_file import read_and_convert
 from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
 from organizer import check_duplication_in_data
 
+import logging
+logger = logging.getLogger(__name__)
+
 app = Flask("exam_builder")
 app.config["UPLOAD_FOLDER"] = "test"
 ### TODO The import flow will be split in two parts, modifying and committing
@@ -88,7 +91,7 @@ def file_import():
         perform_import(temporary_filename, filepath_dict["current_path"])
         return flask.jsonify(result=True)
     except Exception as e:
-        print(traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
         return flask.jsonify(result=False, error=str(e))
 #    raise NotImplementedError
 
@@ -102,14 +105,14 @@ def rollback():
         else:
             return flask.jsonify(result=False, error="No backup available")
     except Exception as e:
-        print(traceback.format_exc())
+        logger.error(traceback.format_exc())
         return flask.jsonify(result=False, error=str(e))
 
 @app.route("/build_template", methods=["POST"])
 def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
-    print("Received template data:", data)
+    logger.info("@build_template: Received template data: {}".format(data))
     key, admin_key = load_template(data)
     # return the key to be accessed by the browser
     return flask.jsonify(session_key=key, admin_key=admin_key)
@@ -128,21 +131,21 @@ def identify():
             if(session_data is None):
                 return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
             student_list = session_data["setting"].get("student_list", None)
-            print(student_list)
+            logger.info("Checking against student list: {}".format(student_list))
             if(student_list is not None):
                 if(isinstance(student_list, dict) and len(student_list) > 0):
                     # a valid student list; use restricted access 
                     return retrieve_submit_route_restricted(template_key, student_list)
                 else:
                     # invalid student list; voiding 
-                    print("Invalid student list found: {}; voiding".format(student_list))
+                    logger.error("Invalid student list found: {}; voiding".format(student_list))
                     session_data["setting"].pop("student_list", None)
             # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
             # use sorta anonymous access here
             return retrieve_submit_route_anonymous(template_key)
         except Exception as e:
+            logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
-            print(traceback.format_exc())
 
 @app.route("/enter")
 def enter():
@@ -167,8 +170,8 @@ def submit():
         submitted_answers = request.get_json()
         return submit_exam_result(submitted_answers, student_key)
     except Exception as e:
+        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
-        print(traceback.format_exc())
 
 @app.route("/single_manager")
 def single_manager():
@@ -183,13 +186,13 @@ def single_manager():
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
-        # print("Access session data: ", session_data)
+        logger.debug("Access session data: {}".format(session_data)
         if(admin_key == session_data["admin_key"]):
             return flask.render_template("single_manager.html", session_data=session_data, template_key=template_key)
         else:
             return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
     except Exception as e:
-        print("Error: ", e)
+        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
 
 @app.route("/single_session_data", methods=["GET"])
@@ -219,7 +222,7 @@ def delete_session():
         admin_key = request.args.get("key")
         return remove_session(template_key, verify=True, verify_admin_key=admin_key)
     except Exception as e:
-        print("Error: ", e)
+        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
     
 @app.route("/convert")
@@ -240,14 +243,13 @@ def convert_text_to_table():
         else:
             to_regex = lambda c: re.escape(c)
         qcue, *acue = [to_regex(c).strip() if len(c.strip()) > 0 else None for c in json_data["cues"]]
-        print(qcue, acue)
+        # logger.debug(qcue, acue)
         text = json_data["text"]
         problems = read_and_convert(text, question_cue=qcue, answer_cues=acue)
         return flask.jsonify(result=True, problems=problems)
     except Exception as e:
-        print("Error: ", e)
+        return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
-        print(traceback.format_exc())
     
 
 @app.route("/generic_submit", methods=["POST"])
@@ -259,11 +261,11 @@ def generic_submit():
     returning a redirect blob if handled by the string; or returning a true/false json block for further guidance
     """
     try:
-        print("Entering generic_submit...")
+        logger.info("Entering generic_submit...")
         form = request.form.to_dict()
         submit_id = form.pop("id")
         if submit_id not in submit_route:
-            print("Cannot found route id: ", submit_id)
+            logger.warning("Cannot found route id: ", submit_id)
             return flask.jsonify(result=False, error="No route id available")
         result_blob = submit_route[submit_id](**form)
         if(isinstance(result_blob, str) or not isinstance(result_blob, (list, tuple))):
@@ -272,11 +274,11 @@ def generic_submit():
         else:
             result, data_or_error = result_blob 
             # result must ALWAYS be false in this case 
-            print("Error from submit_route: {}".format(data_or_error))
+            logger.warning("Error from submit_route: {}".format(data_or_error))
             # TODO show the error 
             return flask.redirect(request.referrer)
     except Exception as e:
-        print("Error: {} - {}".format(e, traceback.format_exc()))
+        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
         # back to the previous (identify page); TODO show the error
         return flask.redirect(request.referrer)
 

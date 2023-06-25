@@ -42,3 +42,6 @@ Remaining bugfix/missing features:
 - [x] Single manager can export list of student in excel format; should be in the format/order of the original list
 - [ ] Student ID as key, which is not important considering the redirection 
 - [ ] Student showing correct answer and/or score if the option is enabled 
+- [ ] Mechanism to auto-test exam generation, especially for single_equation/single_option variants
+- [ ] Mechanism to enforce rollback when import/deletion/whatever fail
+- [ ] Mechanism to notify and show appropriate logs when failure/wrong format etc. happens

@@ -11,6 +11,9 @@ import base64
 from image import DefaultClient, check_and_write_image
 from utils import cell_name_xl_to_tuple
 
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Optional, List, Tuple, Any, Union, Dict
 
 _DEFAULT_FILE_PREFIX = "test/sample"
@@ -46,7 +49,7 @@ def move_file(source: str, target: str, is_target_prefix: Optional[bool]=True, a
     return target
 
 HEADERS = ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]
-SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation"]
+SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation", "is_single_option"]
 
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     if(".csv" in filepath):
@@ -72,32 +75,30 @@ def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool
 def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     workbook = openpyxl.load_workbook(filepath)
     data_sheet = workbook[workbook.sheetnames[0]]
-    print("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
+    logger.debug("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
     data = []
     image_loader = openpyxl_image_loader.SheetImageLoader(data_sheet)
     # old images will be read written in as |||{image_key}|||; b64 format
     # new images will be read and converted to same format as above
-#    print(image_loader._images)
+#    logger.debug(image_loader._images)
 #    image_loader.get("B2").show()
     image_dictionary = dict()
     for key in image_loader._images:
-#        print("Converting image for cell {}, exist: {}".format(key, image_loader.image_in(key)))
+        logger.debug("Converting image for cell {}, exist: {}".format(key, image_loader.image_in(key)))
         try:
             img_buffer = io.BytesIO()
             image_loader.get(key).save(img_buffer, format="PNG")
         except ValueError:
             # due to some weird bug, subsequent file opening can have old references of other loader. It will output "I/O operation on closed file" if not checked 
             # hence, when receiving this, simply ignore them 
-            print("Image at cell {} cannot be read. Ignoring.".format(key))
+            logger.info("Image at cell {} cannot be read. Ignoring.".format(key))
             continue
         img_data = img_buffer.getvalue()
         number_key = row, col = cell_name_xl_to_tuple(key)
-        # print("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
+        # logger.debug("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
         row_dict = image_dictionary[row] = image_dictionary.get(row, dict())
         # col is actually corresponding to answer1-4 already, lucky!
         row_dict[col] = check_and_write_image(img_data)
-#    print(image_dictionary)
-#    return
     for i, row in enumerate(data_sheet.iter_rows(values_only=True)):
         if(i == 0 and headers is None):
             # if header is None, load it from the excel 
@@ -168,7 +169,7 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
         if(k == "tag"):
             # for tag field, split it by delimiter 
             v = [] if v == "" else [v.strip()] if delimiter not in v else [t.strip() for t in v.split(delimiter)]
-#            print("Tag: ", v)
+#            logger.debug("Tag: ", v)
             # backward compatibility
             for st in SPECIAL_TAGS:
                 if(st in v):
@@ -190,7 +191,7 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
                     v = int(v)
                     assert 0 < v <= 4, "Correct_id is fixed to [1, 4] for now, but received: {}".format(v)
             except ValueError as e:
-                print("The correct id `{}` cannot be parsed".format(v))
+                logger.debug("The correct id `{}` cannot be parsed".format(v))
                 raise e
         new_data[k] = v
     # If there is an image present in cell, replace it wholesale. TODO allow insertion 
@@ -210,14 +211,18 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
                         used = True 
                 if not used:
                     # print warning that image is not used anywhere.
-                    print("Image " + image_info["link"] + " has not been used; make sure to have a correct reference as {" + "image_" + (col - 10 + 1) + "} in either question or answer")
+                    logger.warning("Image " + image_info["link"] + " has not been used; make sure to have a correct reference as {" + "image_" + (col - 10 + 1) + "} in either question or answer")
             else:
                 # image is out of expected column, ignore
-                print("Image {} is at invalid column {} (should be put at image_1-image6/10-15); not used.".format(image_info["link"], col))
+                logger.warning("Image {} is at invalid column {} (should be put at image_1-image6/10-15); not used.".format(image_info["link"], col))
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
     # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
-    assert new_data.get("is_single_equation", False) or len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
+    assert new_data.get("is_single_equation", False) or new_data.get("is_single_option", False) or \
+        len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
+    # if is_single_option, make sure that it has at least 4 corresponding templates.
+    if(new_data.get("is_single_option", False) and new_data["variable_limitation"].count("\n") < 3):
+        raise ValueError("Question {} must have at least 4 variant, but only has {}".format(new_data, new_data["variable_limitation"].count("\n")+1))
     # if multiple-choice question with only a single selection, convert it to list 
     if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):
         new_data["correct_id"] = (new_data["correct_id"],)
@@ -226,9 +231,9 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
 if __name__ == "__main__":
     # normal test
     data = read_file("test/sample.xlsx")
-    print(data)
+    logger.debug(data)
 ##    write_file_csv("test/test_write_sample.csv", data, HEADERS)
 #    write_file_xlsx("test/test_write_sample.xlsx", data, HEADERS)
-#    print("Tested writing.")
+#    logger.debug("Tested writing.")
     # image read test
-#    print(read_file_xlsx("test/sample_with_image.xlsx"))
+#    logger.debug(read_file_xlsx("test/sample_with_image.xlsx"))
