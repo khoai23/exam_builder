@@ -28,7 +28,7 @@
 		</div>
 		<div class="col-md-3 col-sm-6">
 			<input type="checkbox" id="cue_is_regex">Regex mode</input>
-			<button class="btn btn-info" id="upload_btn" onclick="upload_convertable(event)">Parse</button>
+			<button class="btn btn-info" id="upload_btn" onclick="convert_text()">Parse</button>
 		</div>
 		<div class="border border-secondary col-md-3 col-sm-6">
 			<label class="d-sm-block" for="question_header"> Question Header: </label>
@@ -63,9 +63,13 @@
 				<th style="position: sticky; top: 0;">Answer 2</th>
 				<th style="position: sticky; top: 0;">Answer 3</th>
 				<th style="position: sticky; top: 0;">Answer 4</th>
-					<th style="position: sticky; top: 0;">Correct</th>
-				<th style="position: sticky; top: 0;">Category</th>
-				<th style="position: sticky; top: 0;">Tag</th> -->
+				<th style="position: sticky; top: 0;">Correct</th>
+				<th style="position: sticky; top: 0;">
+					<input id="category_all" type="text" placeholder="Category"></input>
+				</th>
+				<th style="position: sticky; top: 0;">
+					<input id="tag_all" type="text" placeholder="Tag"></input>
+				</th>
 				<th style="position: sticky; top: 0;">
 					<button class="btn btn-link p-0" onclick="toggle_use(event)">Use</button>
 				</th>
@@ -76,11 +80,18 @@
 	</table>
 	<div class="container-fluid d-flex">
 		<button class="btn border border-info" onclick="copy_to_clipboard(event)" disabled>Copy All to Clipboard</button>
-		<span class="ml-auto text-success p-2" id="save_status" style="display: none;" ></span>
+		<span class="ml-auto text-success p-2" id="save_status"></span>
 		<button class="btn btn-info" onclick="save_csv(event)">Save as CSV</button>
 	</div>
 </div>
 {% endblock %}
+
+<!-- 
+	csv exported in UTF-8 might be screwed when double-clicked on Windows, due to it using the 1252-WE encoding 
+	To circumvent, in an opened Excel session, go Data -> Get Data -> From Text/CSV -> choose the file -> select File Origin to 65001 (UTF-8).
+	If the data created from this has column1...; that can be fixed by going Transform Data -> [Transform tab]Use First row as Headers
+	See https://howardsimpson.blogspot.com/2019/08/excel-import-csv-not-using-use-first-row-as-headers.html
+-->
 
 {% block script %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.10/docxtemplater.js"></script>
@@ -88,6 +99,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
 <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip-utils.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+<script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="convert.js") }}></script>
 {% endblock %}
 
