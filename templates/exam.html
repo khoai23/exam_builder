@@ -1,4 +1,7 @@
 {% extends 'shared/base.html' %}
+{% block stylesheet %}
+	<link rel="stylesheet" href={{ url_for('static', filename="styles/exam.css") }}>
+{% endblock %}
 {% block content %}
 <nav class="navbar navbar-expand-md bg-dark navbar-dark">
 	<a class="navbar-brand" href="#">Exam</a>
@@ -6,7 +9,7 @@
 		<div id="timer" class="row progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">00h00s</div>
 	</div>
 </nav> 
-<div class="container-fluid" style="position: sticky; top: 0;">
+<div class="container-fluid">
 	<h1>Exam Page</h1>
 	<span>Examinee: <b>{{ student_name }}</b> </span><br />
 	<span>Test name: <b>{{ exam_setting["session_name"] }}</b></span><br />
@@ -56,10 +59,11 @@
 		<textarea class="form-control" aria-label="Write your feedback/complaints here"></textarea>
 	</div>
 	<!-- <button class="mx-2 btn btn-success" onclick="submit(event)">Submit Answers</button> -->
-	<button type="button" class="btn btn-success" data-toggle="modal" data-target="#confirmation_modal" onclick="updateModal()"> Submit Answers</button>
+	<button type="button" class="btn btn-success" data-toggle="modal" data-target="#confirmation_modal" onclick="updateModal()">Submit Answers</button>
 </div>
 <div id="finished_region" class="container-fluid" style="display: none;">
 	<p id="finished_message">The test had already been attempted.</p>
+	<h3 id="score_message" {% if score is not defined or score is not number %} style="display: none;" {% endif %}>Score: {{ score }}</h3>
 </div>
 
 <div class="modal fade" id="confirmation_modal" tabindex="-1" role="dialog" aria-labelledby="confirmation_title" aria-hidden="true">
@@ -93,8 +97,9 @@
 	var remaining_time = {{ remaining | safe }};
 	var exam_data_length = {{ exam_data | length }};
 	{% if submitted %}
-		console.log("Answer already submitted, hiding");
+		console.log("Answers already submitted, hiding.");
 		$("#exam_region").hide(); $("#submit_region").hide(); $("#finished_region").show(); 
+		$("#timer_wrapper").hide();
 	{% else %}
 		runTimer(elapsed_time, remaining_time);
 	{% endif %}

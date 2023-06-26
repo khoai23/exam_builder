@@ -116,7 +116,7 @@ function submit(event, autosubmit) {
 	for(let i=0; i<exam_data_length; i++) {
 		submission.push(answers[i]);
 	}
-	console.log(submission); // view for now
+	console.log("Sending submission:", submission); // view for now
 	// var base = window.location.origin;
 	var submit_link = "submit?key=" + getUrlParameter("key");
 	// send 
@@ -131,12 +131,44 @@ function submit(event, autosubmit) {
 			if(data["result"]) {
 				// good submission; display finished region
 				$("#finished_region").show();
-				$("#exam_region").hide();
 				$("#submit_region").hide();
 				if(autosubmit) {
 					$("#finished_message").text("Answers had been auto-submitted. Close the browser and await teacher responses.");
 				} else {
 					$("#finished_message").text("Answers had been submitted. Close the browser and await teacher responses.");
+				}
+				if("correct" in data) { // allowed to show correct result; format accordingly
+					for(const [qid, qcrt] of data["correct"].entries()) {
+						// for correct answer; boxes will glow in green (always)
+						// for incorrect answer; box will glow in red (only selected)
+						console.log(qid, qcrt);
+						for(let i=0;i<4;i++) {
+							// console.log("Searching box: ", "#q_" + qid.toString() + "_" + i.toString());
+							let identifier = qid.toString() + "_" + i.toString();
+							let box = $("#qc_" + identifier + "," + "#qr_" + identifier);
+							// console.log("Modifying box: ", identifier, box);
+							if(Array.isArray(qcrt)) {
+								if(qcrt.includes(i+1)) {
+									box.addClass("custom_glow_green");
+								} else {
+									box.addClass("custom_glow_red");
+								}
+							} else {
+								if(qcrt == i+1) {
+									box.addClass("custom_glow_green");
+								} else {
+									box.addClass("custom_glow_red");
+								}
+							}
+							box.attr("disabled", true); // always disable all boxes
+						}
+					}
+				} else { // is not allowed to show correct result; hide the whole setup
+					$("#exam_region").hide();
+				}
+				if("score" in data) {
+					// allowed to show score; display and format 
+					$("#score_message").text("Score: " + data["score"].toFixed(2)).show();
 				}
 				submitted = true;
 			} else {

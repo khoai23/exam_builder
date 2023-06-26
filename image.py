@@ -15,6 +15,9 @@ import base64
 from imgurpython import ImgurClient 
 from imgurpython.helpers.error import ImgurClientError 
 
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
 DEFAULT_CLIENT_ID = "1326a4fdc9087ea"
@@ -108,10 +111,10 @@ def check_and_write_image(image: Union[str, bytes]):
         # very very very likely a duplication.
         # TODO what to do if it's not? load image and check.
         # insane worry. try loading 2^1024 images and then we'll check collision 
-        print("Image existed, using registered at {}".format(img_hash))
+        logger.info("Image existed, using registered at {}".format(img_hash))
         return DefaultImageRegistry[img_hash]
     else:
-        print("Image new, register with {}".format(img_hash))
+        logger.info("Image new, register with {}".format(img_hash))
         return write_image_to_id(image, img_hash)
 
 # always reload the registry, regardless of command type 
@@ -145,7 +148,7 @@ if __name__ == "__main__":
         #print("Image uploaded at `{}`".format(image["link"]))
         #print("Kept image data: {}".format(image))
 elif(os.path.isfile(DEFAULT_CREDENTIAL_STORAGE)):
-    print("Module mode - reuse set credentials and attempt access.")
+    logger.info("Image in module mode - reuse set credentials and attempt access.")
     DefaultClient = load_credentials()
 else:
     raise FileNotFoundError("Must have `{}` available to load credentials in module mode.".format(DEFAULT_CREDENTIAL_STORAGE))

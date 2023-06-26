@@ -91,7 +91,12 @@ def file_import():
         perform_import(temporary_filename, filepath_dict["current_path"])
         return flask.jsonify(result=True)
     except Exception as e:
-        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
+        keep_backup = request.args.get("keep_backup")
+        if(not keep_backup or keep_backup.lower() != "true"):
+            if(os.path.isfile(temporary_filename)):
+                logger.info("Detected failed import file: {}; removing.".format(temporary_filename))
+                os.remove(temporary_filename)
         return flask.jsonify(result=False, error=str(e))
 #    raise NotImplementedError
 
@@ -105,7 +110,7 @@ def rollback():
         else:
             return flask.jsonify(result=False, error="No backup available")
     except Exception as e:
-        logger.error(traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         return flask.jsonify(result=False, error=str(e))
 
 @app.route("/build_template", methods=["POST"])
@@ -144,7 +149,7 @@ def identify():
             # use sorta anonymous access here
             return retrieve_submit_route_anonymous(template_key)
         except Exception as e:
-            logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+            logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
 
 @app.route("/enter")
@@ -170,7 +175,7 @@ def submit():
         submitted_answers = request.get_json()
         return submit_exam_result(submitted_answers, student_key)
     except Exception as e:
-        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 
 @app.route("/single_manager")
@@ -186,13 +191,13 @@ def single_manager():
         # TODO allow a box to supplement key to manage 
         # TODO listing all running templates
         session_data = session[template_key]
-        logger.debug("Access session data: {}".format(session_data)
+        logger.debug("Access session data: {}".format(session_data))
         if(admin_key == session_data["admin_key"]):
             return flask.render_template("single_manager.html", session_data=session_data, template_key=template_key)
         else:
             return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
     except Exception as e:
-        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
 
 @app.route("/single_session_data", methods=["GET"])
@@ -222,7 +227,7 @@ def delete_session():
         admin_key = request.args.get("key")
         return remove_session(template_key, verify=True, verify_admin_key=admin_key)
     except Exception as e:
-        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
     
 @app.route("/convert")
@@ -248,7 +253,7 @@ def convert_text_to_table():
         problems = read_and_convert(text, question_cue=qcue, answer_cues=acue)
         return flask.jsonify(result=True, problems=problems)
     except Exception as e:
-        return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+#       return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
         return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
     
 
@@ -278,7 +283,7 @@ def generic_submit():
             # TODO show the error 
             return flask.redirect(request.referrer)
     except Exception as e:
-        logger.error("Error: {}; Traceback:\n".format(e, traceback.format_exc())
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         # back to the previous (identify page); TODO show the error
         return flask.redirect(request.referrer)
 

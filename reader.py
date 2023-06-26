@@ -20,6 +20,8 @@ _DEFAULT_FILE_PREFIX = "test/sample"
 _DEFAULT_BACKUP_PREFIX = "test/backup"
 
 TEMPORARY_FILE_DIR = "test"
+_DEFAULT_RECOVER_FILE_PREFIX = "test/recover_current"
+_DEFAULT_RECOVER_BACKUP_PREFIX = "test/recover_backup"
 # no longer hardfix - now try to load file by a prefix, xlsx first
 # DEFAULT_FILE_PATH = "test/sample.xlsx"
 def get_file_by_prefix(prefix: str, prefer_cue: Optional[str]=None):
@@ -46,6 +48,18 @@ def move_file(source: str, target: str, is_target_prefix: Optional[bool]=True, a
     if(os.path.isfile(target) and autoremove_target):
         os.remove(target)
     shutil.move(source, target)
+    return target
+
+def copy_file(source: str, target: str, is_target_prefix: Optional[bool]=True, autoremove_target: bool=True):
+    # copy file. is_target_prefix=true will have target appending the extension of the source 
+    # return the location of the target 
+    # TODO merge with move?
+    if(is_target_prefix):
+        _, ext = os.path.splitext(source)
+        target = target + ext 
+    if(os.path.isfile(target) and autoremove_target):
+        os.remove(target)
+    shutil.copy(source, target)
     return target
 
 HEADERS = ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]

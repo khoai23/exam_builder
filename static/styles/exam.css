@@ -1,0 +1,7 @@
+.custom_glow_green {
+	box-shadow: 0px 0px 5px green;
+}
+
+.custom_glow_red:checked {
+	box-shadow: 0px 0px 5px red;
+}

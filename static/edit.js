@@ -3,11 +3,11 @@ function set_buttons_state(working) {
 	// also switch the spinner and text depending on which
 	// TODO set spinner color
 	if(working){
-		$("#button_bar").find("button").addClass("disabled");
+		$("#button_bar").find("button").prop("disabled", true);
 		$("#spinner").show();
 		$("#io_result").hide();
 	} else {
-		$("#button_bar").find("button").removeClass("disabled");
+		$("#button_bar").find("button").prop("disabled", false);
 		$("#spinner").hide();
 		$("#io_result").show();
 	}
@@ -36,9 +36,13 @@ function submit_file(event) {
 		contentType: false,
 		success: function(data, textStatus, jqXHR) {
 			console.log("Form submitted: ", data);
-			$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.");
-			//$(event.currentTarget).attr("disabled", false);
-			get_and_reupdate_question(event);
+			if(data["result"]) {
+				$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.").show();
+				//$(event.currentTarget).attr("disabled", false);
+				get_and_reupdate_question(event);
+			} else {
+				$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed; error: " + data["error"]).show();
+			}
 			set_buttons_state(false);
 		},
 		error: function(jqXHR, textStatus, error){

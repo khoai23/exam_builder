@@ -1,13 +1,17 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
 import time, os 
+import traceback
 import flask 
 from flask import url_for
 import secrets
 from datetime import datetime 
 
-from reader import read_file, move_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX
+from reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX
 from organizer import assign_ids, shuffle, check_duplication_in_data
+
+import logging
+logger = logging.getLogger(__name__)
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
@@ -21,6 +25,34 @@ student_belong_to_session = dict()
 
 """Section working with data: importing, deleting and rolling back will be put here.
 TODO put all this to a different corresponding files to debloat"""
+
+def wrap_recover_after_failure(function):
+    """General wrapper for all operations involving modification of the backup/current files. Keep necessary copies of current_path and backup_path; upon exception, return them into places and reload the data.
+    """
+    def wrapper_function(*args, **kwargs):
+        try:
+            # keeping recovery files
+            current_recover = copy_file(filepath_dict["current_path"], _DEFAULT_RECOVER_FILE_PREFIX, is_target_prefix=True)
+            if(filepath_dict["backup_path"]):
+                backup_recover = copy_file(filepath_dict["backup_path"], _DEFAULT_RECOVER_BACKUP_PREFIX, is_target_prefix=True)
+            else:
+                backup_recover = None
+            return function(*args, **kwargs)
+        except Exception as e:
+            logger.error("Error attempting to run function {}. Attempt recovery.\nError: {}\n{}".format(function, e, traceback.format_exc()))
+            filepath_dict["current_path"] = move_file(current_recover, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
+            if(backup_recover):
+                filepath_dict["backup_path"] = move_file(backup_recover, _DEFAULT_BACKUP_PREFIX, is_target_prefix=True)
+            reload_data(filepath_dict["current_path"])
+            # reraise the error
+            raise e
+        finally:
+            # if file exist after operation; throw them away 
+            if(os.path.isfile(current_recover)):
+                os.remove(current_recover)
+            if(backup_recover and os.path.isfile(backup_recover)):
+                os.remove(backup_recover)
+    return wrapper_function
 
 def reload_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     """Reload - clear everything and then re-load the data. No session will be kept, since id would likely be completely screwed"""
@@ -38,8 +70,9 @@ def append_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     id_data.clear(); id_data.update(assign_ids(current_data))
     if(check_duplication):
         mark_duplication(current_data)
-#    print([r["correct_id"] for r in current_data])
+#    logger.debug([r["correct_id"] for r in current_data])
 
+@wrap_recover_after_failure
 def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, preserve_session: bool=False):
     """Deleting specific data. 
     If safe, only allow deletion of uncommitted data (set with a specific flag).
@@ -63,7 +96,7 @@ def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, pres
         # put the new_data back in
         del current_data[:]
         current_data.extend(new_data)
-    print("Reupdated data: ", current_data)
+    logger.debug("Reupdated data: {}".format(current_data))
     # re-set the question ids
     id_data.clear(); id_data.update(assign_ids(current_data))
     if(preserve_session):
@@ -73,6 +106,52 @@ def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, pres
         submit_route.clear()
         student_belong_to_session.clear()
     return {"result": True}
+
+def create_backup(current_file: str, backup_prefix=_DEFAULT_BACKUP_PREFIX):
+    """Function will move the file to backup position while being mindful of its extension."""
+    return move_file(current_file, backup_prefix, is_target_prefix=True)
+
+def perform_commit(current_file: str):
+    """After modifying the current data in some way, this action will put old data in backup and create a new one"""
+    backup_path = create_backup(current_file)
+    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
+    write_file_xlsx(current_path, current_data)
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
+    return backup_path, current_path
+
+@wrap_recover_after_failure
+def perform_import(import_file: str, current_file: str, replace_mode: bool=False, delete_import_after_done: bool=True):
+    """Performing appropriate importing protocol. Reloading/updating data as needed depending on replace_mode
+    Assuming an import file is created at {import_file}, and can be read by reload_data(); the file at {current_file} will be replaced with the latest update of each variant
+    Always return "backup_path" & "current_path"
+    """
+    backup_path = create_backup(current_file)
+    # add/replace the data
+    if(replace_mode):
+        logger.debug("Import and add the data to current")
+        reload_data(location=import_file)
+    else:
+        logger.debug("Import and replace the data to current")
+        append_data(location=import_file)
+    # regardless of mode; write the current data to the current path 
+    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
+    write_file_xlsx(current_path, current_data)
+    # clean up if flag is set
+    if(delete_import_after_done):
+        os.remove(import_file)
+    # done, only return correct 
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
+    return backup_path, current_path
+
+@wrap_recover_after_failure
+def perform_rollback(backup_file: str, current_path: str):
+    """Performing rollback. Just move the file back in and reload it."""
+    os.remove(current_path)
+    current_path = move_file(backup_file, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
+    backup_path = None
+    reload_data(location=current_path)
+    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
+    return current_path, backup_path
 
 def mark_duplication(data: List[Dict]):
     """Mark concerning rows of data with {has_duplicate} and {duplicate_of}."""
@@ -87,50 +166,6 @@ def clear_mark_duplication(data: List[Dict]):
     for d in data:
         d.pop("has_duplicate", None)
         d.pop("duplicate_of", None)
-
-def create_backup(current_file: str, backup_prefix=_DEFAULT_BACKUP_PREFIX):
-    """Function will move the file to backup position while being mindful of its extension."""
-    return move_file(current_file, backup_prefix, is_target_prefix=True)
-
-def perform_commit(current_file: str):
-    """After modifying the current data in some way, this action will put old data in backup and create a new one"""
-    backup_path = create_backup(current_file)
-    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
-    write_file_xlsx(current_path, current_data)
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return backup_path, current_path
-
-def perform_import(import_file: str, current_file: str, replace_mode: bool=False, delete_import_after_done: bool=True):
-    """Performing appropriate importing protocol. Reloading/updating data as needed depending on replace_mode
-    Assuming an import file is created at {import_file}, and can be read by reload_data(); the file at {current_file} will be replaced with the latest update of each variant
-    Always return "backup_path" & "current_path"
-    """
-    backup_path = create_backup(current_file)
-    # add/replace the data
-    if(replace_mode):
-        print("Import and add the data to current")
-        reload_data(location=import_file)
-    else:
-        print("Import and replace the data to current")
-        append_data(location=import_file)
-    # regardless of mode; write the current data to the current path 
-    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
-    write_file_xlsx(current_path, current_data)
-    # clean up if flag is set
-    if(delete_import_after_done):
-        os.remove(import_file)
-    # done, only return correct 
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return backup_path, current_path
-
-def perform_rollback(backup_file: str, current_path: str):
-    """Performing rollback. Just move the file back in and reload it."""
-    os.remove(current_path)
-    current_path = move_file(backup_file, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
-    backup_path = None
-    reload_data(location=current_path)
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return current_path, backup_path
 
 
 """This section is for redirecting & managing real session data, entry points & management"""
@@ -156,7 +191,7 @@ def load_template(data: Dict):
     # calculate maximum score using current data 
     max_score = sum((count * score for count, score, ids in data["template"]))
     session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
-    print("Session after modification: ", session)
+    logger.debug("New template: {}".format(session[key]))
     return key, admin_key
 
 def student_first_access_session(template_key: str):
@@ -176,7 +211,6 @@ def student_first_access_session(template_key: str):
             "correct": correct,
             "start_time": time.time()
     }
-    print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
     # redirect to self 
     return flask.redirect(url_for("enter", key=student_key))
 
@@ -189,7 +223,7 @@ def student_reaccess_session(student_key: str):
     # retrieve the generated test; TODO also keep backup of what was chosen 
     session_data = session[template_key]
     student_data = session_data["student"][student_key]
-    print("Accessing existing key: ", student_key, " with data", student_data)
+    logger.debug("Accessing existing key: ", student_key, " with data", student_data)
     # return the exam page directly
     if(session_data["setting"].get("exam_duration", None)):
         # send 2 values: elapsed & remaining if there is a duration
@@ -200,19 +234,21 @@ def student_reaccess_session(student_key: str):
     else:
         elapsed = remaining = 0.0
         end_time = float("+inf")
-    print("Submitted answer? ", ("answers" in student_data))
+    logger.debug("Submitted answer? {}".format("answers" in student_data))
+    # if setting is available and actually has score, allow rendering; if not then is None
+    student_score = student_data["score"] if "answers" in student_data and session_data["setting"].get("allow_score", False) else None
     if(time.time() > end_time):
         return flask.render_template("error.html", error="Exam over; cannot submit", error_traceback=None)
     else:
         # allow entering
-        return flask.render_template("exam.html", student_name=student_data["student_name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session[template_key]["setting"], custom_navbar=True)
+        return flask.render_template("exam.html", student_name=student_data["student_name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session_data["setting"], custom_navbar=True, score=student_score)
 
 def retrieve_submit_route_anonymous(template_key: str):
     """This is for submitting the student info; NOT for submitting the exam result 
     No restriction on student info, anybody can enter
     """
     if(template_key not in submit_route):
-        print("First trigger of identify, building corresponding submit route")
+        logger.debug("First trigger of identify, building corresponding submit route")
         def receive_form_information(student_name=None, **kwargs):
             # refer to generic_submit for more detail
             # create unique student key for this specific format
@@ -228,7 +264,7 @@ def retrieve_submit_route_anonymous(template_key: str):
                     "correct": correct,
                     "start_time": time.time()
             }
-            print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
+            logger.info("New student key created: {}; exam triggered at {}".format(student_key, student_data["start_time"]))
             # redirect to enter/ 
             return flask.redirect(url_for("enter", key=student_key))
         # add this to the submit_route dictionary
@@ -260,10 +296,10 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
                 return flask.render_template("generic_input.html", error="ID {} does not exist in the restriction list.".format(student_id), **default_setting)
                 # return flask.jsonify(result=False, error="ID {} does not exist in the restriction list.".format(id))
             if(student_id in student_id_to_key):
-                print("Restricted mode: ID {} reaccessing its session")
+                logger.info("Restricted mode: ID {} reaccessing its session")
                 student_key = student_id_to_key[student_id]
             else:
-                print("Restricted mode: ID {} first-accessing its session")
+                logger.info("Restricted mode: ID {} first-accessing its session")
                 student_key = secrets.token_hex(8)
                 # write to session retrieval
                 student_belong_to_session[student_key] = template_key
@@ -277,7 +313,7 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
                         "correct": correct,
                         "start_time": time.time()
                 }
-                print("New student key created: ", student_key, ", exam triggered at ", student_data["start_time"])
+                logger.info("New student key created: {}; exam triggered at {}".format(student_key, student_data["start_time"]))
                 # after everything, record so subsequent accesses will work
                 student_id_to_key[student_id] = student_key
             # redirect to enter/ 
@@ -286,10 +322,10 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
 
     return flask.render_template("generic_input.html", **default_setting) 
 
-def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_score: bool=True, return_score: bool=None):
+def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_score: bool=True, return_result: Optional[bool]=None, return_score: Optional[bool]=None):
     template_key = student_belong_to_session[student_key]
     student_data = session[template_key]["student"][student_key]
-    print(student_data)
+    logger.debug("Student data: {}".format(student_data))
     if("answers" in student_data):
         return flask.jsonify(result=False, error="Already have an submitted answer.")
     else:
@@ -315,10 +351,17 @@ def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_scor
                         continue
                 # if reached here, question is wrong 
                 detailed_score.append(0)
-            print("Calculated score: ", score)
+            logger.debug("Calculated score: {}".format(score))
             student_data["score"] = score 
-            student_data["detailed_score"] = detailed_score
-            if(return_score):
+            student_data["detailed_score"] = detailed_score 
+            # TODO clean this better
+            return_result = return_result if return_result is not None else session[template_key]["setting"].get("allow_result", True)
+            return_score = return_score if return_score is not None else session[template_key]["setting"].get("allow_score", True)
+            if(return_result and return_score):
+                return flask.jsonify(result=True, correct=student_data["correct"], score=score)
+            elif(return_result):
+                return flask.jsonify(result=True, correct=student_data["correct"])
+            elif(return_score):
                 return flask.jsonify(result=True, score=score)
         return flask.jsonify(result=True)
 
