@@ -171,23 +171,31 @@ function submit_questionnaire(event) {
 			dataType: "json",
 			success: function(data, textStatus, jqXHR){
 				console.log("Received: ", data);
-				// add the link for admin page & test page 
-				// TODO add a button to do link copying
-				var base = window.location.origin;
-				// set the admin and exam link 
-				var admin_path = base + "/single_manager" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
-				var admin_link = $("#admin_link");
-				admin_link.attr("href", admin_path); admin_link.text(admin_path)
-				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
-				var exam_link = $("#exam_link");
-				exam_link.attr("href", exam_path); exam_link.text(exam_path)
-				// also enable the admin link for "Manage Session" in the navbar 
-				// TODO re-enable this feature again
-				// $("#manage_session_link").attr("href", admin_path);
-				// $("#manage_session_link_wrapper").show();
+				if(data["result"]) {
+					// add the link for admin page & test page 
+					// TODO add a button to do link copying
+					var base = window.location.origin;
+					// set the admin and exam link 
+					var admin_path = base + "/single_manager" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
+					var admin_link = $("#admin_link");
+					admin_link.attr("href", admin_path); admin_link.text(admin_path)
+					var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
+					var exam_link = $("#exam_link");
+					exam_link.attr("href", exam_path); exam_link.text(exam_path)
+					// enable the good panel; hiding the bad one
+					$("#result_good").show(); $("#result_bad").hide()
+					// also close down the selector, shouldn't need it now
+					$("#category_selector").collapse('hide');
+				} else {
+					$("#result_bad_error").text(data["error"]);
+					$("#result_bad_traceback").text(data["error_traceback"]);
+					// enable the bad panel; hiding the good one
+					$("#result_good").show(); $("#result_bad").hide()
+					// still want the selector
+					// $("#category_selector").collapse('hide');
+				}
 				// also hiding the above panels
 				$("#data_table").collapse('hide'); 
-				$("#category_selector").collapse('hide');
 				// open the view 
 				$("#result_frame").collapse('show');
 				result_panel.show();

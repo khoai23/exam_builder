@@ -199,11 +199,19 @@
 			</button>
 		</div>
 		<div class="p-2 collapse show" aria-labelledby="accordion_result_header" data-bs-parent="#accordion_main" id="result_frame">
-			Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
-			<br />
-			Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
-			<br />
-			Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+			<div id="result_good">
+				Admin page: <a id="admin_link" href="#" target="_blank">Not Available</a>
+				<br />
+				Exam page: <a id="exam_link" href="#" target="_blank">Not Available</a>
+				<br />
+				Make sure to copy them into a safe location; these values cannot be retrieved (for now).
+			</div>
+			<div id="result_bad">
+				The questionnaire cannot be created due to
+				<span class="text-danger" id="result_bad_error"></span>
+				Full traceback:
+				<span class="text-warning" id="result_bad_traceback"></span>
+			</div>
 		</div>
 	</div>
 </div>

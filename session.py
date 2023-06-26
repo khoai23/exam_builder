@@ -1,11 +1,14 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
-import time, os 
+import time, os, sys
 import traceback
 import flask 
 from flask import url_for
 import secrets
 from datetime import datetime 
+import signal
+import threading, _thread
+from contextlib import contextmanager
 
 from reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX
 from organizer import assign_ids, shuffle, check_duplication_in_data
@@ -170,7 +173,48 @@ def clear_mark_duplication(data: List[Dict]):
 
 """This section is for redirecting & managing real session data, entry points & management"""
 
-def load_template(data: Dict):
+# from https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call
+class TimeoutException(Exception):
+    pass 
+
+@contextmanager 
+def time_limit(seconds):
+    def signal_handler(signum=None, frame=None):
+        if sys.platform == 'win32': # interrupt the main thread with a KeyboardInterrupt
+            _thread.interrupt_main()
+        else:  # just sent a signal that way
+            raise TimeoutException("Process ran more than {}s. Terminating.".format(seconds))
+    if sys.platform == 'win32':
+        timer = threading.Timer(seconds, signal_handler)
+        timer.start()
+    else:
+        signal.signal(signal.SIGALRM, signal_handler)
+        signal.alarm(seconds) # send signal after seconds
+    try:
+        yield
+    except KeyboardInterrupt:
+        # for window, it will be terminated by the 
+        raise TimeoutException("Process ran more than {}s. Terminating.".format(seconds))
+    finally: # remove signal if either had been ran
+        if sys.platform == 'win32':
+            timer.cancel()
+        else:
+            signal.alarm(0)
+
+def test_template_validity(template: List[Tuple[int, float, List]]):
+    """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that """
+    try:
+        full_test_template = [(len(l), 0.0, l) for _, _, l in template ]
+        full_count = sum((num for num, _, _ in full_test_template))
+        with time_limit(full_count * 0.25):
+            # maximum 0.25s for every question 
+            shuffle(id_data, full_test_template)
+            return True, None
+    except Exception as e:
+        logger.error("Template test failed: {}\n{}".format(e, traceback.format_exc()))
+        return False, (e, traceback.format_exc())
+
+def load_template(data: Dict, check_template: bool=True):
     # format setting: cleaning dates; voiding nulled fields
     setting = {k: v for k, v in data["setting"].items() if v is not None and (not isinstance(v, str) or v.strip() != "")}
     if("session_start" in setting):
@@ -182,7 +226,12 @@ def load_template(data: Dict):
     if("student_list" in setting and len(setting["student_list"]) == 0):
         # void the student list if no entry available 
         setting.pop("student_list", None)
-
+    
+    if(check_template):
+        result, error_type = test_template_validity(data["template"])
+        if(not result):
+            logger.info("Failed validation test. TODO find specific failure row")
+            return False, error_type
     # generate a random key for this session.
     key = secrets.token_hex(8)
     admin_key = secrets.token_hex(8)
@@ -192,7 +241,7 @@ def load_template(data: Dict):
     max_score = sum((count * score for count, score, ids in data["template"]))
     session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
     logger.debug("New template: {}".format(session[key]))
-    return key, admin_key
+    return True, (key, admin_key)
 
 def student_first_access_session(template_key: str):
     """Deprecated as retrieve_submit_route_anonymous & retrieve_submit_route_restricted will perform duty for this hardpoint"""

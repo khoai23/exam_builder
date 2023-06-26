@@ -31,7 +31,7 @@ Remaining bugfix/missing features:
 - [ ] Commit-type import to prevent stupidity
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
-- [ ] Converter supporting multiple-choice question selection
+- [ ] Converter supporting multiple-choice question selection; exporting in the more generic xlsx instead.
 - [ ] Converter direct import and copy content to clipboard (right now not working on Firefox)
 - [ ] Import supporting xls file by xlrd
 - [x] Allow rollback in case of crappy import 

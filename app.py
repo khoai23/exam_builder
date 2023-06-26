@@ -118,9 +118,13 @@ def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
     logger.info("@build_template: Received template data: {}".format(data))
-    key, admin_key = load_template(data)
-    # return the key to be accessed by the browser
-    return flask.jsonify(session_key=key, admin_key=admin_key)
+    result, (arg1, arg2) = load_template(data)
+    if(result):
+        # return the key to be accessed by the browser
+        return flask.jsonify(result=True, session_key=arg1, admin_key=arg2)
+    else:
+        # return the error and concerning traceback
+        return flask.jsonify(result=False, error=str(arg1), error_traceback=str(arg2))
 
 @app.route("/identify")
 def identify():
