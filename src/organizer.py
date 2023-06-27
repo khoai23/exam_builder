@@ -4,7 +4,7 @@ from collections import defaultdict
 import random 
 import unicodedata 
 
-from dynamic_problem import convert_dynamic_key_problem, convert_single_option_problem, convert_fixed_equation_problem, convert_single_equation_problem
+from src.generator.dynamic_problem import convert_dynamic_key_problem, convert_single_option_problem, convert_fixed_equation_problem, convert_single_equation_problem
 
 from typing import Optional, Dict, List, Tuple, Any, Union
 

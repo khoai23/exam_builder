@@ -8,6 +8,7 @@ DONE- Upload image to Imgur and retrieve corresponding link
 """
 import io, os
 import json, pickle
+import requests
 import secrets 
 import hashlib 
 import base64
@@ -101,6 +102,8 @@ def write_image_to_id(image: Union[str, bytes], id_string: str, extra_desc=None)
     return image
 
 def check_and_write_image(image: Union[str, bytes]):
+    if(DefaultClient is None):
+        raise Exception("Image client is not available; action cannot be performed.")
     # hash the image, check if any collision happen in the registry 
     # image is enforced as bytes; str mode should not be used 
     if(not isinstance(image, bytes)):
@@ -149,7 +152,11 @@ if __name__ == "__main__":
         #print("Kept image data: {}".format(image))
 elif(os.path.isfile(DEFAULT_CREDENTIAL_STORAGE)):
     logger.info("Image in module mode - reuse set credentials and attempt access.")
-    DefaultClient = load_credentials()
+    try:
+        DefaultClient = load_credentials()
+    except requests.exceptions.ConnectTimeout as e:
+        logger.error("Image module not working (timeout). Import with images is disabled!")
+        DefaultClient = None
 else:
     raise FileNotFoundError("Must have `{}` available to load credentials in module mode.".format(DEFAULT_CREDENTIAL_STORAGE))
 

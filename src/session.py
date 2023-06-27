@@ -10,8 +10,8 @@ import signal
 import threading, _thread
 from contextlib import contextmanager
 
-from reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX
-from organizer import assign_ids, shuffle, check_duplication_in_data
+from src.reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX
+from src.organizer import assign_ids, shuffle, check_duplication_in_data
 
 import logging
 logger = logging.getLogger(__name__)

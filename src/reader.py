@@ -8,8 +8,8 @@ import string
 import openpyxl, openpyxl_image_loader 
 import base64
 
-from image import DefaultClient, check_and_write_image
-from utils import cell_name_xl_to_tuple
+from src.image import DefaultClient, check_and_write_image
+from src.utils import cell_name_xl_to_tuple
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,28 +91,31 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
     data_sheet = workbook[workbook.sheetnames[0]]
     logger.debug("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
     data = []
-    image_loader = openpyxl_image_loader.SheetImageLoader(data_sheet)
-    # old images will be read written in as |||{image_key}|||; b64 format
-    # new images will be read and converted to same format as above
-#    logger.debug(image_loader._images)
-#    image_loader.get("B2").show()
     image_dictionary = dict()
-    for key in image_loader._images:
-        logger.debug("Converting image for cell {}, exist: {}".format(key, image_loader.image_in(key)))
-        try:
-            img_buffer = io.BytesIO()
-            image_loader.get(key).save(img_buffer, format="PNG")
-        except ValueError:
-            # due to some weird bug, subsequent file opening can have old references of other loader. It will output "I/O operation on closed file" if not checked 
-            # hence, when receiving this, simply ignore them 
-            logger.info("Image at cell {} cannot be read. Ignoring.".format(key))
-            continue
-        img_data = img_buffer.getvalue()
-        number_key = row, col = cell_name_xl_to_tuple(key)
-        # logger.debug("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
-        row_dict = image_dictionary[row] = image_dictionary.get(row, dict())
-        # col is actually corresponding to answer1-4 already, lucky!
-        row_dict[col] = check_and_write_image(img_data)
+    if(DefaultClient is None):
+        logger.warning("Image module disabled/uninitialized. Import with images is disabled.")
+    else:
+        image_loader = openpyxl_image_loader.SheetImageLoader(data_sheet)
+        # old images will be read written in as |||{image_key}|||; b64 format
+        # new images will be read and converted to same format as above
+    #    logger.debug(image_loader._images)
+    #    image_loader.get("B2").show()
+        for key in image_loader._images:
+            logger.debug("Converting image for cell {}, exist: {}".format(key, image_loader.image_in(key)))
+            try:
+                img_buffer = io.BytesIO()
+                image_loader.get(key).save(img_buffer, format="PNG")
+            except ValueError:
+                # due to some weird bug, subsequent file opening can have old references of other loader. It will output "I/O operation on closed file" if not checked 
+                # hence, when receiving this, simply ignore them 
+                logger.info("Image at cell {} cannot be read. Ignoring.".format(key))
+                continue
+            img_data = img_buffer.getvalue()
+            number_key = row, col = cell_name_xl_to_tuple(key)
+            # logger.debug("Image at {:s} - {}: {}...".format(key, cell_name_xl_to_tuple(key), data[:100]))
+            row_dict = image_dictionary[row] = image_dictionary.get(row, dict())
+            # col is actually corresponding to answer1-4 already, lucky!
+            row_dict[col] = check_and_write_image(img_data)
     for i, row in enumerate(data_sheet.iter_rows(values_only=True)):
         if(i == 0 and headers is None):
             # if header is None, load it from the excel 

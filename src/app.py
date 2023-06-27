@@ -5,12 +5,13 @@ import os, time, re
 import traceback 
 import shutil
 
-from session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
-from session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
-from session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
-from convert_file import read_and_convert
-from reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
-from organizer import check_duplication_in_data
+from src.session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
+from src.session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
+from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
+from src.parser.convert_file import read_and_convert
+from src.reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
+from src.organizer import check_duplication_in_data 
+from src.map import generate_map
 
 import logging
 logger = logging.getLogger(__name__)
@@ -24,6 +25,14 @@ app._is_in_commit = False
 def main():
     """Enter the index page"""
     return flask.render_template("main.html")
+
+@app.route("/map")
+def map():
+    """Test the draw map. 
+    This will be base for us to show a little game board representing progress."""
+#    polygons = [(0, 0, 200, 200, [(30, 30), (150, 80), (170, 170), (80, 150)], {"bg": "lime", "fg": "green"})]
+    polygons = generate_map(current_data)
+    return flask.render_template("map.html", polygons=polygons)
 
 @app.route("/edit")
 def edit():

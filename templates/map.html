@@ -1,0 +1,15 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<div class="m-2 p-2">
+	{% for x, y, height, width, pointlist, attr in polygons %}
+	<svg height="{{height}}" width="{{width}}">
+		<polygon 
+			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
+			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
+	</svg> 
+	{% endfor %}
+</div>
+{% endblock %}
+
+{% block script %}
+{% endblock %}

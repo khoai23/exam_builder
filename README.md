@@ -37,6 +37,7 @@ Remaining bugfix/missing features:
 - [x] Allow rollback in case of crappy import 
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
+- [ ] Show error when the Imgur module is dead.
 - [x] Timer for each exam is hardcoded
 - [x] Redirection for identify is still (relatively) busted
 - [ ] Single manager capable of modifying settings (time limit, range, etc.)

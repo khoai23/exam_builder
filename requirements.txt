@@ -3,3 +3,7 @@ flask
 openpyxl 
 openpyxl-image-loader
 imgurpython
+
+scipy 
+numpy
+matplotlib
