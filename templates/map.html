@@ -2,7 +2,7 @@
 {% block content %}
 <div class="m-2 p-2">
 	{% for x, y, height, width, pointlist, attr in polygons %}
-	<svg height="{{height}}" width="{{width}}">
+	<svg height="{{height}}" width="{{width}}" style="position: absolute; left: {{x}}, top {{y}}">
 		<polygon 
 			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
 			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
