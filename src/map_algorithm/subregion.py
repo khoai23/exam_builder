@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import shortest_path
 from scipy.cluster.vq import kmeans 
 
-from typing import Optional, List, Tuple, Any, Union, Dict 
+from typing import Optional, List, Tuple, Any, Union, Dict, Set
 
 def sq_eu_d(a, b): # squared euclid distance between A and B; mostly used for comparing
     return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
@@ -64,26 +64,54 @@ def assign_subregions(keys: Dict[Tuple[str], int], subregions: List[Tuple[Tuple[
     else:
         return result_subregions, result_tags
 
+def border_loss(target_idx: int, recv_idx: int, bordered: Set[Tuple[int, int]], border_count: Dict[int, int]):
+    """Check upon {target_idx} being absorbed to {recv_idx}, lose how many border unit."""
+    count = 0
+    for index in border_count:
+        if index == target_idx or index == recv_idx:
+            continue # not related 
+        # for a neutral field; check if it is bordering both the target and recv. If yes, lose 1
+        if (target_idx, index) in bordered or (index, target_idx) in bordered:
+            if (recv_idx, index) in bordered or (index, recv_idx) in bordered:
+                count += 1
+    return count
 
 def border_based_merge(subregions: List[Tuple[Tuple[float, float], List]], regions: List[int]):
     """Merge basing on the border mechanism - perform merge & cuts in ways that allow the maximum amount of bordered subregions."""
     # establish bordering region 
-    bordered = defaultdict(lambda: False)
+    bordered = set()
     border_count = defaultdict(int)
     for i in range(len(subregions)-1):
         for j in range(i+1, len(subregions)):
             (_, sedge), (_, eedge) = subregions[i], subregions[j]
             # if +2 vertices shared; is two bordered regions 
             if len(set(sedge) & set(eedge)) > 2:
-                bordered[(i, j)] = True 
+                bordered.add( (i, j) )
                 border_count[i] += 1
                 border_count[j] += 1 
     # started merging. 
-    current_regions = [(n, []) for n in regions]
+    current_regions = [(n, [], None) for n in regions]
     mergeable = True 
     ignore = {} # should not be used
     while mergeable:
-        # select a subregion with the least bordered variants 
-        # TODO choose on proximity to other regions as well
-        target_idx, _ = min(border_count.items(), key=lambda it: it[1])
-        # if has 
+        # check bordered or empty region, smaller first 
+        receiver = num, reg, recv_idx = min(current_regions, key=lambda it: len(it[1]))
+        region_idx = current_regions.index(receiver)
+#        target_idx, _ = min(border_count.items(), key=lambda it: it[1])
+        if(len(receiver[1]) == 0):
+            # if receiver region is empty, just push in a random smallest one 
+            smallest = min(border_count.values())
+            # select subregions with the least border
+            possible_targets = [target_idx for target_idx, value in border_count.items() if value == smallest]
+            target_idx = random.choice(possible_targets)
+            # once pushed, the region will use the target_idx's values from this point onward
+            reg.push(target_idx)
+            current_regions[region_idx].push( (num-1, reg, target_idx) )
+        else:
+            # if receiver region is not empty, first choose the one bordering the receiver 
+            possible_targets = [target_idx for target_idx in border_count if (target_idx, recv_idx) in bordered or (recv_idx, target_idx) in bordered]
+            # choose the region that mimimizes border loss
+            target_idx = min(possible_targets, key=lambda t: border_loss(t, recv_idx, bordered, border_count))
+            reg.push(target_idx)
+            # merge the current 
+
