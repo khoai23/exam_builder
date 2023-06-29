@@ -51,10 +51,11 @@ def generate_map_by_region(data: List[Dict], width: float=1000, height: float=10
     mapped = [(0, 0, width, height, polygon, {"center": point, "fg": get_color(index, len(trimmed_polygons)), "text": catlist[index]}) for index, (point, polygon) in enumerate(trimmed_polygons)]
     return mapped
 
-def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, return_center: bool=False):
+def generate_map_by_subregion_deprecated(data: List[Dict], width: float=1000, height: float=1000, return_center: bool=False, retry: int=5):
     """Generate the corresponding map with subregion (category with tag) instead.
     Generate random points equal to each unique combination of tags under each category.
-    TODO allow splitting into further child-region to A. generate arbitrary shapes and B. create border regions"""
+    TODO allow splitting into further child-region to A. generate arbitrary shapes and B. create border regions
+    Failed for now, still working but not reliable"""
     countdict = defaultdict(int)
     for d in data:
         sorted_tag = (list(d["tag"]) if d.get("tag", []) else [])
@@ -66,13 +67,62 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     polygons_with_points = create_voronoi(centers, width=width, height=height)
     trimmed_polygons = perform_trim(polygons_with_points, width=width, height=height)
     # region check - assign nearby regions with similar color & tags 
-    regioned_polygons, regioned_keys, region_centers = assign_subregions(countdict, trimmed_polygons, width=width, height=height, return_center=True)
+    while retry > 0:
+        try:
+            regioned_polygons, regioned_keys, region_centers = assign_subregions(countdict, trimmed_polygons, width=width, height=height, assign_mode="border", return_center=True)
+            retry = 0
+        except ValueError as e:
+            if retry == 1:
+                # repeated up into limit, throw anyway
+                raise e
+            elif "Generation failed" in str(e):
+                # generation failure, normal retrying
+                retry -= 1
+            else:
+                # other failure, let through 
+                raise e
+
     mapped = [(0, 0, width, height, polygon, {"center": point, "fg": get_color(index, len(regioned_polygons)), "text": "-".join(regioned_keys[index])}) for index, (point, polygon) in enumerate(regioned_polygons)]
     if(return_center):
         return region_centers, mapped 
     else:
         return mapped
 
+def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, return_center: bool=False):
+    categories = defaultdict(set)
+    for d in data:
+        cat = d.get("category", "N/A")
+        sorted_tag = (list(d["tag"]) if d.get("tag", []) else [])
+        sorted_tag.sort()
+        categories[cat].add(tuple(sorted_tag))
+    # each category get a random point 
+    category_centers = [(random.random()*width, random.random()*height) for _ in categories]
+    category_regions = create_voronoi(category_centers, width=width, height=height)
+    trimmed_regions = perform_trim(category_regions, width=width, height=height)
+    # for each tag in data, choose 3 point inside associated region, select a point around it 
+    tag_names, tag_centers = [], []
+    region_centers = {}
+    for (cat, list_tags), (center, region) in zip(categories.items(), trimmed_regions):
+        for tags in list_tags:
+            # get random 3 points in region; calculate the new point with it 
+            choice_x, choice_y = zip(*random.sample(region, k=3))
+            parts = [random.random() for _ in range(3)]
+            parts = [v / sum(parts) for v in parts]
+            generated_point = (sum((x*v for x,v in zip(choice_x, parts))), sum((y*v for y,v in zip(choice_y, parts))))
+            # TODO check if generated point is on same line
+            # generate correct name & append 
+            tag_names.append( tuple([cat] + list(tags))  )
+            tag_centers.append(generated_point)
+        region_centers[cat] = center
+    # once finished; redo the region assignment again 
+    tag_regions = create_voronoi(tag_centers, width=width, height=height)
+    trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
+    mapped = [(0, 0, width, height, polygon, {"center": point, "fg": get_color(index, len(trimmed_polygons)), "text": "_".join(tag_names[index])}) for index, (point, polygon) in enumerate(trimmed_polygons)]
+    if(return_center):
+        return region_centers, mapped 
+    else:
+        return mapped
+        
 
 # from https://stackoverflow.com/questions/20677795/how-do-i-compute-the-intersection-point-of-two-lines
 def line_intersection(a, b, c, d, first_is_segment=True, second_is_segment=True):
@@ -156,7 +206,7 @@ if __name__ == "__main__":
 #    import matplotlib.pyplot as plt
 #    fig = voronoi_plot_2d(vor)
 #    plt.show()
-    fake_data = [{"category": "c{}".format(c), "tag": ["t{}".format(t)]} for c in range(2) for t in range(2)]
+    fake_data = [{"category": "c{}".format(c), "tag": ["t{}".format(t)]} for c in range(4) for t in range(6)]
     # map_points = generate_map_by_region(fake_data, center_generate_mode="random", width=600, height=600, center_noise=50)
     region_centers, map_points = generate_map_by_subregion(fake_data, width=600, height=600, return_center=True)
 #    print(map_points)
@@ -171,9 +221,11 @@ if __name__ == "__main__":
     for i, (*_, attr) in enumerate(map_points):
 #        print(attr["text"])
         plt.annotate(attr["text"], (cxs[i], cys[i]))
-    rxs, rys = zip(*region_centers.values())
-    plt.scatter(rxs, rys)
-    for text, (rx, ry) in region_centers.items():
-        plt.annotate(text, (rx, ry))
+    if(all(v is not None for v in region_centers.values())):
+        # region center sometime can't be returned e.g bordered; ignore when happens
+        rxs, rys = zip(*region_centers.values())
+        plt.scatter(rxs, rys)
+        for text, (rx, ry) in region_centers.items():
+            plt.annotate(text, (rx, ry))
     plt.show()
 

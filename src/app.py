@@ -11,7 +11,7 @@ from src.session import student_first_access_session, student_reaccess_session, 
 from src.parser.convert_file import read_and_convert
 from src.reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
 from src.organizer import check_duplication_in_data 
-from src.map import generate_map_by_region
+from src.map import generate_map_by_region, generate_map_by_subregion
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def map():
     """Test the draw map. 
     This will be base for us to show a little game board representing progress."""
 #    polygons = [(0, 0, 200, 200, [(30, 30), (150, 80), (170, 170), (80, 150)], {"bg": "lime", "fg": "green"})]
-    polygons = generate_map_by_region(current_data)
+    polygons = generate_map_by_subregion(current_data)
     return flask.render_template("map.html", polygons=polygons)
 
 @app.route("/edit")
