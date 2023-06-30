@@ -27,6 +27,12 @@ def wcen(pointlist): # centered point of the region. rename it soon
     x, y = zip(*pointlist)
     return mean(x), mean(y)
 
+def has_border(region1, region2): # if two regions has at least one shared border (2 shared vertices), return true 
+#    print(set([tuple(e) for e in sedge]))
+#    print(set([tuple(e) for e in eedge]))
+    # if +2 vertices shared; is two bordered regions 
+    return len(set([tuple(e) for e in region1]) & set([tuple(e) for e in region2])) >= 2
+
 def assign_subregions(keys: Dict[Tuple[str], int], subregions: List[Tuple[Tuple[float, float], List]], width: float, height: float, assign_mode: str="kmean", return_center: bool=False):
     """Assign {subregions} to {keys}; with first value of key denoting the joined region. 
     Return two list: 
@@ -101,11 +107,8 @@ def border_based_merge(subregions: List[Tuple[Tuple[float, float], List]], categ
     border_count = defaultdict(int)
     for i in range(len(subregions)-1):
         for j in range(i+1, len(subregions)):
-            (_, sedge), (_, eedge) = subregions[i], subregions[j]
-#            print(set([tuple(e) for e in sedge]))
-#            print(set([tuple(e) for e in eedge]))
             # if +2 vertices shared; is two bordered regions 
-            if len(set([tuple(e) for e in sedge]) & set([tuple(e) for e in eedge])) >= 2:
+            if has_border(subregions[i][1], subregions[j][1]):
                 bordered.add( (i, j) )
                 border_count[i] += 1
                 border_count[j] += 1 

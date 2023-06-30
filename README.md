@@ -37,13 +37,13 @@ Remaining bugfix/missing features:
 - [x] Allow rollback in case of crappy import 
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
-- [ ] Show error when the Imgur module is dead.
+- [x] Show error when the Imgur module is dead.
 - [x] Timer for each exam is hardcoded
 - [x] Redirection for identify is still (relatively) busted
 - [ ] Single manager capable of modifying settings (time limit, range, etc.)
 - [x] Single manager can export list of student in excel format; should be in the format/order of the original list
 - [ ] Student ID as key, which is not important considering the redirection 
 - [x] Student showing correct answer and/or score if the option is enabled 
-- [ ] Mechanism to auto-test exam generation, especially for single_equation/single_option variants
+- [x] Mechanism to auto-test exam generation, especially for single_equation/single_option variants (UNTESTED)
 - [x] Mechanism to enforce rollback when import/deletion/whatever fail
 - [ ] Mechanism to notify and show appropriate logs when failure/wrong format etc. happens

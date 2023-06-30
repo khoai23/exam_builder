@@ -37,7 +37,6 @@ function getParagraphs(content) {
 
 // read the text from txt file and display it as is
 function update_text(event) {
-	// TODO support reading Word; I know I did this some time ago
 	var target_file = event.currentTarget.files[0];
 	var fr = new FileReader();
 	if(target_file.name.includes(".txt")) {
@@ -276,7 +275,31 @@ function export_to_csv(filename, rows, headers) {
 	download_blob(blob, filename);
 }
 
-function save_csv(event) {
+function export_to_xlsx(filename, rows, headers) {
+	// create the workbook. Failing currently
+	const workbook = XSLX.utils.book_new();
+	// convert data to array of objects instead 
+	converted = rows.map(r => {});
+	for(let i=0; i < headers.length; i++) {
+		converted.forEach(function(new_obj, index){
+			if(rows[index][i] !== undefined) {
+				// has value; put into row 
+				new_obj[headers[i]] = rows[index][i];
+			} else {
+				// has no value; put empty 
+				new_obj[headers[i]] = "";
+			}
+		});
+	}
+	console.log("After conversion: ", converted);
+	// put into a sheet and book
+	const sheet = XLSX.utils.json_to_sheet(converted);
+	XLSX.utils.book_append_sheet(workbook, sheet, "Data");
+	// export to corresponding file
+	XLSX.writeFileXLSX(workbook, filename);
+}
+
+function save_table(event, as_xlsx=false) {
 	// convert all rows to corresponding fields
 	var table_rows = $("#parse_table").find("tbody").find("tr");
 	var rows = [];
@@ -299,13 +322,17 @@ function save_csv(event) {
 	});
 	if(rows.length > 0) {
 		// console.log(rows);
-		filename = $("#file_import")[0].files[0].name.replaceAll(" ", "_").split(".")[0] + ".csv";
-		export_to_csv(filename, rows, ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]);
+		let filename = $("#file_import")[0].files[0].name.replaceAll(" ", "_").split(".")[0];
+		if(as_xlsx) {
+			export_to_xlsx(filename + ".xlsx", rows, ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]);
+		} else {
+			export_to_csv(filename + ".csv", rows, ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]);
+		}
 		$("#save_status").show().text("Exported to \"" + filename + "\"");
 	} else {
 		alert("No row selected; cannot export");
 	}
-}
+};
 
 // toggle selection of the use field
 function toggle_use(event) {

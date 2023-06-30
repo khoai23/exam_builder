@@ -31,7 +31,7 @@ def map():
     """Test the draw map. 
     This will be base for us to show a little game board representing progress."""
 #    polygons = [(0, 0, 200, 200, [(30, 30), (150, 80), (170, 170), (80, 150)], {"bg": "lime", "fg": "green"})]
-    polygons = generate_map_by_subregion(current_data)
+    polygons = generate_map_by_subregion(current_data, bundled_by_category=False, do_recenter=True, do_shrink=0.98)
     return flask.render_template("map.html", polygons=polygons)
 
 @app.route("/edit")

@@ -202,7 +202,7 @@ def time_limit(seconds):
             signal.alarm(0)
 
 def test_template_validity(template: List[Tuple[int, float, List]]):
-    """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that """
+    """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that fail, return appropriate problem"""
     try:
         full_test_template = [(len(l), 0.0, l) for _, _, l in template ]
         full_count = sum((num for num, _, _ in full_test_template))

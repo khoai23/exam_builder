@@ -7,10 +7,12 @@ TODO:
 """
 import math, random 
 from collections import defaultdict 
-import colorsys
+import colorsys 
+from statistics import mean
 
 from src.map_algorithm.region import create_voronoi
-from src.map_algorithm.subregion import assign_subregions
+from src.map_algorithm.subregion import assign_subregions 
+from src.map_algorithm.arrow import list_connections, format_arrow
 
 import logging 
 logger = logging.getLogger()
@@ -20,9 +22,10 @@ from typing import Optional, List, Tuple, Any, Union, Dict
 def get_color(i: int, total: int, mode: str="hsv"):
     # get color variants by "slicing" the hsv into {total} subregion
     # for now just use the light variant (S at 40%)
-    hsv = (1.0 * i / total, 0.4, 0.8)
+    hsv = (0.9 * i / total + 0.05, 0.7, 0.8)
     rgb = [int(255 * v) for v in colorsys.hsv_to_rgb(*hsv)]
     return '#{:02x}{:02x}{:02x}'.format(*rgb)
+#    print("Color idx:", i, "/", total, rgb)
 
 DEFAULT_COLOR = ["green", "blue", "red", "purple", "orange", "yellow"]
 def generate_map_by_region(data: List[Dict], width: float=1000, height: float=1000, center_generate_mode: str="radial", center_noise: Optional[float]=None):
@@ -88,7 +91,7 @@ def generate_map_by_subregion_deprecated(data: List[Dict], width: float=1000, he
     else:
         return mapped
 
-def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, return_center: bool=False):
+def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, bundled_by_category: bool=True, do_recenter: bool=False, do_shrink: Optional[float]=None, return_center: bool=False, return_connections: bool=False):
     categories = defaultdict(set)
     for d in data:
         cat = d.get("category", "N/A")
@@ -105,7 +108,7 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     for (cat, list_tags), (center, region) in zip(categories.items(), trimmed_regions):
         for tags in list_tags:
             # get random 3 points in region; calculate the new point with it 
-            choice_x, choice_y = zip(*random.sample(region, k=3))
+            choice_x, choice_y = zip(*random.choices(region, k=3))
             parts = [random.random() for _ in range(3)]
             parts = [v / sum(parts) for v in parts]
             generated_point = (sum((x*v for x,v in zip(choice_x, parts))), sum((y*v for y,v in zip(choice_y, parts))))
@@ -116,8 +119,31 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
         region_centers[cat] = center
     # once finished; redo the region assignment again 
     tag_regions = create_voronoi(tag_centers, width=width, height=height)
+    if(return_connections):
+        # has to perform connection check here since if shrinking is applied, has_border will fail 
+        connections = list_connections(tag_regions)
+        print(connections)
+    else:
+        connections = None
     trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
+    # additional formatting
+    if(do_recenter):
+        trimmed_polygons = ((recenter(polygon), polygon) for _, polygon in trimmed_polygons)
+    if(do_shrink):
+        trimmed_polygons = ((center, shrink(polygon, center)) for center, polygon in trimmed_polygons)
+    # reconvert back to list
+    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons
     mapped = [(0, 0, width, height, polygon, {"center": point, "fg": get_color(index, len(trimmed_polygons)), "text": "_".join(tag_names[index])}) for index, (point, polygon) in enumerate(trimmed_polygons)]
+    if(connections):
+        for mid, mbrd in connections.items():
+            mapped[mid][-1]["connection"] = mbrd
+    if(bundled_by_category):
+        # return the map by category. Useful to re-organize outside
+        categories = defaultdict(list)
+        for tag, mpol in zip(tag_names, mapped):
+            categories[tag[0]].append(mpol)
+        # replace the mapped
+        mapped = categories
     if(return_center):
         return region_centers, mapped 
     else:
@@ -148,7 +174,7 @@ def line_intersection(a, b, c, d, first_is_segment=True, second_is_segment=True)
 def side(line_start, line_end, point):
   return (line_end[0] - line_start[0])*(point[1] - line_start[1]) - (line_end[1] - line_start[1])*(point[0] - line_start[0])
 
-def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, float]] ]], width: float, height: float):
+def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, float]] ]], width: float, height: float, error_margin: float= 0.01):
     # the input polygons are unrestricted (e.g edges are not in respective range of width x height view)
     # intersect line vs edge; if meet, use the intersected point instead of current 
     c = [(0, 0), (width, 0), (width, height), (0, height)]
@@ -159,28 +185,37 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
 #        print(point, polygon)
         for start, end in zip(polygon, polygon[1:] + polygon[:1]):
             # if line intersected by any of the border, the end vertices will be put into trimmed instead of itself.
-            used_intersect_point = False
-            for ste, ede in edges:
-                # check intersection with second as line (as opposed to segment)
-                intersect = line_intersection(start, end, ste, ede, second_is_segment=False)
-                if(intersect):
-                    # if found intersection, choose the point which is NOT at the same side with the core 
-                    # print("Found intersect", intersect, " between ", start, end)
-                    if(side(ste, ede, point) * side(ste, ede, start) > 0):
-                        # start is same side; replace end 
-                        trimmed.append(start); trimmed.append(intersect)
-                    else:
-                        # end is same side; replace start 
-                        trimmed.append(intersect); trimmed.append(end)
-                    used_intersect_point = True 
-                    break 
-            if(not used_intersect_point):
-                # not used an intersection point; put the first point into trim 
-                trimmed.append(start)
+            start_in_region = 0 <= start[0] <= width and 0 <= start[1] <= height
+            end_in_region = 0 <= end[0] <= width and 0 <= end[1] <= height 
+
+            if start_in_region and end_in_region:
+                # both inside; just add end only
+                trimmed.append(end)
+            elif not start_in_region and end_in_region:
+                # start out end in; take intersection as start and put it in directly
+                intersection = start
+                for ste, ede in edges:
+                    # if exist a connection, replace
+                    intersection = line_intersection(intersection, end, ste, ede, second_is_segment=False) or intersection 
+                assert intersection != tuple(start), "Trying to find intersection for {}-{} but failed".format(start, end)
+                trimmed.append(intersection); trimmed.append(end)
+            elif start_in_region and not end_in_region:
+                # start in end out, replacing the end with the intersection itself
+                intersection = end 
+                for ste, ede in edges:
+                    # if exist a connection, replace
+                    intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False) or intersection 
+                assert intersection != tuple(end), "Trying to find intersection for {}-{} but failed".format(start, end)
+                trimmed.append(end)
+            else:
+                # both out; ignore both. TODO use the corner points instead 
+                continue
+
         trimmed = (tuple(p) for p in trimmed)
         # in addition to this; if there is out-of-bound point after this, limit them to the respective range 
-        limit_x = lambda x: x if 0 <= x <= width else 0 if x < 0 else width
-        limit_y = lambda y: y if 0 <= y <= height else 0 if y < 0 else height 
+        xmargin, ymargin = error_margin * width, error_margin * height
+        limit_x = lambda x: x if (0 + xmargin) <= x <= (width - xmargin) else 0 if x < (0 + xmargin) else width
+        limit_y = lambda y: y if (0 + ymargin) <= y <= (height - ymargin) else 0 if y < (0 + ymargin) else height 
         trimmed = [(limit_x(x), limit_y(y)) for x, y in trimmed]
         # clear possible duplication 
         trimmed = [p for i, p in enumerate(trimmed) if p not in trimmed[:i] ]
@@ -199,6 +234,18 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
         result.append((point, trimmed))
     return result
 
+def recenter(polygons: List[Tuple[float, float]]):
+    # get center of polygon by weight
+    px, py = zip(*polygons)
+    return mean(px), mean(py)
+
+def shrink(polygons: List[Tuple[float, float]], center: Optional[Tuple[float, float]]=None, percentage: float=0.98):
+    # Shrink the polygons to its true center; allowing proper border display 
+    if(center is None):
+        center = recenter(polygons)
+    pp, cp = percentage, 1.0 - percentage
+    return [(p[0]*pp + center[0]*cp, p[1]*pp + center[1]*cp) for p in polygons]
+
 if __name__ == "__main__":
 #    from scipy.spatial import voronoi_plot_2d
 #    test_points = [[10, 25], [20, 30], [30, 10], [10, 5]]
@@ -208,13 +255,18 @@ if __name__ == "__main__":
 #    plt.show()
     fake_data = [{"category": "c{}".format(c), "tag": ["t{}".format(t)]} for c in range(4) for t in range(6)]
     # map_points = generate_map_by_region(fake_data, center_generate_mode="random", width=600, height=600, center_noise=50)
-    region_centers, map_points = generate_map_by_subregion(fake_data, width=600, height=600, return_center=True)
+    region_centers, map_points = generate_map_by_subregion(fake_data, width=600, height=600, bundled_by_category=False, do_recenter=False, do_shrink=0.98, return_center=True, return_connections=True)
+#    print([r[-1]["connection"] for r in map_points])
+#    map_points = [r for region in map_points.values() for r in region]
 #    print(map_points)
     import matplotlib.pyplot as plt 
     plt.figure()
     for *_, points, attr in map_points:
         xs, ys = zip(*(points + points[:1]))
-        plt.plot(xs, ys)
+        if(attr["fg"]):
+            plt.plot(xs, ys, color=attr["fg"])
+        else:
+            plt.plot(xs, ys)
     cxs, cys = zip(*[attr["center"] for *_, attr in map_points])
     cxs, cys = list(cxs), list(cys)
     plt.scatter(cxs, cys)

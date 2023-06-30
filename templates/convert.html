@@ -81,7 +81,8 @@
 	<div class="container-fluid d-flex">
 		<button class="btn border border-info" onclick="copy_to_clipboard(event)" disabled>Copy All to Clipboard</button>
 		<span class="ml-auto text-success p-2" id="save_status"></span>
-		<button class="btn btn-info" onclick="save_csv(event)">Save as CSV</button>
+		<button class="btn btn-info" onclick="save_table(event, false)">Save as CSV</button>
+		<button class="btn btn-info" onclick="save_table(event, true)" hidden>Save as XLSX</button>
 	</div>
 </div>
 {% endblock %}
@@ -96,10 +97,11 @@
 {% block script %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.10/docxtemplater.js"></script>
 <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
 <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip-utils.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
-<script src={{ url_for('static', filename="utils.js") }}></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script> -->
+<script lang="javascript" src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js" integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src={{ url_for('static', filename="convert.js") }}></script>
+<script src={{ url_for('static', filename="utils.js") }}></script>
 {% endblock %}
 
