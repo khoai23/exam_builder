@@ -99,7 +99,10 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
         sorted_tag.sort()
         categories[cat].add(tuple(sorted_tag))
     # each category get a random point 
-    category_centers = [(random.random()*width, random.random()*height) for _ in categories]
+    center_x, center_y = center = width / 2, height / 2
+    radius = min(width, height) / 2 * 0.75
+    category_centers = [(center_x + radius * math.sin(2 * math.pi / len(categories) * i), center_y + radius * math.cos(2 * math.pi / len(categories) * i)) for i in range(len(categories))]
+    #category_centers = [(random.random()*width, random.random()*height) for _ in categories]
     category_regions = create_voronoi(category_centers, width=width, height=height)
     trimmed_regions = perform_trim(category_regions, width=width, height=height)
     # for each tag in data, choose 3 point inside associated region, select a point around it 
@@ -108,7 +111,11 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     for (cat, list_tags), (center, region) in zip(categories.items(), trimmed_regions):
         for tags in list_tags:
             # get random 3 points in region; calculate the new point with it 
-            choice_x, choice_y = zip(*random.choices(region, k=3))
+            try:
+                choice_x, choice_y = zip(*random.choices(region, k=3))
+            except IndexError as e:
+                print("Failed to draw from: ", region)
+                raise e
             parts = [random.random() for _ in range(3)]
             parts = [v / sum(parts) for v in parts]
             generated_point = (sum((x*v for x,v in zip(choice_x, parts))), sum((y*v for y,v in zip(choice_y, parts))))
@@ -208,8 +215,30 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
                 assert intersection != tuple(end), "Trying to find intersection for {}-{} but failed".format(start, end)
                 trimmed.append(end)
             else:
-                # both out; ignore both. TODO use the corner points instead 
-                continue
+                # both out; use the corner points instead 
+                upper = start[0] > 0 and end[0] > 0
+                lower = start[0] < width and end[0] < width 
+                right = start[1] > 0 and end[1] > 0
+                left = start[1] < height and end[1] < height
+                # print("Should only have 2 categories here U-D-L-R: {} {} {} {}".format(upper, lower, left, right))
+                if(upper and lower):
+                    trimmed.append(end)
+                elif(upper):
+                    if(left and right):
+                        # both; use only the end section
+                        trimmed.append( end )
+                    elif(left):   # belong to upper left section 
+                        trimmed.append( (width, 0) )
+                    else:       # belong to upper right
+                        trimmed.append( (width, height) )
+                else:
+                    if(left and right):
+                        # both; use only the end section
+                        trimmed.append( end )
+                    elif(left):   # belong to lower left
+                        trimmed.append( (0, 0) )
+                    else:       # belong to lower right
+                        trimmed.append( (0, height) )
 
         trimmed = (tuple(p) for p in trimmed)
         # in addition to this; if there is out-of-bound point after this, limit them to the respective range 
