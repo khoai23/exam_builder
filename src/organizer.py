@@ -43,6 +43,10 @@ def get_past_generator(qid: int, question_template: Dict, generator_fn: callable
         q = next(q_generator)
     return q
 
+def return_brackets(text):
+    # brackets specified with special &lcub; and &rcub; will be returned; this is to circumvent necessary wrapper for various dynamic problems.
+    return text.replace("&lcub;", "{").replace("&rcub;", "}")
+
 # TODO wipe this upon data reload
 def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]], seed=None):
     # handle multiple questions already selected 
@@ -55,27 +59,33 @@ def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]],
     for qnum, qsc, qids in all_questions:
         qids = random.sample(qids, qnum)
         for qid in qids:
-            q = data[qid]
-            answer_shuffle = random.sample(list(range(1, 5)), 4)
-            if(q.get("is_dynamic_key", False)):
-                # TODO allow dynamic_key with fixed/single equation
-                q = convert_dynamic_key_problem(q)
-            elif(q.get("is_fixed_equation", False)):
-                q = convert_fixed_equation_problem(q)
-            elif(q.get("is_single_equation", False)):
-                q = get_past_generator(qid, q, convert_single_equation_problem)
-            elif(q.get("is_single_option", False)):
-                q = get_past_generator(qid, q, convert_single_option_problem)
-            # shuffle to create the new_question
-            new_question = {"question": q["question"], "answers": [q["answer{:d}".format(i)] for i in answer_shuffle], "score": qsc, "is_multiple_choice": q["is_multiple_choice"] }
-            if(q["is_multiple_choice"]):
-                new_correct_id = tuple((i+1 for i, aid in enumerate(answer_shuffle) if aid in q["correct_id"]))
-            else:
-                new_correct_id = next((i for i, aid in enumerate(answer_shuffle) if aid == q["correct_id"])) + 1
-            #print(answer_shuffle, q["correct_id"])
-            #print("->", new_correct_id)
-            selected.append(new_question)
-            correct.append(new_correct_id)
+            try:
+                q = data[qid]
+                answer_shuffle = random.sample(list(range(1, 5)), 4)
+                if(q.get("is_dynamic_key", False)):
+                    # TODO allow dynamic_key with fixed/single equation
+                    q = convert_dynamic_key_problem(q)
+                elif(q.get("is_fixed_equation", False)):
+                    q = convert_fixed_equation_problem(q)
+                elif(q.get("is_single_equation", False)):
+                    q = get_past_generator(qid, q, convert_single_equation_problem)
+                elif(q.get("is_single_option", False)):
+                    q = get_past_generator(qid, q, convert_single_option_problem)
+                # shuffle to create the new_question
+                new_question = {"question": return_brackets(q["question"]), "answers": [return_brackets(q["answer{:d}".format(i)]) for i in answer_shuffle], "score": qsc, "is_multiple_choice": q["is_multiple_choice"] }
+                # new_question = {k: v.replace("&lcub;", "{").replace("&rcub;", "}") if isinstance(v, str) else v for k, v in new_question.items()}
+                if(q["is_multiple_choice"]):
+                    new_correct_id = tuple((i+1 for i, aid in enumerate(answer_shuffle) if aid in q["correct_id"]))
+                else:
+                    new_correct_id = next((i for i, aid in enumerate(answer_shuffle) if aid == q["correct_id"])) + 1
+                #print(answer_shuffle, q["correct_id"])
+                #print("->", new_correct_id)
+                selected.append(new_question)
+                correct.append(new_correct_id)
+            except Exception as e:
+                print("Shuffle error at question with qid: {}".format(qid))
+                e.wrong_question_id = qid
+                raise e
     return selected, correct
 
 ignore_tokens_duplication = re.compile(r"\|\|\|.+?\|\|\||{.+?}|\W")

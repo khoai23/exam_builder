@@ -203,6 +203,7 @@ def time_limit(seconds):
 
 def test_template_validity(template: List[Tuple[int, float, List]]):
     """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that fail, return appropriate problem"""
+    question_id = 0
     try:
         full_test_template = [(len(l), 0.0, l) for _, _, l in template ]
         full_count = sum((num for num, _, _ in full_test_template))
@@ -211,7 +212,7 @@ def test_template_validity(template: List[Tuple[int, float, List]]):
             shuffle(id_data, full_test_template)
             return True, None
     except Exception as e:
-        logger.error("Template test failed: {}\n{}".format(e, traceback.format_exc()))
+        logger.error("Template test failed for question {}: {}\n{}".format(getattr(e, "wrong_question_id", "N/A"), e, traceback.format_exc()))
         return False, (e, traceback.format_exc())
 
 def load_template(data: Dict, check_template: bool=True):
@@ -322,6 +323,7 @@ def retrieve_submit_route_anonymous(template_key: str):
             title="Enter Exam",
             message="Enter name & submit to start your exam.", 
             submit_key=template_key,
+            custom_navbar=True,
             # TODO make this dependent on session setting
             input_fields=[{"id": "student_name", "type": "text", "name": "Student Name"}]) 
 

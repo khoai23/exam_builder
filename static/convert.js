@@ -71,6 +71,25 @@ function update_text(event) {
 	}
 }
 
+function choose_website(event) {
+	var url = "https://stackoverflow.com/questions/39758031/get-text-from-a-txt-file-in-the-url";
+	$.ajax({
+		url: url, 
+		type: "GET",
+		crossDomain: true,
+		success: function(data){ 
+			console.log(data);
+			var pdoc = $(data);
+			console.log(pdoc.innerText);
+			//current_text = data;
+		},
+		headers: {
+			"accept": "text/html",
+			"Access-Control-Allow-Origin":"*"
+		}
+	});
+}
+
 function update_highlight(event) {
 	// reload all possible markup with its own 
 	var highlighted_text = current_text;

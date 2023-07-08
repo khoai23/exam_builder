@@ -3,7 +3,7 @@ All possible extension regard the builder, unlikely first:
 - [ ] Mouse-driven, or later touch-driven geometric drawer (drawing parallel line, same length, perpendicular, etc.)
 - [x] Template problems (replacing variables)
 - [x] LaTeX-type formatting
-- [ ] Data source
+- [ ] Data source organized by category
 - [x] Statistics for session managing (student weakness by question category)
 - [x] Import check for duplication
 - [x] Split the current "build" page to "build", "edit" (for changing the data), and "table" (for generic display of the data)
@@ -11,6 +11,7 @@ All possible extension regard the builder, unlikely first:
 - [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
+- [ ] Crawler to read data from online pages
 - [x] Template usage for shared components (navigation bar, question table, etc)
 - [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page 
@@ -27,8 +28,11 @@ Remaining bugfix/missing features:
 - [x] Table auto-scroll upon large screen
 - [x] Import in append vs replace mode
 - [x] Finishing import/rollback should automatically reload the table 
+- [ ] Build/Edit has dropdown for category 
+- [ ] Button to flag duplicate items
 - [ ] Loading icon while performing modifying action e.g import/rollback 
 - [ ] Commit-type import to prevent stupidity
+- [ ] Import raw text from website
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter supporting multiple-choice question selection; exporting in the more generic xlsx instead.

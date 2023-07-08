@@ -10,7 +10,7 @@ import ast
 
 from typing import Optional, List, Tuple, Any, Union, Dict
 
-MathJaxSymbols = re.compile(r"$$|\\\(|\\\)|\\\[|\\\]")
+MathJaxSymbols = re.compile(r"\$\$|\\\(|\\\)|\\\[|\\\]")
 
 VALID_ALPHABET_KEY = "ABCDEFGHIJKLMNOPQRSTUWVZ"
 alphabet_regex = re.compile(r"{alpha_\d}")
@@ -138,7 +138,11 @@ def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mod
     else:
         raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
     # TODO enforce expression type
-    assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+    try:
+        assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+    except Exception as e:
+        print("Failed expression with variable set: {}".format(assigned_variables))
+        raise e
     if re.search(MathJaxSymbols, problem["question"]):
         # keep symbols curly brackets 
         assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}
@@ -177,7 +181,11 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
             raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
         # print(assigned_variables)
 #        assigned_variables = {k: random.randint(1, 100) for k in variables}
-        assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+        try:
+            assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+        except Exception as e:
+            print("Failed expression with variable set: {}".format(assigned_variables))
+            raise e
         if re.search(MathJaxSymbols, problem["question"]):
             # keep symbols curly brackets 
             assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}

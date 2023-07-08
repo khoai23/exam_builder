@@ -11,11 +11,18 @@
 		<div id="raw_text" class="border" style="max-height: 300px; overflow-y: auto;"> </div>
 	</div>
 	<div class="row">
-		<div class="col-md-3 col-sm-6 form-group">
+		<div class="col-md-2 col-sm-4 form-group">
 			<label for="file_import">Import: </label>
 			<input type="file" class="form-control-file" accept=".txt,.docx" id="file_import" onchange="update_text(event)"> </input>
 		</div>
+		<div class="col-md-2 col-sm-4">
+			<input type="text" class="form-control"></input>
+			<button class="btn btn-success" onclick="choose_website(event)">Get from URL</button>
+		</div>
 		<div class="col-md-3 col-sm-6">
+			<button class="btn btn-info" id="upload_btn" onclick="convert_text()">Parse</button>
+		</div>
+		<div class="col-md-2 col-sm-4">
 			<div class="dropdown">
 				<button class="btn btn-secondary dropdown-toggle" type="button" id="choose_template_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Choose Template </button>
 				<div class="dropdown-menu" aria-labelledby="choose_template_dropdown">
@@ -25,10 +32,7 @@
 					<button class="btn btn-link" onclick="choose_template(2)">Q: [Bài XX:/Bài XX.] A: [A. B. C. D.]</button>
 				</div>
 			</div>
-		</div>
-		<div class="col-md-3 col-sm-6">
 			<input type="checkbox" id="cue_is_regex">Regex mode</input>
-			<button class="btn btn-info" id="upload_btn" onclick="convert_text()">Parse</button>
 		</div>
 		<div class="border border-secondary col-md-3 col-sm-6">
 			<label class="d-sm-block" for="question_header"> Question Header: </label>

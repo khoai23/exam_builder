@@ -7,7 +7,7 @@ import shutil
 
 from src.session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
 from src.session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
-from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
+from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, perform_commit
 from src.parser.convert_file import read_and_convert
 from src.reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
 from src.organizer import check_duplication_in_data 
@@ -66,6 +66,19 @@ def duplicate_questions():
     duplicate = check_duplication_in_data(current_data)
     return flask.jsonify(duplicate_ids=duplicate)
 
+@app.route("/retrieve_text", methods=["GET"])
+def retrieve_text():
+    # read a specified html and strip it down to pure text.
+    url = request.args.get("url");
+    if(url is None):
+        return flask.jsonify(result=false, error="URL not specified.")
+    try:
+        pass
+    except Exception as e:
+        logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
+        return flask.jsonify(result=False, error=str(e))
+
+
 @app.route("/delete_questions", methods=["DELETE"])
 def delete_questions():
     # TODO restrict access 
@@ -74,7 +87,7 @@ def delete_questions():
         return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
     else:
         result = delete_data_by_ids(delete_ids)
-        if(result["true"]):
+        if(result["result"]):
             nocommit = request.args.get("nocommit")
             if(not nocommit or nocommit.lower() != "true"):
                 # if nocommit is not enabled; push the current data to backup and write down new one 
