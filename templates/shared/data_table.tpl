@@ -9,12 +9,25 @@
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Category &nbsp;
-					<button id="filter_category_clear" class="m-0 p-0 btn btn-link" onclick="clear_category(event)" style="display: none;">
-						(X)
-					</button>
+				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
+					<div class="dropdown">
+						<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							Category
+						</button>
+						<div class="dropdown-menu" aria-labelledby="category_dropdown" id="category_dropdown_menu" style="z-index: 10;">
+							<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
+						</div>
+					</div>
 				</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Tag</th>
+				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
+					<div class="dropdown">
+						<button class="btn btn-secondary dropdown-toggle" type="button" id="tag_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							Tag
+						</button>
+						<div class="dropdown-menu" aria-labelledby="tag_dropdown" id="tag_dropdown_menu" style="z-index: 10;">
+						</div>
+					</div>
+				</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
 					<button class="btn btn-link p-0" onclick="toggle_all_tag(event)">Use</button>
 				</th>

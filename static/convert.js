@@ -72,20 +72,29 @@ function update_text(event) {
 }
 
 function choose_website(event) {
-	var url = "https://stackoverflow.com/questions/39758031/get-text-from-a-txt-file-in-the-url";
+	var url = $("#url_import").val();
+	if(url == "") {
+		console.log("Empty URL, do nothing.");
+	}
+	// use the host to render it for now.
 	$.ajax({
-		url: url, 
+		url: "retrieve_text?url=" + encodeURIComponent(url), 
 		type: "GET",
-		crossDomain: true,
-		success: function(data){ 
-			console.log(data);
-			var pdoc = $(data);
-			console.log(pdoc.innerText);
-			//current_text = data;
+		contentType: "application/json",
+		dataType: "json",
+		success: function(data, textStatus, jqXHR){
+			if(data["result"]) {
+				console.log(data["data"]);
+				current_text = data["data"];
+				update_highlight(event);
+				$("#raw_text_wrapper").show();
+			} else {
+				console.log("Failed, error data:", data);
+			}
 		},
-		headers: {
-			"accept": "text/html",
-			"Access-Control-Allow-Origin":"*"
+		error: function(jqXHR, textStatus, error){
+			// TODO check failure here
+			console.log("Failure with error: " + error);
 		}
 	});
 }

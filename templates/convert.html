@@ -12,12 +12,20 @@
 	</div>
 	<div class="row">
 		<div class="col-md-2 col-sm-4 form-group">
-			<label for="file_import">Import: </label>
-			<input type="file" class="form-control-file" accept=".txt,.docx" id="file_import" onchange="update_text(event)"> </input>
+			<div class="btn-group" role="group">
+				<div class="input-group-prepend">
+					<label class="input-group-text" for="file_import">Import: </label>
+				</div>
+				<input type="file" class="form-control" accept=".txt,.docx" id="file_import" onchange="update_text(event)"> </input>
+			</div>
 		</div>
 		<div class="col-md-2 col-sm-4">
-			<input type="text" class="form-control"></input>
-			<button class="btn btn-success" onclick="choose_website(event)">Get from URL</button>
+			<div class="btn-group" role="group">
+				<input type="text" class="form-control" id="url_import" placeholder="Type URL.."></input>
+				<div class="input-group-append">
+					<button class="btn btn-outline-success" type="button" onclick="choose_website(event)">Get</button>
+				</div>
+			</div>
 		</div>
 		<div class="col-md-3 col-sm-6">
 			<button class="btn btn-info" id="upload_btn" onclick="convert_text()">Parse</button>
