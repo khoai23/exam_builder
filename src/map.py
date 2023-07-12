@@ -104,7 +104,9 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     category_centers = [(center_x + radius * math.sin(2 * math.pi / len(categories) * i), center_y + radius * math.cos(2 * math.pi / len(categories) * i)) for i in range(len(categories))]
     #category_centers = [(random.random()*width, random.random()*height) for _ in categories]
     category_regions = create_voronoi(category_centers, width=width, height=height)
+    print("Pre-trim: {}".format(category_regions))
     trimmed_regions = perform_trim(category_regions, width=width, height=height)
+    print("Post-trim {}".format(trimmed_regions))
     # for each tag in data, choose 3 point inside associated region, select a point around it 
     tag_names, tag_centers = [], []
     region_centers = {}

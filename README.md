@@ -11,7 +11,7 @@ All possible extension regard the builder, unlikely first:
 - [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
-- [ ] Crawler to read data from online pages
+- [x] Crawler to read data from online pages
 - [x] Template usage for shared components (navigation bar, question table, etc)
 - [x] Filter for question category/tags
 - [x] Redirect student with template key to a specializing page 
@@ -28,11 +28,11 @@ Remaining bugfix/missing features:
 - [x] Table auto-scroll upon large screen
 - [x] Import in append vs replace mode
 - [x] Finishing import/rollback should automatically reload the table 
-- [ ] Build/Edit has dropdown for category 
+- [x] Build/Edit has dropdown for category & tag
 - [ ] Button to flag duplicate items
 - [ ] Loading icon while performing modifying action e.g import/rollback 
 - [ ] Commit-type import to prevent stupidity
-- [ ] Import raw text from website
+- [x] Import raw text from website (note: still need the host as intermediary)
 - [x] Text denoting import/export finished is not working
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter supporting multiple-choice question selection; exporting in the more generic xlsx instead.
@@ -42,7 +42,7 @@ Remaining bugfix/missing features:
 - [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
 - [x] Show error when the Imgur module is dead.
-- [x] Timer for each exam is hardcoded
+- [x] Timer for each exam should not be hardcoded
 - [x] Redirection for identify is still (relatively) busted
 - [ ] Single manager capable of modifying settings (time limit, range, etc.)
 - [x] Single manager can export list of student in excel format; should be in the format/order of the original list
