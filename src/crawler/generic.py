@@ -1,5 +1,6 @@
-import sys, random, time, io, os
-import pickle
+import sys, random, time, io, os 
+import pickle 
+import traceback
 import requests
 from bs4 import BeautifulSoup
 
@@ -32,19 +33,23 @@ def get_neighbor_links(soup_or_url, include_key=None, filter_key=None, append_do
             filtered_links = (l for l in filtered_links if l.startswith(append_domain))
     return list(filtered_links)
 
-def perform_crawl(start_url: str, craw_result_location: str, process_data_fn: callable=None, neighbor_link_fn: callable=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: str=None, retrieve_interval: tuple=(0.5, 1.5), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0):
+def perform_crawl(start_url: str, crawl_result_location: str, process_data_fn: callable=None, neighbor_link_fn: callable=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: str=None, retrieve_interval: tuple=(0.5, 1.5), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0, override_crawl_result: bool=False, prefer_cue: str=None):
     # get_neighbor_links(start_url)
     if(os.path.isfile(recovery_dump_path)):
         with io.open(recovery_dump_path, "rb") as df:
             passed, queue = pickle.load(df)
             passed = set(passed)
-            queue = list(set(queue)) # backward compatibility; remove later
+            queue = set(queue) # backward compatibility; remove later
+            if prefer_cue:
+                queue = [l for l in queue if prefer_cue in l] + [l for l in queue if prefer_cue not in l]
+            else:
+                queue = list(queue)
     else:
         passed = {start_url}
         queue = [start_url]
     # usable_links = []
     incremental_wait_on_failed_resolve = 0
-    retrieve_base, retrieve_variance = retrieve_interval
+    retrieve_base, retrieve_variance = retrieve_interval if retrieve_interval else (0.0, 0.0)
     failed_run = False 
     try:
         while len(queue) > 0:
@@ -70,7 +75,7 @@ def perform_crawl(start_url: str, craw_result_location: str, process_data_fn: ca
                         pickle.dump((passed, queue), df)
                 # wait incrementally before retrying; reenable a flag to reuse the current_url
                 incremental_wait_on_failed_resolve += failed_get_incremental / 2 + random.random() * failed_get_incremental / 2
-                logger.info("Encountered error: {}\nwaiting for {:.2f}s".format(sys.exc_info()[-1], incremental_wait_on_failed_resolve))
+                logger.info("Encountered error: {}\nwaiting for {:.2f}s".format(traceback.format_exc(), incremental_wait_on_failed_resolve))
                 time.sleep(incremental_wait_on_failed_resolve)
                 failed_run = True
                 continue
@@ -80,7 +85,12 @@ def perform_crawl(start_url: str, craw_result_location: str, process_data_fn: ca
 #                logger.debug("Pre-update: passed [{}], queue [{}]".format(len(passed), len(queue)))
 #                preval = len(passed), len(queue)
                 passed.update(valid_queue_links)
-                queue.extend(valid_queue_links)
+                if(prefer_cue):
+                    preferred = (l for l in valid_queue_links if prefer_cue in l)
+                    not_preferred = [l for l in valid_queue_links if prefer_cue not in l]
+                    queue[0:0] = preferred; queue.extend(not_preferred)
+                else:
+                    queue.extend(valid_queue_links) # append all at back
 #                logger.debug("Post-update: passed [{}], queue [{}]".format(len(passed), len(queue)))
 #                postval = len(passed), len(queue)
 #                assert postval[0] - preval[0] == postval[1] - preval[1], "Issue updating: passed/queue going {} => {}, {} link is corrupted".format(preval, postval, len(valid_queue_links))
@@ -88,13 +98,17 @@ def perform_crawl(start_url: str, craw_result_location: str, process_data_fn: ca
                 logger.debug("No valid link to add; continuing.")
             random_wait = retrieve_base + random.random() * retrieve_variance
             logger.info("Waiting for {:.2f}s; passed [{:d}], currently left in queue [{:d}]".format(random_wait, len(passed), len(queue)))
-            time.sleep(random_wait)
+            if(random_wait > 0):
+                time.sleep(random_wait)
             # also reset the incremental wait to 0
             incremental_wait_on_failed_resolve = 0
     except KeyboardInterrupt:
         if(recovery_dump_path):
             logger.info("Dumping current run info at {}".format(recovery_dump_path))
             # first entry into the error; save into dump to be restarted (if needed)
+            # re-input the last current_url 
+            passed.remove(current_url)
+            queue.insert(0, current_url)
             with io.open(recovery_dump_path, "wb") as df:
                 pickle.dump((passed, queue), df)
         else:
@@ -102,7 +116,15 @@ def perform_crawl(start_url: str, craw_result_location: str, process_data_fn: ca
         # exit immediately
         return 1 # use for sys exit 
     logger.info("Finished crawling.")
-    with io.open(craw_result_location, "w", encoding="utf-8") as resultfile:
+    if(not override_crawl_result and os.path.isfile(crawl_result_location)):
+        base, extension = os.path.splitext(crawl_result_location)
+        for i in range(1, 1000 + 1):
+            crawl_result_location = base + "_{:d}".format(i) + extension
+            if(not os.path.isfile(crawl_result_location)):
+                logger.info("Found valid unused derivative: {}".format(crawl_result_location))
+                break
+        # this will override file 1000; but at that point it's your fault.
+    with io.open(crawl_result_location, "w", encoding="utf-8") as resultfile:
         resultfile.write("\n".join(list(passed)))
     if(delete_dump_after_done and os.path.isfile(recovery_dump_path)):
         # if still have the dump path, throw it away
