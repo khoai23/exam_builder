@@ -14,6 +14,9 @@ def get_parsed(url: str):
     soup = BeautifulSoup(r.content, "html.parser");
     return soup 
     
+def get_parsed_from_str(source_str: str):
+    return BeautifulSoup(source_str, "html.parser")
+
 def get_text_from_url(url: str):
     return get_parsed(url).text
 
@@ -143,7 +146,9 @@ def convert_crawled_dump(dumppath, targetpath, filter_key: set=None, start_key: 
         wf.write("\n".join(passed))
 
 """Generic parser, using chrome in selenium to render javascript interaction."""
-from selenium import webdriver
+from selenium import webdriver 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 #import chromedriver_binary
 def create_options():
     options = webdriver.FirefoxOptions()
@@ -151,27 +156,38 @@ def create_options():
     options.binary = webdriver.firefox.firefox_binary.FirefoxBinary(r"C:\Program Files\Mozilla Firefox\firefox.exe")
     return options 
 #print("Binary location: ", chromedriver_binary.chromedriver_filename)
-DRIVER = None
+# DRIVER = None
 def get_driver():
-    if DRIVER is None:
-        SERVICE = webdriver.firefox.service.Service(executable_path="src/crawler/bin/geckodriver.exe")
-        DRIVER = webdriver.Firefox(service=SERVICE, options=create_options())
-    return DRIVER
+#    if DRIVER is None:
+    service = webdriver.firefox.service.Service(executable_path="src/crawler/bin/geckodriver.exe")
+    driver = webdriver.Firefox(service=service, options=create_options())
+    return driver
 
-def close_driver():
-    if DRIVER is not None:
-        DRIVER.quit()
-    DRIVER = None
+def close_driver(driver):
+    if driver is not None:
+        driver.quit()
+#    DRIVER = None
+    return driver
 
 from contextlib import contextmanager
 @contextmanager
 def acquire_driver():
     """Same as generic get/close driver above; but using a context manager to ensure closure"""
+    logger.info("Starting Selenium-Geckodriver..")
     driver = get_driver()
+    logger.info("Driver started.")
     try:
         yield driver 
     finally:
-        close_driver()
+        logger.info("Closing Selenium-Geckodriver.")
+        close_driver(driver)
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+def driver_wait_element_clickable(driver, duration: float, selector_args: tuple):
+    # wait for the element to be clickable 
+    # duration specify the maximum wait time; selector args targetting required item
+    WebDriverWait(driver, duration).until(expected_conditions.element_to_be_clickable(selector_args))
 
 if __name__ == "__main__":
 #    link = "https://tracnghiem.net/de-thi/cau-hoi-co-su-khac-nhau-ve-mau-da-giua-cac-chung-toc-la-do-dau-149980.html"

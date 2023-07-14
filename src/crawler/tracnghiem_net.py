@@ -112,5 +112,5 @@ if __name__ == "__main__":
 #        process_data(soup, start_url, writer=writer)
         process_data_fn = partial(process_data, writer=writer)
         return_code = perform_crawl(start_url, target_location, process_data_fn=process_data_fn, recovery_dump_path=DUMP_PATH, prefer_cue="cau-hoi-", retrieve_interval=(0.1, 0.3))
-#    sys.exit(return_code)
+    sys.exit(return_code)
 
