@@ -3,6 +3,7 @@ Basic code to read data from a csv file.
 """
 import os, io, csv 
 import glob
+import traceback
 import shutil
 import string
 import openpyxl, openpyxl_image_loader 
@@ -73,13 +74,20 @@ def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=Fal
     else:
         raise ValueError("Unusable filepath: {}; check the extension (must be .csv/.xlsx)".format(filepath))
 
-def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
+def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed: bool=False):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []
     with io.open(filepath, "r", encoding="utf-8") as rf:
         reader = csv.DictReader(rf, fieldnames=headers)
         for row in reader:
-            data.append(process_field(row))
+            try:
+                data.append(process_field(row))
+            except Exception as e:
+                if(ignore_failed):
+                    logger.error("Failed row: {}\n{}".format(e, traceback.format_exc()))
+                    continue
+                else:
+                    raise e
     if(strict):
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields) or row["is_single_equation"]
