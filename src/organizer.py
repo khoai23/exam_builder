@@ -72,6 +72,7 @@ def shuffle(data: List[Dict], all_questions: List[Tuple[int, float, List]], seed
                     q = get_past_generator(qid, q, convert_single_equation_problem)
                 elif(q.get("is_single_option", False)):
                     q = get_past_generator(qid, q, convert_single_option_problem)
+                #print(q)
                 # shuffle to create the new_question
                 new_question = {"question": return_brackets(q["question"]), "answers": [return_brackets(q["answer{:d}".format(i)]) for i in answer_shuffle], "score": qsc, "is_multiple_choice": q["is_multiple_choice"] }
                 # new_question = {k: v.replace("&lcub;", "{").replace("&rcub;", "}") if isinstance(v, str) else v for k, v in new_question.items()}

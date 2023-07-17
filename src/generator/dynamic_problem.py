@@ -48,11 +48,11 @@ def convert_single_option_problem(problem: Dict, generator_mode=True):
         new_problem["correct_id"] = i 
         
     if(generator_mode): # on generator, return four variants sequentially
-        for p in problems:
+        for i, p in problems:
             yield p
         return 
     else:
-        return problems[0]  # on non-generator; just pump out one
+        return problems[0][0]  # on non-generator; just pump out one
 
 range_regex = re.compile(r"\[(\d+),\s*(\d+)\]")
 
