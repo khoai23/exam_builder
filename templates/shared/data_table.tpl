@@ -1,3 +1,13 @@
+<div class="container-fluid d-flex flex-row-reverse">
+	<div class="dropdown m-2">
+		<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			Category
+		</button>
+		<div class="dropdown-menu" aria-labelledby="category_dropdown" id="category_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
+			<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
+		</div>
+	</div>
+</div>
 <div class="table-responsive card-body p-1">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
 		<thead class="thead-light">
@@ -9,16 +19,6 @@
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
-					<div class="dropdown">
-						<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							Category
-						</button>
-						<div class="dropdown-menu" aria-labelledby="category_dropdown" id="category_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
-							<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
-						</div>
-					</div>
-				</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
 					<div class="dropdown">
 						<button class="btn btn-secondary dropdown-toggle" type="button" id="tag_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -58,11 +58,6 @@
 					{% endfor %}
 					<td>{{q["correct_id"]}}</td>
 				{% endif %}
-				<td class="category_cell">
-					<button class="m-0 p-0 btn btn-link" onclick="select_category(event)">
-						{{q.get("category", "N/A")}}
-					</button>
-				</td>
 				<td>
 					{% if "tag" in q %}
 						{% for tag in q["tag"] %}

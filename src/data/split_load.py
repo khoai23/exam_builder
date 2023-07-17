@@ -19,7 +19,7 @@ quote = lambda string, safe="", **kwargs: parselib.quote(string, safe=safe, **kw
 unquote = parselib.unquote
 
 class OnRequestData(dict):
-    def __init__(self, data_path: str="data/data.html", categories: Optional[Set[str]]=None, backup_path: str="data/backup.html", maximum_cached: int=5, _initiate_blank: bool=False):
+    def __init__(self, data_path: str="data/data.xlsx", categories: Optional[Set[str]]=None, backup_path: str="data/backup.xlsx", maximum_cached: int=5, _initiate_blank: bool=False):
         """Construct and check if all files is ready."""
         base, ext = os.path.splitext(data_path)
         valid_files = glob.glob(base + "*")
@@ -49,7 +49,11 @@ class OnRequestData(dict):
         self._cache = {}
         self._maximum_cached = maximum_cached
 
-    def load_category(self, category: str, with_ids: bool=False, use_cache: bool=True):
+    @property
+    def categories(self):
+        return list(self._data.keys())
+
+    def load_category(self, category: str, with_ids: bool=True, use_cache: bool=True):
         """Load data specifically belong to a category. Can use cache to reduce IO overhead at expense of idle memory."""
         # load data from necessary filepath 
         if use_cache and category in self._cache:
@@ -60,7 +64,7 @@ class OnRequestData(dict):
                 # reupdate all order
                 self._cache = {category: (1, data), **{k: (i+1 if i < order else i, d) for k, (i, d) in self._cache.items()}}
         else:
-            logger.debug("Not found in cache, read new.")
+            logger.debug("Not found in cache, read new from {}".format(self._data[category]))
             # either cache not enabled or not found, get from file 
             data = read_file_xlsx(self._data[category])
             if with_ids:
@@ -126,7 +130,7 @@ class OnRequestData(dict):
             categorized[q.get("category", "N/A")].append(q)
         for cat in categorized:
             logger.debug("update_data performing update for category {}".format(cat))
-            self.update_category(cat, data, update_cache=update_cache)
+            self.update_category(cat, categorized[cat], update_cache=update_cache)
         if(not update_cache):
             # clear out the cache if not updated; TODO sort by old_i?
             self._cache = {k: (i+1, v) for i, (k, (old_i, v)) in enumerate(filter(lambda it: it[0] in categorized, self._cache.items()))}
@@ -135,7 +139,7 @@ class OnRequestData(dict):
 
     def update_data_from_file(self, data_location: str, update_cache: bool=False):
         data = read_file(data_location)
-        return update_data(data, update_cache=update_cache)
+        return self.update_data(data, update_cache=update_cache)
     
     def delete_data_by_ids(self, category: str, list_ids: List[int], update_cache: bool=True):
         old_data = self.load_category(category)

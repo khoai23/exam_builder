@@ -16,12 +16,10 @@ var current_selected_category = null;
 var currently_selected_tag = [];
 
 // used when use_local_data is false; data is reloaded on the long web instead 
-function load_data_into_table(start, end, url="filtered_questions") {
-	let catstr = current_selected_category === null ? "" : "category=" + encodeURI(current_selected_category);
+function load_data_into_table(start, end, request_tags=false, url="filtered_questions") {
+	let catstr = "category=" + encodeURI(current_selected_category);
 	let tagstr = currently_selected_tag.length === 0 ? "" : "tag=" + encodeURI(currently_selected_tag.join(","));
-	if(catstr == "") {
-		url = url + "?" + tagstr;
-	} else if(tagstr == "") {
+	if(tagstr == "") {
 		url = url + "?" + catstr;
 	} else {
 		url = url + "?" + catstr + "&" + tagstr;
@@ -35,12 +33,24 @@ function load_data_into_table(start, end, url="filtered_questions") {
 	if(end !== undefined) {
 		url = url + "&end=" + end.toString();
 	}
+	if(request_tags) {
+		if(currently_selected_tag.length > 0) {
+			console.log("Trying to request tags with already selected tag; this will still work, but will returning same value as selected");
+			// TODO disable this?
+		}
+		url = url + "&request_tags=true"
+	}
 	// console.log("Querying url, ", url, catstr, tagstr);
 	$.ajax({
 		type: "GET",
 		url: url,
 		success: function(data, textStatus, jqXHR) {
+			// update the questions 
 			reupdate_questions(data["questions"]);
+			// show all necessary tags if specifically requested
+			if(request_tags) {
+				internal_update_filter(data["tags"]);
+			}
 			update_view_index(start, Math.floor(data["all_length"] / length_per_view));
 		},
 		error: function(jqXHR, textStatus, error){
@@ -50,7 +60,7 @@ function load_data_into_table(start, end, url="filtered_questions") {
 }
 	
 // show the combination of category & tag. Used in a variety of situation 
-function show_by_category_and_tag() {
+function show_by_category_and_tag(request_tags=false) {
 	if(use_local_data) {
 		$("tbody").find("tr").each(function(index) {
 			let row_cat = $(this).find(".category_cell").first().text().trim();
@@ -66,13 +76,13 @@ function show_by_category_and_tag() {
 				$(this).hide();
 		});
 	} else {
-		load_data_into_table()
+		load_data_into_table(undefined, undefined, request_tags=request_tags)
 	}
 }
 // show only a category depending on the clicked button 
 function select_category(event) {
 	var category = event.currentTarget.innerText;
-	if(category === "All") {
+	if(false && category === "All") {
 		// throw away the filtering
 		current_selected_category = null;
 		$("#category_dropdown").text("Category");
@@ -80,8 +90,10 @@ function select_category(event) {
 		// filter all fields that does not contain this category 
 		current_selected_category = category;
 		$("#category_dropdown").text(category);
+		// also disable all tags and try again
+		currently_selected_tag = [];
 	}
-	show_by_category_and_tag();
+	show_by_category_and_tag(request_tags=true);
 	// update the clear filter and show it 
 	// $("#filter_category_clear").text(category + "(X)");
 	// $("#filter_category_clear").show();
@@ -97,7 +109,7 @@ function toggle_view_tag(event) {
 	} else {
 		currently_selected_tag = currently_selected_tag.filter(t => t !== tag);
 	}
-	show_by_category_and_tag();
+	show_by_category_and_tag(request_tags=false);
 }
 
 // remove all tag; used for a whole button box. TODO migrate to a similar checkbox?
@@ -221,21 +233,9 @@ function update_view_index(current_index, max_index) {
 	}
 }
 
-function get_and_reupdate_question(event, with_duplicate = true) {
-	//$(event.currentTarget).attr("disabled", true);
-	$.ajax({
-		type: "GET",
-		url: "questions?with_duplicate=" + with_duplicate.toString(),
-		success: function(data, textStatus, jqXHR) {
-			// console.log(data["questions"], data["all_length"]);
-			reupdate_questions(data["questions"]);
-			// also update the index of the current section back to 0
-			update_view_index(0, Math.floor(data["all_length"] / length_per_view));
-		},
-		error: function(jqXHR, textStatus, error){
-			console.log("Received error", error);
-		},
-	})
+function get_and_reupdate_question(event, with_duplicate=true) {
+	// first load into the table; 
+	load_data_into_table(undefined, undefined, request_tags=true);
 }
 
 function build_category_cell(cell_text) {
@@ -250,26 +250,34 @@ function build_tag_cell(tag_text) {
 	return tag_overall;
 }
 
-function external_update_filter() {
+function external_update_filter(chain_to_reupdate_question=false) {
+	// update the category; if specific flag is enabled, also auto-select the first category and load accordnigly
 	$.ajax({
 		type: "GET",
 		url: "all_filter",
 		success: function(data, textStatus, jqXHR) {
 			//console.log(data)
-			console.log("Loading category & tag:", data["categories"], data["tags"]);
+			console.log("Loading category:", data["categories"]);
 			let catmenu = $("#category_dropdown_menu");
 			catmenu.empty();
-			catmenu.append(build_category_cell("All"));
+			// catmenu.append(build_category_cell("All"));
 			data["categories"].forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
-			let tagmenu = $("#tag_dropdown_menu");
-			tagmenu.empty();
-			tagmenu.append($("<button>").addClass("btn btn-link").text("Clear").attr("onclick", "clear_tag(event)"));
-			data["tags"].forEach( function(tag) { tagmenu.append(build_tag_cell(tag)); });
+			if(chain_to_reupdate_question) {
+				current_selected_category = data["categories"][0]; // selected first category
+				load_data_into_table(undefined, undefined, request_tags=true)
+			}
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
 		},
 	})
+}
+
+function internal_update_filter(tags) {
+	let tagmenu = $("#tag_dropdown_menu");
+	tagmenu.empty();
+	tagmenu.append($("<button>").addClass("btn btn-link").text("Clear").attr("onclick", "clear_tag(event)"));
+	tags.forEach( function(tag) { tagmenu.append(build_tag_cell(tag)); });
 }
 
 // upon successful update, rebuild the table accordingly
@@ -348,11 +356,14 @@ function reupdate_questions(data, clear_table = true) {
 		// category, tag, and use checkbox 
 		//console.log("Cat/Tag: ", q["category"], q["tag"]);
 		let category = q["category"] || "N/A";
-		let cat_cell = $("<td>").addClass("category_cell").append($("<button>").addClass("m-0 p-0 btn btn-link").attr("onclick", "select_category(event)").text(category));
-		row.append(cat_cell);
+		if(use_local_data) {
+			let cat_cell = $("<td>").addClass("category_cell").append($("<button>").addClass("m-0 p-0 btn btn-link").attr("onclick", "select_category(event)").text(category));
+			row.append(cat_cell);
+		}
 		let tag_cell = $("<td>");
 		if("tag" in q) {
 			q["tag"].forEach( function(tag, index) {
+				if(index > 0) { tag_cell.append($("<br>")) }
 				tag_cell.append($("<button>").addClass("m-0 p-0 btn btn-link tag_cell").attr("onclick", "toggle_select_tag(event)").text(tag));
 				if(!tags.includes(tag)) { tags.push(tag); } // add to current tags if not in there
 			});

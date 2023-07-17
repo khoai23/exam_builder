@@ -37,10 +37,4 @@
 {% block script %}
 <script src={{ url_for('static', filename="table.js") }}></script>
 <script src={{ url_for('static', filename="edit.js") }}></script>
-<script>
-	$(document).ready(function() {
-		// load the data when ready 
-		get_and_reupdate_question();
-	});
-</script>
 {% endblock %}

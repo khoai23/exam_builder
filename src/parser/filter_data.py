@@ -1,5 +1,5 @@
 import os, io, csv 
-from src.reader import HEADERS, process_field
+from src.data.reader import HEADERS, process_field
 
 from typing import Optional, List, Tuple, Any, Union, Dict
 

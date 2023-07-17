@@ -51,27 +51,32 @@ def build():
     """
 #    print([r["correct_id"] for r in current_data])
     # limit to 1k for now
-    return flask.render_template("build.html", title="Data", questions=current_data[:1000])
+    return flask.render_template("build.html", title="Data", questions=[])
 
 @app.route("/filtered_questions", methods=["GET"])
 def filtered_questions():
     # same as above; but receiving corresponding category & tag filtering.
-    category_filter = request.args.get("category", None)
+    category = request.args.get("category", None)
+    if category is None:
+        raise NotImplementedError
     tag_raw_filter = request.args.get("tag", None)
     tag_filter = None if tag_raw_filter is None else tag_raw_filter.split(",") if "," in tag_raw_filter else [tag_raw_filter]
-    filtered_data = current_data
-    if(category_filter):
-        filtered_data = (q for q in filtered_data if q.get("category", "N/A") == category_filter)
+    filtered_data = current_data.load_category(category)
     if(tag_filter):
         filtered_data = (q for q in filtered_data if any((t in q.get("tag", []) for t in tag_filter)))
     filtered_data = list(filtered_data)
     start_index = int(request.args.get("start", 0))
     end_index = int(request.args.get("end", int(request.args.get("length", 1000)) + start_index ))
-    return flask.jsonify(questions=filtered_data[start_index:end_index], all_length=len(filtered_data))
+    if(request.args.get("request_tags", "false") == "true"):
+        # tag is requested; parse it from all children
+        tags = list(set(t for q in filtered_data for t in q.get("tag", ())))
+        return flask.jsonify(questions=filtered_data[start_index:end_index], tags=tags, all_length=len(filtered_data))
+    else:
+        return flask.jsonify(questions=filtered_data[start_index:end_index], all_length=len(filtered_data))
 
 @app.route("/all_filter", methods=["GET"])
 def all_filter():
-    # returning all category & tag from the current data 
+    # returning all categoryfrom the current data 
     return flask.jsonify(categories=current_data.categories)
 
 @app.route("/retrieve_text", methods=["GET"])
@@ -163,7 +168,7 @@ def build_template():
     if(category is None):
         raise NotImplementedError
     logger.info("@build_template: Received template data: {}".format(data))
-    result, (arg1, arg2) = load_template(data)
+    result, (arg1, arg2) = load_template(data, category)
     if(result):
         # return the key to be accessed by the browser
         return flask.jsonify(result=True, session_key=arg1, admin_key=arg2)
