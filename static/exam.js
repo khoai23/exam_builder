@@ -103,11 +103,6 @@ function updateModal() {
 	}
 }
 
-$(document).ready(function() {
-	// wrap to ensure that the document is fully instantalized before allowing this trigger
-	// $("#confirmation_modal").on("show.bs.modal", updateModal); 
-});
-
 function submit(event, autosubmit) {
 	// the modal confirmed submission; compile the answer list
 	var answers = listAnswers();

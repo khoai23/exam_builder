@@ -100,7 +100,7 @@ def remove_nonchar(input_str):
 def check_duplication_in_data(data: List[Dict], deviation: Optional[int]=None):
     """Perform check and find duplication.
     Check question's static section only (word-based, no special token, no space), and only allow upto {deviation} difference. For now, only deviation=0 (exact match) is allowed."""
-    question_stripped = ( (q["id"], remove_nonchar(q["question"])) for q in data)
+    question_stripped = ( (q["id"], remove_nonchar(q.get("question", ""))) for q in data)
     check_dictionary = {}
     duplicate_dictionary = {}
     for qid, qstr in question_stripped:

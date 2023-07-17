@@ -74,17 +74,20 @@ def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=Fal
     else:
         raise ValueError("Unusable filepath: {}; check the extension (must be .csv/.xlsx)".format(filepath))
 
-def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed: bool=False):
+def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []
+    if(ignore_failed_row):
+        failed_rows = []
     with io.open(filepath, "r", encoding="utf-8") as rf:
         reader = csv.DictReader(rf, fieldnames=headers)
-        for row in reader:
+        for i, row in enumerate(reader):
             try:
                 data.append(process_field(row))
             except Exception as e:
-                if(ignore_failed):
-                    logger.error("Failed row: {}\n{}".format(e, traceback.format_exc()))
+                if(ignore_failed_row):
+                    # logger.error("Failed row: {}".format(e, traceback.format_exc()))
+                    failed_rows.append(i+1)
                     continue
                 else:
                     raise e
@@ -92,13 +95,18 @@ def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields) or row["is_single_equation"]
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
-    return data
+    if(ignore_failed_row):
+        return failed_rows, data
+    else:
+        return data
 
-def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
+def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False):
     workbook = openpyxl.load_workbook(filepath)
     data_sheet = workbook[workbook.sheetnames[0]]
     logger.debug("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
     data = []
+    if(ignore_failed_row):
+        failed_rows = []
     image_dictionary = dict()
     if(DefaultClient is None):
         logger.warning("Image module disabled/uninitialized. Import with images is disabled.")
@@ -131,12 +139,23 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
             continue 
         # only add the data field in when value is not empty 
         # have to re-convert back to string right now; TODO code to skip this
-        data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }, image_dictionary=image_dictionary.get(i, None)))
+        try:
+            data.append(process_field({header: str(value) for header, value in zip(headers, row) if value is not None }, image_dictionary=image_dictionary.get(i, None)))
+        except Exception as e:
+            if(ignore_failed_row):
+                # logger.error("Failed row: {}".format(e, traceback.format_exc()))
+                failed_rows.append(i+1)
+                continue
+            else:
+                raise e
     if(strict):
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields)
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
-    return data
+    if(ignore_failed_row):
+        return failed_rows, data
+    else:
+        return data
 
 def write_file_csv(filepath: str, data: List[Dict], headers: List[str]=HEADERS):
     # write a csv file using the current read data. Useful when importing in append mode
@@ -242,11 +261,12 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
                 logger.warning("Image {} is at invalid column {} (should be put at image_1-image6/10-15); not used.".format(image_info["link"], col))
     # assert no duplicate answers.
     answers = [v for k, v in new_data.items() if "answer" in k]
+    assert "question" in new_data, "Data must have a valid question field."
     # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
     assert new_data.get("is_single_equation", False) or new_data.get("is_single_option", False) or \
         len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
     # if is_single_option, make sure that it has at least 4 corresponding templates.
-    if(new_data.get("is_single_option", False) and new_data["variable_limitation"].count("\n") < 3):
+    if(new_data.get("is_single_option", False) and new_data["variable_limitation"].count("\n") < 4):
         raise ValueError("Question {} must have at least 4 variant, but only has {}".format(new_data, new_data["variable_limitation"].count("\n")+1))
     # if multiple-choice question with only a single selection, convert it to list 
     if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):

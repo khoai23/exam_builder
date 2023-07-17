@@ -50,7 +50,8 @@ def build():
     TODO restrict access
     """
 #    print([r["correct_id"] for r in current_data])
-    return flask.render_template("build.html", title="Data", questions=current_data)
+    # limit to 1k for now
+    return flask.render_template("build.html", title="Data", questions=current_data[:1000])
 
 @app.route("/questions", methods=["GET"])
 def questions():
@@ -58,7 +59,31 @@ def questions():
     with_duplicate = request.args.get("with_duplicate")
     if(with_duplicate and with_duplicate.lower() == "true"):
         mark_duplication(current_data)
-    return flask.jsonify(questions=current_data)
+    # data will load only a maximum of 1k, until specified otherwise 
+    start_index = int(request.args.get("start", 0))
+    end_index = int(request.args.get("end", int(request.args.get("length", 1000)) + start_index ))
+    return flask.jsonify(questions=current_data[start_index:end_index], all_length=len(current_data))
+
+@app.route("/filtered_questions", methods=["GET"])
+def filtered_questions():
+    # same as above; but receiving corresponding category & tag filtering.
+    category_filter = request.args.get("category", None)
+    tag_raw_filter = request.args.get("tag", None)
+    tag_filter = None if tag_raw_filter is None else tag_raw_filter.split(",") if "," in tag_raw_filter else [tag_raw_filter]
+    filtered_data = current_data
+    if(category_filter):
+        filtered_data = (q for q in filtered_data if q.get("category", "N/A") == category_filter)
+    if(tag_filter):
+        filtered_data = (q for q in filtered_data if any((t in q.get("tag", []) for t in tag_filter)))
+    filtered_data = list(filtered_data)
+    start_index = int(request.args.get("start", 0))
+    end_index = int(request.args.get("end", int(request.args.get("length", 1000)) + start_index ))
+    return flask.jsonify(questions=filtered_data[start_index:end_index], all_length=len(filtered_data))
+
+@app.route("/all_filter", methods=["GET"])
+def all_filter():
+    # returning all category & tag from the current data 
+    return flask.jsonify(categories=list(data["all_categories"]), tags=list(data["all_tags"]))
 
 @app.route("/duplicate_questions", methods=["GET"])
 def duplicate_questions():
@@ -111,7 +136,7 @@ def file_import():
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
         # performing the importing procedure; ALWAYS creating backup to be used with rollback
-        perform_import(temporary_filename, filepath_dict["current_path"])
+        perform_import(temporary_filename, filepath_dict["current_path"], replace_mode=is_replace_mode)
         return flask.jsonify(result=True)
     except Exception as e:
         logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))

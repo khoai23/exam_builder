@@ -1,5 +1,5 @@
 <div class="table-responsive card-body p-1">
-	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 600px; overflow: auto;">
+	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
 		<thead class="thead-light">
 			<tr>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
@@ -14,7 +14,7 @@
 						<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Category
 						</button>
-						<div class="dropdown-menu" aria-labelledby="category_dropdown" id="category_dropdown_menu" style="z-index: 10;">
+						<div class="dropdown-menu" aria-labelledby="category_dropdown" id="category_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
 							<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
 						</div>
 					</div>
@@ -24,7 +24,7 @@
 						<button class="btn btn-secondary dropdown-toggle" type="button" id="tag_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Tag
 						</button>
-						<div class="dropdown-menu" aria-labelledby="tag_dropdown" id="tag_dropdown_menu" style="z-index: 10;">
+						<div class="dropdown-menu" aria-labelledby="tag_dropdown" id="tag_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
 						</div>
 					</div>
 				</th>
@@ -78,5 +78,22 @@
 			</tr>
 			{% endfor %}
 		</tbody>
+		<tfoot id="table_button_bar">
+			<tr>
+				<th colspan='10' class="align-bottom bg-white" style="position: sticky; bottom: 0; z-index: 5;">
+					<div class="d-flex p-1">
+						<div class="ml-auto">
+							<button class="btn btn-primary ml-auto m-1" id="table_button_first">1</button>
+							<span class="p-1" id="elipse_start">...</span>
+							<button class="btn btn-outline-primary m-1" id="table_button_previous">2</button>
+							<button class="btn btn-outline-primary m-1" id="table_button_current">3</button>
+							<button class="btn btn-outline-primary m-1" id="table_button_next">4</button>
+							<span class="p-1" id="elipse_end">...</span>
+							<button class="btn btn-outline-primary m-1" id="table_button_last">5</button>
+						</div>
+					</div>
+				</th>
+			</tr>
+		</tfoot>
 	</table>
 </div>

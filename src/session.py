@@ -24,6 +24,8 @@ data["id"] = id_data = assign_ids(current_data)
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
 data["paths"] = filepath_dict = {"backup_path": DEFAULT_BACKUP_PATH, "current_path": DEFAULT_FILE_PATH}
+data["all_categories"] = {q.get("category", "N/A") for q in current_data}
+data["all_tags"] = {tag for q in current_data for tag in q.get("tag", [])}
 student_belong_to_session = dict()
 
 """Section working with data: importing, deleting and rolling back will be put here.
@@ -64,13 +66,18 @@ def reload_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     session.clear()
     submit_route.clear()
     student_belong_to_session.clear()
+    data["all_categories"] = {q["category"] for q in current_data}
+    data["all_tags"] = {tag for q in current_data for tag in q["tag"]}
     if(check_duplication):
         mark_duplication(current_data)
 
 def append_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
     """Append - update the data after the current one; sessions will be kept since id would not be moved"""
-    current_data.extend(read_file(location))
+    new_data = read_file(location)
+    current_data.extend(new_data)
     id_data.clear(); id_data.update(assign_ids(current_data))
+    data["all_categories"].update((q["category"] for q in current_data))
+    data["all_tags"].update((tag for q in current_data for tag in q["tag"]))
     if(check_duplication):
         mark_duplication(current_data)
 #    logger.debug([r["correct_id"] for r in current_data])

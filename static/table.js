@@ -1,3 +1,5 @@
+var use_local_data = false;
+
 function get_selected_question_ids() {
 	var valid_id = [];
 	var checklist = $("#question_table").find("[id^=use_question_]");
@@ -12,21 +14,60 @@ function get_selected_question_ids() {
 
 var current_selected_category = null;
 var currently_selected_tag = [];
+
+// used when use_local_data is false; data is reloaded on the long web instead 
+function load_data_into_table(start, end, url="filtered_questions") {
+	let catstr = current_selected_category === null ? "" : "category=" + encodeURI(current_selected_category);
+	let tagstr = currently_selected_tag.length === 0 ? "" : "tag=" + encodeURI(currently_selected_tag.join(","));
+	if(catstr == "") {
+		url = url + "?" + tagstr;
+	} else if(tagstr == "") {
+		url = url + "?" + catstr;
+	} else {
+		url = url + "?" + catstr + "&" + tagstr;
+	}
+	if(start !== undefined) {
+		url = url + "&start=" + start.toString();
+		start = Math.floor(start / length_per_view);
+	} else {
+		start = 0;
+	}
+	if(end !== undefined) {
+		url = url + "&end=" + end.toString();
+	}
+	// console.log("Querying url, ", url, catstr, tagstr);
+	$.ajax({
+		type: "GET",
+		url: url,
+		success: function(data, textStatus, jqXHR) {
+			reupdate_questions(data["questions"]);
+			update_view_index(start, Math.floor(data["all_length"] / length_per_view));
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log("Received error", error);
+		},
+	});
+}
+	
 // show the combination of category & tag. Used in a variety of situation 
 function show_by_category_and_tag() {
-	$("tbody").find("tr").each(function(index) {
-		let row_cat = $(this).find(".category_cell").first().text().trim();
-		let row_tag = $(this).find(".tag_cell").text();
-		// no category selection or category is correct
-		let has_category = (current_selected_category === null) || (row_cat === current_selected_category);
-		// no tag selection or tag is included in selected
-		let has_tag = (currently_selected_tag.length === 0) || currently_selected_tag.some(t => row_tag.includes(t));
-		// console.log(row_cat);
-		if(has_category && has_tag)
-			$(this).show();
-		else 
-			$(this).hide();
-	});
+	if(use_local_data) {
+		$("tbody").find("tr").each(function(index) {
+			let row_cat = $(this).find(".category_cell").first().text().trim();
+			let row_tag = $(this).find(".tag_cell").text();
+			// no category selection or category is correct
+			let has_category = (current_selected_category === null) || (row_cat === current_selected_category);
+			// no tag selection or tag is included in selected
+			let has_tag = (currently_selected_tag.length === 0) || currently_selected_tag.some(t => row_tag.includes(t));
+			// console.log(row_cat);
+			if(has_category && has_tag)
+				$(this).show();
+			else 
+				$(this).hide();
+		});
+	} else {
+		load_data_into_table()
+	}
 }
 // show only a category depending on the clicked button 
 function select_category(event) {
@@ -49,7 +90,7 @@ function select_category(event) {
 // add or remove the tag depending on which one
 function toggle_view_tag(event) {
 	let tag = $(event.currentTarget.parentNode).find(".form-check-label").text().trim();
-	console.log("Clicked on", event, "with tag", tag);
+	//console.log("Clicked on", event, "with tag", tag);
 	let checked = $(event.currentTarget).is(":checked");
 	if(checked) {
 		currently_selected_tag.push(tag);
@@ -74,7 +115,7 @@ function toggle_select_tag(event) {
 	var boxes = $("tbody").find("tr").filter(function(index) {
 		return $(this).find(".tag_cell:contains('" + target_tag + "')").length > 0;
 	}).find("[id^=use_question_]");
-	console.log(boxes);
+	// console.log(boxes);
 	if(boxes.filter(":checked").length == boxes.length) {
 		// all box checked; deselect 
 		boxes.each(function() { $(this).prop("checked", false); })
@@ -98,6 +139,87 @@ function toggle_all_tag(event) {
 	}
 }
 
+const length_per_view = 1000;
+const button_list = ["table_button_first", "table_button_previous", "table_button_current", "table_button_next", "table_button_last"];
+var max_question_index = 0;
+
+function update_view_index(current_index, max_index) {
+	// if max_index, reupdate the bar depending on value
+	console.log("Updating index", current_index, "of", max_index);
+	if(max_index !== undefined) {
+		max_question_index = max_index;
+		if(max_index == 0) {
+			// sub-1 (index 0), showing no bar
+			$("#table_button_bar").hide();
+		} else {
+			$("#table_button_bar").show();
+			if(max_index < 5) {
+				// between 2-5(index 1-4), repurpose the buttons in direct format 
+				for(let i=0; i<max_index; i++) {
+					$("#" + button_list[i]).text((i+1).toString()).attr("onclick", "load_data_into_table(" + (i*length_per_view).toString() + "," + ((i+1)*length_per_view).toString() + ")");
+				}
+			} else {
+				// 5+, set button in default format with correct end index
+				$("#table_button_first").text("1").attr("onclick", "load_data_into_table(0," + length_per_view.toString() + ")");
+				$("#table_button_previous").text("<");
+				//$("#table_button_next").text(">");
+				$("#table_button_last").text((max_index+1).toString()).attr("onclick", "load_data_into_table(" + (max_question_index*length_per_view).toString() + ")");
+			}
+		}
+	}
+	// update the values depending on the current_index & max_question_index
+	if(max_question_index < 5) {
+		// direct format 
+		button_list.forEach(function(name, index){
+			if(index == current_index) {
+				$("#" + button_list).addClass("btn-primary").removeClass("btn-outline-primary");
+			} else {
+				$("#" + button_list).removeClass("btn-primary").addClass("btn-outline-primary");
+			}
+		})
+	} else {
+		// default format, showing items depending on immediate distance between current toward first & last 
+		$("#table_button_current").text((current_index+1).toString());
+		// front section
+		$("#table_button_previous").attr("onclick", "load_data_into_table(" + ((current_index-1)*length_per_view).toString() + "," + (current_index*length_per_view).toString() + ")")
+		if(current_index == 0) { // first; hide all
+			$("#table_button_first").hide();
+			$("#elipse_start").hide();
+			$("#table_button_previous").hide();
+		} else if(current_index == 1) { // second, hide the spanning & previous
+			$("#table_button_first").show();
+			$("#elipse_start").hide();
+			$("#table_button_previous").hide();
+		} else if(current_index == 2) { // third, hide the spanning & repurpose the previous 
+			$("#table_button_first").show();
+			$("#elipse_start").hide();
+			$("#table_button_previous").text(current_index.toString()).show();
+		} else { // >3, show the elipses
+			$("#table_button_first").show();
+			$("#elipse_start").show();
+			$("#table_button_previous").text("<").show();
+		}
+		// back section
+		$("#table_button_next").attr("onclick", "load_data_into_table(" + ((current_index+1)*length_per_view).toString() + "," + ((current_index+2)*length_per_view).toString() + ")")
+		if(current_index == max_question_index) { // last; hide all
+			$("#table_button_last").hide();
+			$("#elipse_end").hide();
+			$("#table_button_next").hide();
+		} else if(current_index == max_question_index-1) { // second, hide the spanning & previous
+			$("#table_button_last").show();
+			$("#elipse_end").hide();
+			$("#table_button_next").hide();
+		} else if(current_index == max_question_index-2) { // third, hide the spanning & repurpose the previous 
+			$("#table_button_last").show();
+			$("#elipse_end").hide();
+			$("#table_button_next").text((current_index+2).toString()).show();
+		} else { // <-3, show the elipses
+			$("#table_button_last").show();
+			$("#elipse_end").show();
+			$("#table_button_next").text(">").show();
+		}
+	}
+}
 
 function get_and_reupdate_question(event, with_duplicate = true) {
 	//$(event.currentTarget).attr("disabled", true);
@@ -105,8 +227,10 @@ function get_and_reupdate_question(event, with_duplicate = true) {
 		type: "GET",
 		url: "questions?with_duplicate=" + with_duplicate.toString(),
 		success: function(data, textStatus, jqXHR) {
-			// console.log(data["questions"]);
+			// console.log(data["questions"], data["all_length"]);
 			reupdate_questions(data["questions"]);
+			// also update the index of the current section back to 0
+			update_view_index(0, Math.floor(data["all_length"] / length_per_view));
 		},
 		error: function(jqXHR, textStatus, error){
 			console.log("Received error", error);
@@ -124,6 +248,28 @@ function build_tag_cell(tag_text) {
 	let tag_label = $("<label for=\"tag_check_all\"> " + tag_text + " </label>").addClass("form-check-label");
 	tag_overall.append(tag_checkbox); tag_overall.append(tag_label);
 	return tag_overall;
+}
+
+function external_update_filter() {
+	$.ajax({
+		type: "GET",
+		url: "all_filter",
+		success: function(data, textStatus, jqXHR) {
+			//console.log(data)
+			console.log("Loading category & tag:", data["categories"], data["tags"]);
+			let catmenu = $("#category_dropdown_menu");
+			catmenu.empty();
+			catmenu.append(build_category_cell("All"));
+			data["categories"].forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
+			let tagmenu = $("#tag_dropdown_menu");
+			tagmenu.empty();
+			tagmenu.append($("<button>").addClass("btn btn-link").text("Clear").attr("onclick", "clear_tag(event)"));
+			data["tags"].forEach( function(tag) { tagmenu.append(build_tag_cell(tag)); });
+		},
+		error: function(jqXHR, textStatus, error){
+			console.log("Received error", error);
+		},
+	})
 }
 
 // upon successful update, rebuild the table accordingly
@@ -173,7 +319,10 @@ function reupdate_questions(data, clear_table = true) {
 			// console.log("Correct: ", correct_ids);
 			for(let j=1; j<=4; j++) {
 				let answer = q["answer" + j.toString()];
-				if(answer.includes("|||")) {
+				if(answer === undefined) {
+					console.error("Question", q, "missing answer of index", j);
+					answers.push($("<td>").addClass("bg-danger"));
+				} else if(answer.includes("|||")) {
 					// is image variant; put into img tag and put inside
 					answer = answer.replaceAll("|||", "");
 					answers.push($("<td>").append(
@@ -219,18 +368,25 @@ function reupdate_questions(data, clear_table = true) {
 		// console.log("Constructed row: ", row);
 		if(!categories.includes(category)) { categories.push(category); } // add to current categories if not in there
 	};
-	// after the rows updated; reupdate the items in the category/tag dropdown menu 
-	let catmenu = $("#category_dropdown_menu");
-	catmenu.empty();
-	catmenu.append(build_category_cell("All"));
-	categories.forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
-	let tagmenu = $("#tag_dropdown_menu");
-	tagmenu.empty();
-	tagmenu.append($("<button>").addClass("btn btn-link").text("Clear").attr("onclick", "clear_tag(event)"));
-	tags.forEach( function(tag) { tagmenu.append(build_tag_cell(tag)); });
+	if(use_local_data) {
+		// in local data, after the rows updated; reupdate the items in the category/tag dropdown menu 
+		let catmenu = $("#category_dropdown_menu");
+		catmenu.empty();
+		catmenu.append(build_category_cell("All"));
+		categories.forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
+		let tagmenu = $("#tag_dropdown_menu");
+		tagmenu.empty();
+		tagmenu.append($("<button>").addClass("btn btn-link").text("Clear").attr("onclick", "clear_tag(event)"));
+		tags.forEach( function(tag) { tagmenu.append(build_tag_cell(tag)); });
+	} else {
+		// in remote data; catmenu and tagmenu is persistent
+	}
 	
 	// after everything had updated; re-typeset MathJax elements 
 	MathJax.typeset();
 }
 
-
+if(!use_local_data) {
+	// add extra update to load all categories/tags in
+	$(document).ready(external_update_filter);
+}

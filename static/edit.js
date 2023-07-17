@@ -40,6 +40,7 @@ function submit_file(event) {
 				$("#io_result").removeClass("text-danger").addClass("text-success").text("Import done, data reloaded.").show();
 				//$(event.currentTarget).attr("disabled", false);
 				get_and_reupdate_question(event);
+				external_update_filter();
 			} else {
 				$("#io_result").removeClass("text-success").addClass("text-danger").text("Import failed; error: " + data["error"]).show();
 			}
