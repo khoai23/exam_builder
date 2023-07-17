@@ -163,8 +163,9 @@ function submit_questionnaire(event) {
 		console.log("Cleaned result: ", payload);
 		var result_panel = $("#result_panel");
 		result_panel.hide();
+		var category = $("#category_dropdown").text();
 		$.ajax({
-			url: "build_template", 
+			url: "build_template?category=" + encodeURIComponent(category), 
 			type: "POST",
 			data: payload, 
 			contentType: "application/json",

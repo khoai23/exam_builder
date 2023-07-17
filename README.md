@@ -8,6 +8,7 @@ All possible extension regard the builder, unlikely first:
 - [x] Import check for duplication
 - [x] Split the current "build" page to "build", "edit" (for changing the data), and "table" (for generic display of the data)
 - [ ] Option to show relevant solution with wrong answers
+- [ ] Overhauling data loading procedure - data will be split and kept by category
 - [ ] Authentication mechanism
 - [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer

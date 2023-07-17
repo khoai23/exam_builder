@@ -10,7 +10,8 @@ import signal
 import threading, _thread
 from contextlib import contextmanager
 
-from src.reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX
+from src.data.reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX 
+from src.data.split_load import OnRequestData
 from src.organizer import assign_ids, shuffle, check_duplication_in_data
 
 import logging
@@ -18,150 +19,26 @@ logger = logging.getLogger(__name__)
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
-data = {}
-data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
-data["id"] = id_data = assign_ids(current_data)
+data = current_data = OnRequestData()
+# data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
+#data["id"] = current_data.load_category(session_data["category"]] = assign_ids(current_data)
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
-data["paths"] = filepath_dict = {"backup_path": DEFAULT_BACKUP_PATH, "current_path": DEFAULT_FILE_PATH}
-data["all_categories"] = {q.get("category", "N/A") for q in current_data}
-data["all_tags"] = {tag for q in current_data for tag in q.get("tag", [])}
 student_belong_to_session = dict()
 
-"""Section working with data: importing, deleting and rolling back will be put here.
-TODO put all this to a different corresponding files to debloat"""
-
-def wrap_recover_after_failure(function):
-    """General wrapper for all operations involving modification of the backup/current files. Keep necessary copies of current_path and backup_path; upon exception, return them into places and reload the data.
-    """
-    def wrapper_function(*args, **kwargs):
-        try:
-            # keeping recovery files
-            current_recover = copy_file(filepath_dict["current_path"], _DEFAULT_RECOVER_FILE_PREFIX, is_target_prefix=True)
-            if(filepath_dict["backup_path"]):
-                backup_recover = copy_file(filepath_dict["backup_path"], _DEFAULT_RECOVER_BACKUP_PREFIX, is_target_prefix=True)
-            else:
-                backup_recover = None
-            return function(*args, **kwargs)
-        except Exception as e:
-            logger.error("Error attempting to run function {}. Attempt recovery.\nError: {}\n{}".format(function, e, traceback.format_exc()))
-            filepath_dict["current_path"] = move_file(current_recover, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
-            if(backup_recover):
-                filepath_dict["backup_path"] = move_file(backup_recover, _DEFAULT_BACKUP_PREFIX, is_target_prefix=True)
-            reload_data(filepath_dict["current_path"])
-            # reraise the error
-            raise e
-        finally:
-            # if file exist after operation; throw them away 
-            if(os.path.isfile(current_recover)):
-                os.remove(current_recover)
-            if(backup_recover and os.path.isfile(backup_recover)):
-                os.remove(backup_recover)
-    return wrapper_function
-
-def reload_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
-    """Reload - clear everything and then re-load the data. No session will be kept, since id would likely be completely screwed"""
-    del current_data[:]; current_data.extend(read_file(location))
-    id_data.clear(); id_data.update(assign_ids(current_data))
-    session.clear()
-    submit_route.clear()
-    student_belong_to_session.clear()
-    data["all_categories"] = {q["category"] for q in current_data}
-    data["all_tags"] = {tag for q in current_data for tag in q["tag"]}
-    if(check_duplication):
-        mark_duplication(current_data)
-
-def append_data(location=DEFAULT_FILE_PATH, check_duplication: bool=True):
-    """Append - update the data after the current one; sessions will be kept since id would not be moved"""
-    new_data = read_file(location)
-    current_data.extend(new_data)
-    id_data.clear(); id_data.update(assign_ids(current_data))
-    data["all_categories"].update((q["category"] for q in current_data))
-    data["all_tags"].update((tag for q in current_data for tag in q["tag"]))
-    if(check_duplication):
-        mark_duplication(current_data)
-#    logger.debug([r["correct_id"] for r in current_data])
-
-@wrap_recover_after_failure
-def delete_data_by_ids(ids: List[int], safe: bool=False, strict: bool=True, preserve_session: bool=False):
-    """Deleting specific data. 
-    If safe, only allow deletion of uncommitted data (set with a specific flag).
-    If strict, will reject deletion if trying to delete strange id. Still allow duplicate though
-    For now allow deleting anything."""
-    if(safe):
-        raise NotImplementedError
-    else:
-        ids = set((int(i) for i in ids))
-        new_data = []
-        for i, q in enumerate(current_data):
-            if(i in ids):
-                # found; removing 
-                ids.remove(i)
-            else:
-                # not found; re-add 
-                new_data.append(q)
-            # TODO create a refer (old_id -> new_id, and migrate all standing session using this dict)
-        if(strict and len(ids) > 0):
-            return {"result": False, "error": "Invalid list of id: {} not found".format(ids)}
-        # put the new_data back in
-        del current_data[:]
-        current_data.extend(new_data)
-    logger.debug("Reupdated data: {}".format(current_data))
-    # re-set the question ids
-    id_data.clear(); id_data.update(assign_ids(current_data))
-    if(preserve_session):
-        raise NotImplementedError
-    else:
+def wipe_session(for_categories: Optional[List[str]]=None):
+    """Wipe all sessions. If specifying category, keep the sessions that are not related to the wipe."""
+    if for_categories is None:
         session.clear()
         submit_route.clear()
         student_belong_to_session.clear()
-    return {"result": True}
-
-def create_backup(current_file: str, backup_prefix=_DEFAULT_BACKUP_PREFIX):
-    """Function will move the file to backup position while being mindful of its extension."""
-    return move_file(current_file, backup_prefix, is_target_prefix=True)
-
-def perform_commit(current_file: str):
-    """After modifying the current data in some way, this action will put old data in backup and create a new one"""
-    backup_path = create_backup(current_file)
-    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
-    write_file_xlsx(current_path, current_data)
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return backup_path, current_path
-
-@wrap_recover_after_failure
-def perform_import(import_file: str, current_file: str, replace_mode: bool=False, delete_import_after_done: bool=True):
-    """Performing appropriate importing protocol. Reloading/updating data as needed depending on replace_mode
-    Assuming an import file is created at {import_file}, and can be read by reload_data(); the file at {current_file} will be replaced with the latest update of each variant
-    Always return "backup_path" & "current_path"
-    """
-    backup_path = create_backup(current_file)
-    # add/replace the data
-    if(replace_mode):
-        logger.debug("Import and add the data to current")
-        reload_data(location=import_file)
     else:
-        logger.debug("Import and replace the data to current")
-        append_data(location=import_file)
-    # regardless of mode; write the current data to the current path 
-    current_path = _DEFAULT_FILE_PREFIX + ".xlsx"
-    write_file_xlsx(current_path, current_data)
-    # clean up if flag is set
-    if(delete_import_after_done):
-        os.remove(import_file)
-    # done, only return correct 
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return backup_path, current_path
-
-@wrap_recover_after_failure
-def perform_rollback(backup_file: str, current_path: str):
-    """Performing rollback. Just move the file back in and reload it."""
-    os.remove(current_path)
-    current_path = move_file(backup_file, _DEFAULT_FILE_PREFIX, is_target_prefix=True)
-    backup_path = None
-    reload_data(location=current_path)
-    filepath_dict["backup_path"], filepath_dict["current_path"] = backup_path, current_path
-    return current_path, backup_path
+        rm_sessions = {sid: sdata for sid, sdata in session.items() if sdata["category"] in for_categories}
+        for sid, sdata in rm_sessions.items(): 
+            session.pop(sid)
+            submit_route.pop(sid, None)
+            for std in sdata["student"]:
+                student_belong_to_session.pop(std, None)
 
 def mark_duplication(data: List[Dict]):
     """Mark concerning rows of data with {has_duplicate} and {duplicate_of}."""
@@ -208,7 +85,7 @@ def time_limit(seconds):
         else:
             signal.alarm(0)
 
-def test_template_validity(template: List[Tuple[int, float, List]]):
+def test_template_validity(template: List[Tuple[int, float, List]], category: str):
     """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that fail, return appropriate problem"""
     question_id = 0
     try:
@@ -216,13 +93,13 @@ def test_template_validity(template: List[Tuple[int, float, List]]):
         full_count = sum((num for num, _, _ in full_test_template))
         with time_limit(full_count * 0.25):
             # maximum 0.25s for every question 
-            shuffle(id_data, full_test_template)
+            shuffle(current_data.load_category(category), full_test_template)
             return True, None
     except Exception as e:
         logger.error("Template test failed for question {}: {}\n{}".format(getattr(e, "wrong_question_id", "N/A"), e, traceback.format_exc()))
         return False, (e, traceback.format_exc())
 
-def load_template(data: Dict, check_template: bool=True):
+def load_template(data: Dict, category: str, check_template: bool=True):
     # format setting: cleaning dates; voiding nulled fields
     setting = {k: v for k, v in data["setting"].items() if v is not None and (not isinstance(v, str) or v.strip() != "")}
     if("session_start" in setting):
@@ -236,7 +113,7 @@ def load_template(data: Dict, check_template: bool=True):
         setting.pop("student_list", None)
     
     if(check_template):
-        result, error_type = test_template_validity(data["template"])
+        result, error_type = test_template_validity(data["template"], category)
         if(not result):
             logger.info("Failed validation test. TODO find specific failure row")
             return False, error_type
@@ -247,7 +124,7 @@ def load_template(data: Dict, check_template: bool=True):
     # TODO add a timer to expire the session when needed 
     # calculate maximum score using current data 
     max_score = sum((count * score for count, score, ids in data["template"]))
-    session[key] = {"template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
+    session[key] = {"category": category, "template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
     logger.debug("New template: {}".format(session[key]))
     return True, (key, admin_key)
 
@@ -262,7 +139,7 @@ def student_first_access_session(template_key: str):
     # write to session retrieval 
     student_belong_to_session[student_key] = template_key
     # write to session data itself.
-    selected, correct = shuffle(id_data, session_data["template"])
+    selected, correct = shuffle(current_data.load_category(session_data["category"]), session_data["template"])
     session_data["student"][student_key] = student_data = {
             "exam_data": selected,
             "correct": correct,
@@ -314,7 +191,7 @@ def retrieve_submit_route_anonymous(template_key: str):
             student_belong_to_session[student_key] = template_key
             session_data = session.get(template_key, None)
             # write to session data itself.
-            selected, correct = shuffle(id_data, session_data["template"])
+            selected, correct = shuffle(current_data.load_category(session_data["category"]), session_data["template"])
             session_data["student"][student_key] = student_data = {
                     "student_name": student_name,
                     "exam_data": selected,
@@ -363,7 +240,7 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
                 student_belong_to_session[student_key] = template_key
                 session_data = session.get(template_key, None)
                 # write to session data itself.
-                selected, correct = shuffle(id_data, session_data["template"])
+                selected, correct = shuffle(current_data.load_category(session_data["category"]), session_data["template"])
                 session_data["student"][student_key] = student_data = {
                         "student_id": student_id,
                         "student_name": restricted_ids[student_id],

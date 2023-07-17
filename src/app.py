@@ -5,12 +5,12 @@ import os, time, re
 import traceback 
 import shutil
 
-from src.session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
-from src.session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
-from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, perform_commit
+from src.session import data, current_data, session, submit_route, student_belong_to_session
+from src.session import wipe_session, load_template, mark_duplication # migrate to external module
+from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
-from src.reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
+from src.data.reader import TEMPORARY_FILE_DIR 
 from src.organizer import check_duplication_in_data 
 from src.map import generate_map_by_region, generate_map_by_subregion
 
@@ -53,17 +53,6 @@ def build():
     # limit to 1k for now
     return flask.render_template("build.html", title="Data", questions=current_data[:1000])
 
-@app.route("/questions", methods=["GET"])
-def questions():
-    # TODO restrict access like data 
-    with_duplicate = request.args.get("with_duplicate")
-    if(with_duplicate and with_duplicate.lower() == "true"):
-        mark_duplication(current_data)
-    # data will load only a maximum of 1k, until specified otherwise 
-    start_index = int(request.args.get("start", 0))
-    end_index = int(request.args.get("end", int(request.args.get("length", 1000)) + start_index ))
-    return flask.jsonify(questions=current_data[start_index:end_index], all_length=len(current_data))
-
 @app.route("/filtered_questions", methods=["GET"])
 def filtered_questions():
     # same as above; but receiving corresponding category & tag filtering.
@@ -83,14 +72,7 @@ def filtered_questions():
 @app.route("/all_filter", methods=["GET"])
 def all_filter():
     # returning all category & tag from the current data 
-    return flask.jsonify(categories=list(data["all_categories"]), tags=list(data["all_tags"]))
-
-@app.route("/duplicate_questions", methods=["GET"])
-def duplicate_questions():
-    # TODO restrict access like data 
-    # Deprecated for now
-    duplicate = check_duplication_in_data(current_data)
-    return flask.jsonify(duplicate_ids=duplicate)
+    return flask.jsonify(categories=current_data.categories)
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():
@@ -109,21 +91,29 @@ def retrieve_text():
 def delete_questions():
     # TODO restrict access 
     delete_ids = request.get_json()
+    category = request.args.get("category", None)
+    if category is None:
+        raise NotImplementedError
     if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
         return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
     else:
-        result = delete_data_by_ids(delete_ids)
-        if(result["result"]):
-            nocommit = request.args.get("nocommit")
-            if(not nocommit or nocommit.lower() != "true"):
-                # if nocommit is not enabled; push the current data to backup and write down new one 
-                perform_commit(filepath_dict["current_path"])
-        return flask.jsonify(**result)
+        # delete by id
+        current_data.delete_data_by_ids(category, delete_ids)
+        if request.args.get("wipe", "true").lower() == "true":
+            # wipe by default, selectively for only this category. TODO evaluate
+            wipe_session(for_categories=[category])
+#        if(result["result"]):
+#            nocommit = request.args.get("nocommit")
+#            if(not nocommit or nocommit.lower() != "true"):
+#                # if nocommit is not enabled; push the current data to backup and write down new one 
+#                perform_commit(filepath_dict["current_path"])
+        return flask.jsonify(result=True)
 
 @app.route("/export")
 def file_export():
     """Allow downloading the database file."""
-    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
+    raise NotImplementedError # disable until further sorting out
+#    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
 
 @app.route("/import", methods=["POST"])
 def file_import():
@@ -136,7 +126,8 @@ def file_import():
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
         # performing the importing procedure; ALWAYS creating backup to be used with rollback
-        perform_import(temporary_filename, filepath_dict["current_path"], replace_mode=is_replace_mode)
+        current_data.update_data_from_file(temporary_filename)
+        wipe_session()
         return flask.jsonify(result=True)
     except Exception as e:
         logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
@@ -152,8 +143,11 @@ def file_import():
 def rollback():
     """Attempt to do a rollback on previous backup."""
     try:
-        if(filepath_dict["backup_path"] and os.path.isfile(filepath_dict["backup_path"])):
-            perform_rollback(filepath_dict["backup_path"], filepath_dict["current_path"])
+        category = request.args.get("category", None)
+        if category is None:
+            raise NotImplementedError
+        if current_data.category_has_rollback(category):
+            current_data.rollback_category(category)
             return flask.jsonify(result=True)
         else:
             return flask.jsonify(result=False, error="No backup available")
@@ -165,6 +159,9 @@ def rollback():
 def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
+    category = request.args.get("category", None)
+    if(category is None):
+        raise NotImplementedError
     logger.info("@build_template: Received template data: {}".format(data))
     result, (arg1, arg2) = load_template(data)
     if(result):

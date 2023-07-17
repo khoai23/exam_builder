@@ -8,12 +8,13 @@ from src.generator.dynamic_problem import convert_dynamic_key_problem, convert_s
 
 from typing import Optional, Dict, List, Tuple, Any, Union
 
-def assign_ids(data: List[Dict]):
-    id_based_data = {}
+def assign_ids(data: List[Dict]) -> List[Dict]:
+#    id_based_data = {}
     for i, row in enumerate(data): # most basic form
         row["id"] = i;
-        id_based_data[i] = row
-    return id_based_data
+#        id_based_data[i] = row
+#    return id_based_data
+    return data
 
 def organize(data: List[Dict], default_category: str="unknown"):
     # category are single-choice, mutually exclusive identifier
@@ -48,7 +49,7 @@ def return_brackets(text):
     return text.replace("&lcub;", "{").replace("&rcub;", "}")
 
 # TODO wipe this upon data reload
-def shuffle(data: Dict[int, Dict], all_questions: List[Tuple[int, float, List]], seed=None):
+def shuffle(data: List[Dict], all_questions: List[Tuple[int, float, List]], seed=None):
     # handle multiple questions already selected 
     # the selected should already been sub-divided to its minor section; this process will shuffle both the choices and the order of the answers and provide correct answer ids for them.
     # for specific dynamic problem; propels it into corresponding dynamic_problem function

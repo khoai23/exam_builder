@@ -64,9 +64,10 @@ function export_file(event) {
 function rollback(event) {
 	//$(event.currentTarget).attr("disabled", true);
 	set_buttons_state(true);
+	var category = $("#category_dropdown").text();
 	$.ajax({
 		type: "GET",
-		url: "rollback",
+		url: "rollback?category=" + encodeURIComponent(category),
 		success: function(data, textStatus, jqXHR) {
 			if(data["result"]) {
 				$("#io_result").removeClass("text-danger").addClass("text-success").text("Rollback done, old data had been loaded.");
@@ -103,10 +104,11 @@ function perform_confirm_modal(event) {
 // should be called by perform_confirm_modal
 function delete_selected(event) {
 	set_buttons_state(true);
+	var category = $("#category_dropdown").text();
 	var payload = JSON.stringify(get_selected_question_ids());
 	$.ajax({
 		type: "DELETE",
-		url: "delete_questions",
+		url: "delete_questions?category=" + encodeURIComponent(category),
 		data: payload, 
 		contentType: "application/json",
 		dataType: "json",
