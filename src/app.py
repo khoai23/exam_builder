@@ -6,11 +6,11 @@ import traceback
 import shutil
 
 from src.session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
-from src.session import perform_import, perform_rollback, load_template, mark_duplication, delete_data_by_ids # migrate to external module
+from src.session import wipe_session, load_template, mark_duplication # migrate to external module
 from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, perform_commit
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
-from src.reader import DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, TEMPORARY_FILE_DIR, move_file, write_file_xlsx 
+from src.data.reader import TEMPORARY_FILE_DIR 
 from src.organizer import check_duplication_in_data 
 from src.map import generate_map_by_region, generate_map_by_subregion
 
@@ -52,20 +52,20 @@ def build():
 #    print([r["correct_id"] for r in current_data])
     return flask.render_template("build.html", title="Data", questions=current_data)
 
-@app.route("/questions", methods=["GET"])
-def questions():
-    # TODO restrict access like data 
-    with_duplicate = request.args.get("with_duplicate")
-    if(with_duplicate and with_duplicate.lower() == "true"):
-        mark_duplication(current_data)
-    return flask.jsonify(questions=current_data)
+#@app.route("/questions", methods=["GET"])
+#def questions():
+#    # TODO restrict access like data 
+#    with_duplicate = request.args.get("with_duplicate")
+#    if(with_duplicate and with_duplicate.lower() == "true"):
+#        mark_duplication(current_data)
+#    return flask.jsonify(questions=current_data)
 
-@app.route("/duplicate_questions", methods=["GET"])
-def duplicate_questions():
-    # TODO restrict access like data 
-    # Deprecated for now
-    duplicate = check_duplication_in_data(current_data)
-    return flask.jsonify(duplicate_ids=duplicate)
+#@app.route("/duplicate_questions", methods=["GET"])
+#def duplicate_questions():
+#    # TODO restrict access like data 
+#    # Deprecated for now
+#    duplicate = check_duplication_in_data(current_data)
+#    return flask.jsonify(duplicate_ids=duplicate)
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():
@@ -84,10 +84,13 @@ def retrieve_text():
 def delete_questions():
     # TODO restrict access 
     delete_ids = request.get_json()
+    category = request.args.get("category", None)
+    if category is None:
+        raise NotImplementedError
     if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
         return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
     else:
-        result = delete_data_by_ids(delete_ids)
+        result = current_data.delete_data_by_ids(category, delete_ids)
         if(result["result"]):
             nocommit = request.args.get("nocommit")
             if(not nocommit or nocommit.lower() != "true"):
@@ -111,7 +114,8 @@ def file_import():
         temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
         file.save(temporary_filename)
         # performing the importing procedure; ALWAYS creating backup to be used with rollback
-        perform_import(temporary_filename, filepath_dict["current_path"])
+        current_data.update_data_from_file(temporary_filename)
+        wipe_session()
         return flask.jsonify(result=True)
     except Exception as e:
         logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
@@ -127,8 +131,11 @@ def file_import():
 def rollback():
     """Attempt to do a rollback on previous backup."""
     try:
+        category = request.args.get("category", None)
+        if category is None:
+            raise NotImplementedError
         if(filepath_dict["backup_path"] and os.path.isfile(filepath_dict["backup_path"])):
-            perform_rollback(filepath_dict["backup_path"], filepath_dict["current_path"])
+            current_data.rollback_category(category)
             return flask.jsonify(result=True)
         else:
             return flask.jsonify(result=False, error="No backup available")
@@ -140,6 +147,9 @@ def rollback():
 def build_template():
     """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
     data = request.get_json()
+    category = request.args.get("category", None)
+    if(category is None):
+        raise NotImplementedError
     logger.info("@build_template: Received template data: {}".format(data))
     result, (arg1, arg2) = load_template(data)
     if(result):

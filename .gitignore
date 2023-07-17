@@ -1,6 +1,7 @@
 *.swp
 __pycache__/ 
-src/crawler/bin/
-test/backup.xlsx
+src/crawler/bin/ 
+test 
+data
 geckodriver.log
 ~$*
