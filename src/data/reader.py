@@ -6,6 +6,7 @@ import glob
 import traceback
 import shutil
 import string
+import unicodedata 
 import openpyxl, openpyxl_image_loader 
 import base64
 
@@ -179,7 +180,7 @@ def reconvert_field(row: Dict):
         row["correct_id"] = ", ".join([str(i) for i in row["correct_id"]])
     return row
 
-def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dictionary: Optional[Dict]=None, image_format: str="|||{}|||"):
+def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dictionary: Optional[Dict]=None, image_format: str="|||{}|||", normalize: bool=True):
     """All processing of fields is done here.
     image_dictionary: if supplied, is reading & converting from external xlsx; image is already uploaded and can be referred by link
     image_format: image links will be wrapped by this update
@@ -189,6 +190,8 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
         if(v is None):
             continue
         v = v.strip()
+        if(normalize): # if set flag, use NFKC (composite) format on all fields
+            v = unicodedata.normalize('NFKC', v)
         if(lowercase_field):
             k = k.lower()
         if(k == "tag"):

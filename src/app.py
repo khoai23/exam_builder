@@ -5,7 +5,7 @@ import os, time, re
 import traceback 
 import shutil
 
-from src.session import data, current_data, session, filepath_dict, submit_route, student_belong_to_session
+from src.session import data, current_data, session, submit_route, student_belong_to_session
 from src.session import wipe_session, load_template, mark_duplication # migrate to external module
 from src.session import student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, perform_commit
 from src.parser.convert_file import read_and_convert
@@ -90,18 +90,23 @@ def delete_questions():
     if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
         return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
     else:
-        result = current_data.delete_data_by_ids(category, delete_ids)
-        if(result["result"]):
-            nocommit = request.args.get("nocommit")
-            if(not nocommit or nocommit.lower() != "true"):
-                # if nocommit is not enabled; push the current data to backup and write down new one 
-                perform_commit(filepath_dict["current_path"])
-        return flask.jsonify(**result)
+        # delete by id
+        current_data.delete_data_by_ids(category, delete_ids)
+        if request.args.get("wipe", "true").lower() == "true":
+            # wipe by default, selectively for only this category. TODO evaluate
+            wipe_session(for_categories=[category])
+#        if(result["result"]):
+#            nocommit = request.args.get("nocommit")
+#            if(not nocommit or nocommit.lower() != "true"):
+#                # if nocommit is not enabled; push the current data to backup and write down new one 
+#                perform_commit(filepath_dict["current_path"])
+        return flask.jsonify(result=True)
 
 @app.route("/export")
 def file_export():
     """Allow downloading the database file."""
-    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
+    raise NotImplementedError # disable until further sorting out
+#    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
 
 @app.route("/import", methods=["POST"])
 def file_import():
@@ -134,8 +139,7 @@ def rollback():
         category = request.args.get("category", None)
         if category is None:
             raise NotImplementedError
-        if(filepath_dict["backup_path"] and os.path.isfile(filepath_dict["backup_path"])):
-            current_data.rollback_category(category)
+        current_data.rollback_category(category)
             return flask.jsonify(result=True)
         else:
             return flask.jsonify(result=False, error="No backup available")
