@@ -5,4 +5,5 @@ if __name__ == "__main__":
     if "log" in sys.argv:
         import logging
         logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True)
+    debug = "debug" in sys.argv
+    app.run(debug=debug)

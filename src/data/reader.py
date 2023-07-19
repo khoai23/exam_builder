@@ -1,13 +1,15 @@
 """
 Basic code to read data from a csv file.
 """
-import os, io, csv 
+import os, io, csv, re
 import glob
 import traceback
 import shutil
 import string
 import unicodedata 
 import openpyxl, openpyxl_image_loader 
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from openpyxl.utils.exceptions import IllegalCharacterError
 import base64
 
 from src.image import DefaultClient, check_and_write_image
@@ -180,7 +182,12 @@ def write_file_xlsx(filepath: str, data: List[Dict], headers: List[str]=HEADERS)
     for row in data:
         row = reconvert_field(row)
         data_row = [row.get(h, None) for h in headers ]
-        data_sheet.append(data_row)
+        try:
+            data_sheet.append(data_row)
+        except IllegalCharacterError:
+            logger.warning("data_row {} has error character; wiping.".format(data_row))
+            data_row = [re.sub(ILLEGAL_CHARACTERS_RE, "", r) if isinstance(r, str) else r for r in data_row]
+            data_sheet.append(data_row)
     # save 
     workbook.save(filepath)
     return filepath

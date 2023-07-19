@@ -52,7 +52,7 @@ def process_data(soup, url=None, writer=None, keep_partial_question=True):
             elif("dai-hoc" in url):
                 category, tags = "Đại học", ""
             else:
-                category = tags =""
+                category = tags = ""
     #        print(question, answers, right, explanation)
             data = dict(question=question, correct_id=right, explanation=explanation, tag=", ".join(tags), category=category, url=url)
             if(keep_partial_question):

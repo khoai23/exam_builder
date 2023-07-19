@@ -290,8 +290,8 @@ def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_scor
             student_data["score"] = score 
             student_data["detailed_score"] = detailed_score 
             # TODO clean this better
-            return_result = return_result if return_result is not None else session[template_key]["setting"].get("allow_result", True)
-            return_score = return_score if return_score is not None else session[template_key]["setting"].get("allow_score", True)
+            return_result = return_result if return_result is not None else session[template_key]["setting"].get("allow_result", False)
+            return_score = return_score if return_score is not None else session[template_key]["setting"].get("allow_score", False)
             if(return_result and return_score):
                 return flask.jsonify(result=True, correct=student_data["correct"], score=score)
             elif(return_result):

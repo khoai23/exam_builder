@@ -127,7 +127,8 @@ class OnRequestData(dict):
         By default not updating cache; but wiping it instead"""
         categorized = defaultdict(list)
         for q in data:
-            categorized[q.get("category", "N/A")].append(q)
+            # ensure that category will be put into N/A even if it's blank
+            categorized[q.get("category", "N/A") or "N/A"].append(q)
         for cat in categorized:
             logger.debug("update_data performing update for category {}".format(cat))
             self.update_category(cat, categorized[cat], update_cache=update_cache)
