@@ -36,23 +36,25 @@ def format_arrow(arrow: Tuple[Tuple[float, float], Tuple[float, float]], thickne
         center = (arrow[0][0] + arrow[1][0]) / 2, (arrow[0][1] + arrow[1][1]) / 2
         # control_offset if in ratio mode will be scaled by flat length of current arrow 
         if(offset_in_ratio_mode):
-            control_offset = control_offset * eu_d(arrow[0], arrow[1])
+            scale = eu_d(arrow[0], arrow[1])
+            control_offset = (control_offset[0] * scale, control_offset[1] * scale)
         # calculate the control point
         control_point = (center[0] + control_offset[0], center[1] + control_offset[1])
         # put at last 
         result["points"][1] = (arrow[1], control_point)
     result["thickness"] = thickness
-    result["color"] = black
+    result["color"] = color
     # create corresponding arrow-head by assimilating thickness. 
     # TODO push the arrow back +width to let arrow tip stop at point, right now stop at width+2
     # TODO customizable arrowhead
-    width, height = thickness * 5, thickness * 3
+#    width, height = thickness * 2, thickness * 3
     result["arrowhead"] = {
-        "width": width,
-        "height": height,
-        "refX": 0,
-        "refY": width/2,
+        "markerUnits": "strokeWidth",
+        "markerWidth": 2,
+        "markerHeight": 3,
+        "refX": 2/2,
+        "refY": 3/2,
         "orient": "auto"
     }
-    result["arrowhead_poly"] = [(0, 0), (width, height/2), (0, height)]
+    result["arrowhead_poly"] = [(0, 0), (2, 3/2), (0, 3)]
     return result

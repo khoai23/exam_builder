@@ -1,5 +1,5 @@
-<div class="container-fluid d-flex flex-row-reverse">
-	<div class="dropdown m-2">
+<div class="container-fluid d-flex flex-row-reverse m-2">
+	<div class="dropleft">
 		<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			Category
 		</button>
@@ -7,6 +7,7 @@
 			<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
 		</div>
 	</div>
+	<span class="h3 m-2">Category:</span>
 </div>
 <div class="table-responsive card-body p-1">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">

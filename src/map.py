@@ -7,6 +7,7 @@ TODO:
 """
 import math, random 
 from collections import defaultdict 
+from functools import partial
 import colorsys 
 from statistics import mean
 
@@ -26,6 +27,24 @@ def get_color(i: int, total: int, mode: str="hsv"):
     rgb = [int(255 * v) for v in colorsys.hsv_to_rgb(*hsv)]
     return '#{:02x}{:02x}{:02x}'.format(*rgb)
 #    print("Color idx:", i, "/", total, rgb)
+
+def create_bounds(center: Tuple[float, float], polygons: List[tuple], width: float, height: float):
+    # create the appropriate rectangular bounding of a polygon; and convert all subsequent items to that format
+    min_x, min_y = polygons[0]; max_x, max_y = polygons[0]
+    for px, py in polygons[1:]:
+        if px < min_x:
+            min_x = px 
+        if py < min_y:
+            min_y = py 
+        if px > max_x:
+            max_x = px 
+        if py > max_y:
+            max_y = py 
+    # perform conversion 
+    converted_polygons = [(px-min_x, py-min_y) for px, py in polygons]
+    converted_center = (center[0]-min_x, center[1]-min_y)
+    # output as necessary
+    return converted_center, converted_polygons, (min_x, min_y, max_x-min_x, max_y-min_y)
 
 DEFAULT_COLOR = ["green", "blue", "red", "purple", "orange", "yellow"]
 def generate_map_by_region(data: List[Dict], width: float=1000, height: float=1000, center_generate_mode: str="radial", center_noise: Optional[float]=None):
@@ -104,9 +123,9 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     category_centers = [(center_x + radius * math.sin(2 * math.pi / len(categories) * i), center_y + radius * math.cos(2 * math.pi / len(categories) * i)) for i in range(len(categories))]
     #category_centers = [(random.random()*width, random.random()*height) for _ in categories]
     category_regions = create_voronoi(category_centers, width=width, height=height)
-    print("Pre-trim: {}".format(category_regions))
+#    print("Pre-trim: {}".format(category_regions))
     trimmed_regions = perform_trim(category_regions, width=width, height=height)
-    print("Post-trim {}".format(trimmed_regions))
+#    print("Post-trim {}".format(trimmed_regions))
     # for each tag in data, choose 3 point inside associated region, select a point around it 
     tag_names, tag_centers = [], []
     region_centers = {}
@@ -114,13 +133,14 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
         for tags in list_tags:
             # get random 3 points in region; calculate the new point with it 
             try:
-                choice_x, choice_y = zip(*random.choices(region, k=3))
+                choice_x, choice_y = zip(* (random.choices(region, k=3) if len(region) < 3 else random.sample(region, 3)))
             except IndexError as e:
                 print("Failed to draw from: ", region)
                 raise e
             parts = [random.random() for _ in range(3)]
             parts = [v / sum(parts) for v in parts]
             generated_point = (sum((x*v for x,v in zip(choice_x, parts))), sum((y*v for y,v in zip(choice_y, parts))))
+#            print("Generate child: {} from {}({})".format(generated_point, center, region) )
             # TODO check if generated point is on same line
             # generate correct name & append 
             tag_names.append( tuple([cat] + list(tags))  )
@@ -131,21 +151,23 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     if(return_connections):
         # has to perform connection check here since if shrinking is applied, has_border will fail 
         connections = list_connections(tag_regions)
-        print(connections)
+#        print(connections)
     else:
         connections = None
     trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
+#    trimmed_polygons = tag_regions
     # additional formatting
     if(do_recenter):
         trimmed_polygons = ((recenter(polygon), polygon) for _, polygon in trimmed_polygons)
     if(do_shrink):
         trimmed_polygons = ((center, shrink(polygon, center)) for center, polygon in trimmed_polygons)
     # reconvert back to list
-    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons
-    mapped = [(0, 0, width, height, polygon, {"center": point, "fg": get_color(index, len(trimmed_polygons)), "text": "_".join(tag_names[index])}) for index, (point, polygon) in enumerate(trimmed_polygons)]
+#    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons
+    bounded_polygons = [create_bounds(center, polygon, width=width, height=height) for center, polygon in trimmed_polygons]
+    mapped = [(*bound, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon, bound) in enumerate(bounded_polygons)]
     if(connections):
         for mid, mbrd in connections.items():
-            mapped[mid][-1]["connection"] = mbrd
+            mapped[mid][-1]["connection"] = mbrd # has only once
     if(bundled_by_category):
         # return the map by category. Useful to re-organize outside
         categories = defaultdict(list)
@@ -183,12 +205,23 @@ def line_intersection(a, b, c, d, first_is_segment=True, second_is_segment=True)
 def side(line_start, line_end, point):
   return (line_end[0] - line_start[0])*(point[1] - line_start[1]) - (line_end[1] - line_start[1])*(point[0] - line_start[0])
 
+# bound: if not in specific bound; fail it 
+def bound(point, width=None, height=None):
+    if not point:
+        return False
+    if(0 > point[0] or point[0] > width):
+        return False 
+    if(0 > point[1] or point[1] > height):
+        return False 
+    return point
+
 def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, float]] ]], width: float, height: float, error_margin: float= 0.01):
     # the input polygons are unrestricted (e.g edges are not in respective range of width x height view)
     # intersect line vs edge; if meet, use the intersected point instead of current 
     c = [(0, 0), (width, 0), (width, height), (0, height)]
     edges = [(c[0], c[1]), (c[1], c[2]), (c[2], c[3]), (c[3], c[0])]
     result = []
+#    custom_bound = partial(bound, width=width, height=height)
     for point, polygon in polygons:
         trimmed = []
 #        print(point, polygon)
@@ -202,18 +235,29 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
                 trimmed.append(end)
             elif not start_in_region and end_in_region:
                 # start out end in; take intersection as start and put it in directly
-                intersection = start
+                intersection = tuple(start)
                 for ste, ede in edges:
-                    # if exist a connection, replace
-                    intersection = line_intersection(intersection, end, ste, ede, second_is_segment=False) or intersection 
+                    # if exist a connection, replace 
+                    new_intersection = line_intersection(intersection, end, ste, ede, second_is_segment=False)
+                    if(new_intersection):
+#                        print("Using new intersection point: {}".format(new_intersection))
+                        if(intersection != tuple(start)):
+                            print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
+                        intersection = new_intersection 
                 assert intersection != tuple(start), "Trying to find intersection for {}-{} but failed".format(start, end)
                 trimmed.append(intersection); trimmed.append(end)
             elif start_in_region and not end_in_region:
                 # start in end out, replacing the end with the intersection itself
-                intersection = end 
+                intersection = tuple(end)
                 for ste, ede in edges:
                     # if exist a connection, replace
-                    intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False) or intersection 
+                    new_intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False)
+                    if(new_intersection):
+#                        print("Using new intersection point: {}".format(new_intersection))
+                        if(intersection != tuple(end)):
+                            print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
+                        intersection = new_intersection 
+#                    intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False) or intersection 
                 assert intersection != tuple(end), "Trying to find intersection for {}-{} but failed".format(start, end)
                 trimmed.append(end)
             else:

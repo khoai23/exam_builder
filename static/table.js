@@ -261,9 +261,11 @@ function external_update_filter(chain_to_reupdate_question=false) {
 			let catmenu = $("#category_dropdown_menu");
 			catmenu.empty();
 			// catmenu.append(build_category_cell("All"));
+			data["categories"].sort(); // ensure consistent ordering
 			data["categories"].forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
 			if(chain_to_reupdate_question) {
-				current_selected_category = data["categories"][0]; // selected first category
+				current_selected_category = data["categories"][0]; // selected first category 
+				$("#category_dropdown").text(data["categories"][0]); // also change the display to the appropriate version
 				load_data_into_table(undefined, undefined, request_tags=true)
 			}
 		},

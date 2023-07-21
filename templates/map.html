@@ -1,18 +1,44 @@
 {% extends 'shared/base.html' %}
 {% block content %}
-<div class="m-2 p-2">
-	{% for x, y, height, width, pointlist, attr in polygons %}
-	<svg height="{{height}}" width="{{width}}" style="position: absolute; left: {{x}}, top {{y}}">
+<div class="m-2 p-2" style="position: relative;">
+	{% for x, y, width, height, pointlist, attr in polygons %}
+	<svg height="{{height}}" width="{{width}}" style="position: absolute; top: {{y}}px; left: {{x}}px">
 		<polygon 
 			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
 			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
 		{% if "text" in attr and "center" in attr %}
-			<g font-size="30" fill="black" text-anchor="middle">
+			<g font-size="10" fill="black" text-anchor="middle">
 				<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}">
 					{{attr["text"]}}
 				</text>
 			</g>
 		{% endif %}
+	</svg>
+	{% endfor %}
+	{% for x, y, height, width, arrow in arrows %}
+	<svg height="{{height}}" width="{{width}}" style="position: absolute; left: {{x}}, top {{y}}">
+		<defs>
+			<marker id="head{{loop.index}}"
+				{% for attr, val in arrow["arrowhead"].items() %}
+					{{attr}}="{{val}}"
+				{% endfor %}>
+				{% set ap = arrow["arrowhead_poly"] %}
+				<path d="M {{ap[0][0]}},{{ap[0][1]}} L {{ap[1][0]}},{{ap[1][1]}} L {{ap[2][0]}},{{ap[2][1]}} z" fill="{{arrow["color"]}}">
+				</path>
+			</marker>
+		</defs>
+		{% set pts = arrow["points"] %}
+		<path d="M {% for p, q in pts %} 
+			{% if q %}
+			Q {{q[0]}},{{q[1]}}
+			{% endif %}
+			{{p[0]}},{{p[1]}}
+		{% endfor %}"  
+		stroke="{{arrow["color"]}}"
+		stroke-width="{{arrow["thickness"]}}"
+		fill="none"
+		marker-end="url(#head{{loop.index}})"
+		/>
 	</svg>
 	{% endfor %}
 </div>
