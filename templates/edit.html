@@ -1,23 +1,23 @@
 {% extends 'shared/base.html' %}
 {% block content %}
 {% include 'shared/data_table.tpl' %}
-<div class="container-fluid d-flex p-1" id="modify_bar">
+<div class="container-fluid d-flex p-1" id="modify_bar" hidden>
 	<!-- Allow modifying items here: swapping category, appending/removing tags, deleting -->
 	<div class="mx-2 dropup">
-		<button class="btn btn-secondary dropdown-toggle" type="button" id="swap_category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		<button class="btn btn-outline-secondary dropdown-toggle" type="button" id="swap_category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			Swap Category
 		</button>
 		<div class="dropdown-menu" aria-labelledby="swap_category_dropdown" id="swap_category_dropdown_menu">
 		</div>
 	</div>
-	<div class="input-group mx-2">
-		<input type="text" class="form-control" placeholder="New tag.." id="new_tag_field"/>
-		<button class="btn btn-outline-warning" onclick="add_tag_to_questions(event)">Add</button>
+	<div class="input-group mx-2 w-25">
+		<input type="text" class="form-control border-secondary" placeholder="New tag.." id="new_tag_field"/>
+		<button class="btn btn-outline-secondary" onclick="add_tag_to_questions(event)">Add</button>
 	</div>
-	<div class="mr-auto" id="removable_tags">
+	<div class="mr-auto border border-secondary" id="removable_tags" style="display: none;">
 	</div>
 	<button class="mx-2 btn btn-danger ml-auto" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)">Delete Selected</button>
-	</div>
+</div>
 <div class="container-fluid d-flex p-1" id="button_bar">
 	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
 	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)">Import &amp; Replace</button>

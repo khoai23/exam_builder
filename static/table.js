@@ -12,7 +12,11 @@ function get_selected_question_ids() {
 	return valid_id;
 }
 
+var category_update_function = null; // this value is to be called upon a category change
+var selector_update_function = null; // this value is to be updated upon a selector load (checkbox)
+var all_categories = null;
 var current_selected_category = null;
+var all_tags = null;
 var currently_selected_tag = [];
 
 // used when use_local_data is false; data is reloaded on the long web instead 
@@ -90,6 +94,7 @@ function select_category(event) {
 		// filter all fields that does not contain this category 
 		current_selected_category = category;
 		$("#category_dropdown").text(category);
+		category_update_function(all_categories, category);
 		// also disable all tags and try again
 		currently_selected_tag = [];
 	}
@@ -148,6 +153,13 @@ function toggle_all_tag(event) {
 	} else {
 		// zero/some box checked; select
 		boxes.each(function() { $(this).prop("checked", true); })
+	}
+}
+
+function selector_update(event) {
+	// function on checkbox click; should not do anything by default 
+	if(selector_update_function !== null) {
+		selector_update_function(event);
 	}
 }
 
@@ -262,10 +274,14 @@ function external_update_filter(chain_to_reupdate_question=false) {
 			catmenu.empty();
 			// catmenu.append(build_category_cell("All"));
 			data["categories"].sort(); // ensure consistent ordering
-			data["categories"].forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
+			all_categories = data["categories"];
+			all_categories.forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
 			if(chain_to_reupdate_question) {
-				current_selected_category = data["categories"][0]; // selected first category 
-				$("#category_dropdown").text(data["categories"][0]); // also change the display to the appropriate version
+				current_selected_category = all_categories[0]; // selected first category 
+				$("#category_dropdown").text(all_categories[0]); // also change the display to the appropriate version
+				if(category_update_function !== null) {
+					category_update_function(all_categories, all_categories[0])
+				}
 				load_data_into_table(undefined, undefined, request_tags=true)
 			}
 		},
@@ -374,7 +390,7 @@ function reupdate_questions(data, clear_table = true) {
 		}
 		row.append(tag_cell);
 		let use_cell = $("<td>").addClass("custom-checkbox").append(
-			$("<input type=\"checkbox\" class=\"custom-control\" id=\"use_question_" + q["id"] + "\">")
+			$("<input type=\"checkbox\" id=\"use_question_" + q["id"] + "\">").addClass("custom-control").attr("onclick", "selector_update(event)")
 		);
 		row.append(use_cell);
 		table_body.append(row);

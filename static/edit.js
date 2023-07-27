@@ -219,3 +219,20 @@ function remove_tag(new_tag) {
 	perform_post(payload, "remove_tag?category=" + encodeURIComponent(category) + "&tag=" + encodeURIComponent(new_tag), success_fn=success_fn, error_fn=error_fn);
 }
 
+// setup the appropriate function for table
+selector_update_function = function(event) {
+	// update fields accordingly 
+	var checklist = $("#question_table").find("[id^=use_question_]");
+	var checked = checklist.filter((i, it) => it[0].checked });
+	// backrefer to the next tag list 
+	var tag_fields = checked.parent().prev();
+	// select all buttons, filter as field
+	var tags = new Set(tag_fields.find("button").map((i, it) => it.text()));
+	// TODO create appropriate boxes.
+}
+
+category_update_function = function(categories, selected) {
+	// update swapper 
+	
+}
+
