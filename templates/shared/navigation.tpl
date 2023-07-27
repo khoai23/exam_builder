@@ -4,8 +4,8 @@
 		<span class="navbar-toggler-icon"></span>
 	</button>
 	<div class="collapse navbar-collapse" id="collapsibleNavbar">
-		<ul class="navbar-nav">
-			{% if True or admin_right is defined %}
+		<ul class="navbar-nav flex-row container-fluid">
+			{% if current_user.is_authenticated %}
 			<li class="nav-item">
 				<a class="nav-link" href="build">Build</a>
 			</li>
@@ -19,6 +19,16 @@
 			<li class="nav-item">
 				<a class="nav-link" href="convert">Converter Tool</a>
 			</li>
+			{% if current_user.is_authenticated %}
+			<li class="nav-item nav-link ml-auto">
+				Hello, <b><u>{{current_user.name}}</u></b>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="logout">
+					<img src="/static/icons/img_logout.svg" class="img-fluid" alt="Logout" style="width: 20px; -webkit-filter: invert(100%); filter: invert(100%)">
+				</a>
+			</li>
+			{% endif %}
 		</ul>
 	</div>
 </nav> 

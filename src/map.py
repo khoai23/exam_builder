@@ -110,7 +110,7 @@ def generate_map_by_subregion_deprecated(data: List[Dict], width: float=1000, he
     else:
         return mapped
 
-def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, bundled_by_category: bool=True, do_recenter: bool=False, do_shrink: Optional[float]=None, return_center: bool=False, return_connections: bool=False):
+def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float=1000, bundled_by_category: bool=True, do_recenter: bool=False, do_shrink: Optional[float]=None, do_rebounding: bool=True, return_center: bool=False, return_connections: bool=False):
     categories = defaultdict(set)
     for d in data:
         cat = d.get("category", "N/A")
@@ -162,9 +162,13 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
     if(do_shrink):
         trimmed_polygons = ((center, shrink(polygon, center)) for center, polygon in trimmed_polygons)
     # reconvert back to list
-#    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons
-    bounded_polygons = [create_bounds(center, polygon, width=width, height=height) for center, polygon in trimmed_polygons]
-    mapped = [(*bound, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon, bound) in enumerate(bounded_polygons)]
+#    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons 
+    if(do_rebounding):
+        bounded_polygons = [create_bounds(center, polygon, width=width, height=height) for center, polygon in trimmed_polygons]
+        mapped = [(*bound, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon, bound) in enumerate(bounded_polygons)]
+    else:
+        bounded_polygons = list(trimmed_polygons)
+        mapped = [(0, 0, width, height, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon) in enumerate(bounded_polygons)]
     if(connections):
         for mid, mbrd in connections.items():
             mapped[mid][-1]["connection"] = mbrd # has only once
@@ -179,7 +183,78 @@ def generate_map_by_subregion(data: List[Dict], width: float=1000, height: float
         return region_centers, mapped 
     else:
         return mapped
-        
+
+def generate_map_by_subregion_boxed(data: List[Dict], width: float=1000, height: float=1000, bundled_by_category: bool=True, do_recenter: bool=False, do_shrink: Optional[float]=None, do_rebounding: bool=True, return_center: bool=False, return_connections: bool=False):
+    categories = defaultdict(set)
+    for d in data:
+        cat = d.get("category", "N/A")
+        sorted_tag = (list(d["tag"]) if d.get("tag", []) else [])
+        sorted_tag.sort()
+        categories[cat].add(tuple(sorted_tag))
+    # assign each category to a fixed rectangle within width/height 
+    wh_ratio = width / height 
+    per_width = int(math.sqrt(len(categories) * wh_ratio))
+    per_height = int(per_width / wh_ratio)
+    while per_width * per_height < len(categories):
+        # enlarge by the smaller value 
+        if per_width > per_height:
+            per_height += 1
+        else:
+            per_width += 1
+    print("Using {:d}x{:d} grid for {} items".format(per_width, per_height, len(categories)))
+    # TODO work out something to allocate randomly the other rectangle 
+    # assign associated points 
+    width_cell, height_cell = (width / per_width), (height / per_height)
+    tag_names, tag_centers = [], []
+    region_centers = {}
+    for i, (cat, tags) in enumerate(categories.items()):
+        row, col = i // per_height, i % per_height
+        # gs means generate_start, indicate the upper left corner
+        gs_x, gs_y = col * width_cell, row * height_cell
+        # generate points 
+        for tag in tags:
+            generated_point = gs_x + random.random() * width_cell, gs_y + random.random() * height_cell
+            tag_names.append( tuple([cat] + list(tag))  )
+            tag_centers.append(generated_point)
+        region_centers[cat] = (gs_x + width_cell / 2, gs_y + width_cell / 2)
+    # apply voronoi to the new points
+    tag_regions = create_voronoi(tag_centers, width=width, height=height)
+    if(return_connections):
+        # has to perform connection check here since if shrinking is applied, has_border will fail 
+        connections = list_connections(tag_regions)
+#        print(connections)
+    else:
+        connections = None
+    trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
+#    trimmed_polygons = tag_regions
+    # additional formatting
+    if(do_recenter):
+        trimmed_polygons = ((recenter(polygon), polygon) for _, polygon in trimmed_polygons)
+    if(do_shrink):
+        trimmed_polygons = ((center, shrink(polygon, center)) for center, polygon in trimmed_polygons)
+    # reconvert back to list
+#    trimmed_polygons = list(trimmed_polygons) if not isinstance(trimmed_polygons, list) else trimmed_polygons
+    if(do_rebounding):
+        bounded_polygons = [create_bounds(center, polygon, width=width, height=height) for center, polygon in trimmed_polygons]
+        mapped = [(*bound, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon, bound) in enumerate(bounded_polygons)]
+    else:
+        bounded_polygons = list(trimmed_polygons)
+        mapped = [(0, 0, width, height, polygon, {"center": center, "fg": get_color(index, len(bounded_polygons)), "text": "_".join(tag_names[index])}) for index, (center, polygon) in enumerate(bounded_polygons)]
+    if(connections):
+        for mid, mbrd in connections.items():
+            mapped[mid][-1]["connection"] = mbrd # has only once
+    if(bundled_by_category):
+        # return the map by category. Useful to re-organize outside
+        categories = defaultdict(list)
+        for tag, mpol in zip(tag_names, mapped):
+            categories[tag[0]].append(mpol)
+        # replace the mapped
+        mapped = categories
+    if(return_center):
+        return region_centers, mapped 
+    else:
+        return mapped
+
 
 # from https://stackoverflow.com/questions/20677795/how-do-i-compute-the-intersection-point-of-two-lines
 def line_intersection(a, b, c, d, first_is_segment=True, second_is_segment=True):
@@ -240,10 +315,14 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
                     # if exist a connection, replace 
                     new_intersection = line_intersection(intersection, end, ste, ede, second_is_segment=False)
                     if(new_intersection):
-#                        print("Using new intersection point: {}".format(new_intersection))
-                        if(intersection != tuple(start)):
-                            print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
-                        intersection = new_intersection 
+                        if -error_margin <= new_intersection[0] <= width+error_margin and -error_margin <= new_intersection[1] <= height+error_margin:
+    #                        print("Using new intersection point: {}".format(new_intersection))
+                            if(intersection != tuple(start)):
+                                print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
+                                print("Start (out) {}, End (in) {}".format(start, end))
+                            intersection = new_intersection 
+                        else:
+                            print("[SOEI] Discarding possible intersection {} due to out of bound".format(new_intersection))
                 assert intersection != tuple(start), "Trying to find intersection for {}-{} but failed".format(start, end)
                 trimmed.append(intersection); trimmed.append(end)
             elif start_in_region and not end_in_region:
@@ -253,13 +332,17 @@ def perform_trim(polygons: List[Tuple[ Tuple[float, float], List[Tuple[float, fl
                     # if exist a connection, replace
                     new_intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False)
                     if(new_intersection):
-#                        print("Using new intersection point: {}".format(new_intersection))
-                        if(intersection != tuple(end)):
-                            print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
-                        intersection = new_intersection 
+                        if -error_margin <= new_intersection[0] <= width+error_margin and -error_margin <= new_intersection[1] <= height+error_margin:
+    #                        print("Using new intersection point: {}".format(new_intersection))
+                            if(intersection != tuple(end)):
+                                print("Error when searching intersection, multiple points detected: {} -> {}".format(intersection, new_intersection))
+                                print("Start (in) {}, End (out) {}".format(start, end))
+                            intersection = new_intersection 
+                        else:
+                            print("[SIEO] Discarding possible intersection {} due to out of bound".format(new_intersection))
 #                    intersection = line_intersection(start, intersection, ste, ede, second_is_segment=False) or intersection 
                 assert intersection != tuple(end), "Trying to find intersection for {}-{} but failed".format(start, end)
-                trimmed.append(end)
+                trimmed.append(intersection)
             else:
                 # both out; use the corner points instead 
                 upper = start[0] > 0 and end[0] > 0
@@ -330,7 +413,7 @@ if __name__ == "__main__":
 #    plt.show()
     fake_data = [{"category": "c{}".format(c), "tag": ["t{}".format(t)]} for c in range(4) for t in range(6)]
     # map_points = generate_map_by_region(fake_data, center_generate_mode="random", width=600, height=600, center_noise=50)
-    region_centers, map_points = generate_map_by_subregion(fake_data, width=600, height=600, bundled_by_category=False, do_recenter=False, do_shrink=0.98, return_center=True, return_connections=True)
+    region_centers, map_points = generate_map_by_subregion(fake_data, width=600, height=600, bundled_by_category=False, do_recenter=False, do_shrink=0.98, do_rebounding=False, return_center=True, return_connections=True)
 #    print([r[-1]["connection"] for r in map_points])
 #    map_points = [r for region in map_points.values() for r in region]
 #    print(map_points)

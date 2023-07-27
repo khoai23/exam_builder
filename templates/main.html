@@ -1,8 +1,26 @@
 {% extends 'shared/base.html' %}
 {% block content %}
 <div class="container-fluid">
-	<h1>EntryPoint</h1>
-	<p>Admin page, TODO hide it away </p>
+	{% if current_user.is_authenticated %}
+		<h2>Entry Point</h2>
+		<p>You has successfully authorized as <b>{{current_user.name}}</b></p>
+		<p>Your id is <b>{{current_user.id}}</b></p>
+		<p>Please use the above navigation bar to build and/or edit the quizzes</p>
+	{% else %}
+		<h2>Login</h2>
+		<p>You must login to start building/editing quizzes</p>
+		<form id="login_form" enctype="multipart/form-data" method="POST" action="login">
+			<div class="form-group">
+				<label class="control-label" for="username">Username:</label> 
+				<input type="text" class="form-control" name="username" placeholder="Enter Username"></input>
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="username">Password:</label> 
+				<input type="password" class="form-control" name="password" placeholder="Enter Password"></input>
+			</div>
+			<button type="submit" class="btn btn-primary">Login</button>
+		</form>
+	{% endif %}
 </div>
 {% endblock %}
 

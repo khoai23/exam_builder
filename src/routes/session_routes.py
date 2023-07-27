@@ -9,9 +9,10 @@ from src.session import load_template, student_first_access_session, student_rea
 import logging 
 logger = logging.getLogger(__name__)
 
-def build_session_routes(app: Flask) -> Flask:
+def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
     ### SECTION FOR MAKER ###
     @app.route("/build")
+    @login_decorator
     def build():
         """Enter the quiz build page where we can build a new template for an exam 
         Modification is now in a separate page
@@ -20,6 +21,7 @@ def build_session_routes(app: Flask) -> Flask:
         return flask.render_template("build.html", title="Data", questions=[])
     
     @app.route("/build_template", methods=["POST"])
+    @login_decorator
     def build_template():
         """Template data is to be uploaded on the server; provide an admin key to ensure safe monitoring."""
         data = request.get_json()
@@ -36,6 +38,7 @@ def build_session_routes(app: Flask) -> Flask:
             return flask.jsonify(result=False, error=str(arg1), error_traceback=str(arg2))
     
     @app.route("/single_manager")
+    @login_decorator
     def single_manager():
         """Exam maker can access this page to track the current status of the exam; including the choices being made by the student (if chosen to be tracked)
         It should be able to modify settings of the exam"""
@@ -58,6 +61,7 @@ def build_session_routes(app: Flask) -> Flask:
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
     
     @app.route("/single_session_data", methods=["GET"])
+    @login_decorator
     def single_session_data():
         """Retrieving the exact same data being ran on single_manager.
         TODO use this to autoupdate result."""
@@ -72,11 +76,13 @@ def build_session_routes(app: Flask) -> Flask:
             return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
     
     @app.route("/session_manager")
+    @login_decorator
     def session_manager():
         """Manage all sessions created here."""
         return flask.render_template("session_manager.html", all_session_data=session)
     
     @app.route("/delete_session", methods=["DELETE"])
+    @login_decorator
     def delete_session():
         """Only work with a valid admin_key, to prevent some smart mf screwing up sessions."""
         try:

@@ -13,8 +13,15 @@
 	<h1>Exam Page</h1>
 	<span>Examinee: <b>{{ student_name }}</b> </span><br />
 	<span>Test name: <b>{{ exam_setting["session_name"] }}</b></span><br />
-	<span>Duration: <b>{{ exam_setting["exam_duration"] }}</b>min</span>
-	<p>You are advised to save <a href="#">the current link</a> somewhere, or you risk losing all your progress.</p>
+	
+	<span>Duration: 
+	{% if "exam_duration" in exam_setting %}
+		<b>{{ exam_setting["exam_duration"] }}</b>min
+	{% else %}
+		<u>Unlimited</u>
+	{% endif %}
+	</span>
+	<!-- <p>You are advised to save <a href="#">the current link</a> somewhere, or there is a risk of losing all your progress.</p> -->
 	<span class="text-danger" id="autosubmit_warning" style="display: none;"> Exam will be auto-submitted soon, finalize your work! </span>
 </div>
 <div id="exam_region">

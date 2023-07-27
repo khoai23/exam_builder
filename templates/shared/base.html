@@ -15,6 +15,15 @@
 		{% if custom_navbar is not defined %}
 			{% include 'shared/navigation.tpl' %}
 		{% endif  %}
+		{% with messages = get_flashed_messages(with_categories=True) %}
+			{% if messages %}
+				<ol class=flashes>
+					{% for category, message in messages %}
+						<li class="text-{{ category }}"> {{message}} </li>
+					{% endfor %}
+				</ol>
+			{% endif %}
+		{% endwith %}
 		{% block content %}
 		{% endblock %}
 		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>

@@ -9,7 +9,7 @@ from typing import Optional, List, Tuple, Any, Union, Dict
 
 def create_voronoi(center_points: List[Tuple[float, float]], width: float, height: float, return_obj: bool=False):
     # just use scipy 
-    distant_points = [(width*2*ix, height*2*iy) for ix, iy in [(-1, -1), (-1, 1), (1, -1), (1, 1)]]
+    distant_points = [(width*(0.5+1.5*ix), height*(0.5+1.5*iy)) for ix, iy in [(-1, -1), (-1, 1), (1, -1), (1, 1)]]
     np_points = np.array(center_points + distant_points)
     vor = Voronoi(np_points)
     # print(vor.vertices, vor.regions, vor.ridge_vertices, vor.ridge_points)

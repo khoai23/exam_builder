@@ -10,9 +10,10 @@ from src.session import wipe_session # migrate to external module
 import logging 
 logger = logging.getLogger(__name__)
 
-def build_data_routes(app: Flask) -> Flask:
+def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
     ### For generic data table ###
     @app.route("/filtered_questions", methods=["GET"])
+    @login_decorator
     def filtered_questions():
         # same as above; but receiving corresponding category & tag filtering.
         category = request.args.get("category", None)
@@ -34,12 +35,14 @@ def build_data_routes(app: Flask) -> Flask:
             return flask.jsonify(questions=filtered_data[start_index:end_index], all_length=len(filtered_data))
 
     @app.route("/all_filter", methods=["GET"])
+    @login_decorator
     def all_filter():
         # returning all categoryfrom the current data 
         return flask.jsonify(categories=current_data.categories)
 
     ### For modification (edit, delete, import, export) ###
     @app.route("/edit")
+    @login_decorator
     def edit():
         """Enter the edit page where we can submit new data to database; rollback and deleting data (preferably duplicated question)
         TODO restrict access
@@ -47,6 +50,7 @@ def build_data_routes(app: Flask) -> Flask:
         return flask.render_template("edit.html", title="Modify", questions=[])
     
     @app.route("/delete_questions", methods=["DELETE"])
+    @login_decorator
     def delete_questions():
         # TODO restrict access 
         delete_ids = request.get_json()
@@ -69,12 +73,14 @@ def build_data_routes(app: Flask) -> Flask:
             return flask.jsonify(result=True)
     
     @app.route("/export")
+    @login_decorator
     def file_export():
         """Allow downloading the database file."""
         raise NotImplementedError # disable until further sorting out
     #    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
     
     @app.route("/import", methods=["POST"])
+    @login_decorator
     def file_import():
         """Allow overwriting or appending to the database file."""
         try:
@@ -99,6 +105,7 @@ def build_data_routes(app: Flask) -> Flask:
     #    raise NotImplementedError
     
     @app.route("/rollback")
+    @login_decorator
     def rollback():
         """Attempt to do a rollback on previous backup."""
         try:

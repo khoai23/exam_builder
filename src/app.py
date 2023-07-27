@@ -6,7 +6,7 @@ import traceback
 import shutil
 
 from src.session import current_data, submit_route 
-from src.routes import build_session_routes, build_data_routes
+from src.routes import build_login_routes, build_session_routes, build_data_routes
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
@@ -16,10 +16,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = Flask("exam_builder")
+app.secret_key = "liars_punishment_circle_24102023"
 app.config["UPLOAD_FOLDER"] = "test"
 # bind appropriate functions
-build_session_routes(app)
-build_data_routes(app)
+app, login_manager, login_decorator = build_login_routes(app)
+app = build_session_routes(app, login_decorator=login_decorator)
+app = build_data_routes(app, login_decorator=login_decorator)
 ### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
 
@@ -106,7 +108,9 @@ def generic_submit():
         submit_id = form.pop("id")
         if submit_id not in submit_route:
             logger.warning("Cannot found route id: ", submit_id)
-            return flask.jsonify(result=False, error="No route id available")
+            flask.flash("No such route id: {}".format(submit_id), "danger")
+            flask.redirect(request.referrer)
+            # return flask.jsonify(result=False, error="No route id available")
         result_blob = submit_route[submit_id](**form)
         if(isinstance(result_blob, str) or not isinstance(result_blob, (list, tuple))):
             # upon data being a redirect blob; just throw it back
@@ -115,11 +119,13 @@ def generic_submit():
             result, data_or_error = result_blob 
             # result must ALWAYS be false in this case 
             logger.warning("Error from submit_route: {}".format(data_or_error))
+            flask.flash("Submit error: {}".format(data_or_error), "danger")
             # TODO show the error 
             return flask.redirect(request.referrer)
     except Exception as e:
         logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
-        # back to the previous (identify page); TODO show the error
+        # back to the previous (identify page); 
+        flask.flash("Error: {}".format(e), "danger")
         return flask.redirect(request.referrer)
 
 if __name__ == "__main__":
