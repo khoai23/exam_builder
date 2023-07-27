@@ -7,6 +7,7 @@ All possible extension regard the builder, unlikely first:
 - [x] Statistics for session managing (student weakness by question category)
 - [x] Import check for duplication
 - [x] Split the current "build" page to "build", "edit" (for changing the data), and "table" (for generic display of the data)
+- [ ] Integrate the current game map into a game board
 - [ ] Option to show relevant solution with wrong answers
 - [x] Overhauling data loading procedure - data will be split and kept by category
 - [x] Authentication mechanism

@@ -35,3 +35,34 @@ function s2ab(s) {
 	for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
 	return buf;
 }
+
+function _ajax_default_error_fn(jqXHR, textStatus, error) {
+	console.log("Received error", error);
+}
+
+function _ajax_default_receive_fn(data, textStatus, jqXHR) {
+	console.log("Received data", data)
+}
+
+// perform an appropriate ajax function. Usually just 
+function perform_post(payload, url, success_fn=_ajax_default_receive_fn, error_fn=_ajax_default_error_fn, type="POST") {
+	$.ajax({
+		type: type,
+		url: url,
+		data: payload, 
+		contentType: "application/json",
+		dataType: "json",
+		success: success_fn,
+		error: error_fn,
+	});
+}
+
+function perform_get(url, success_fn=_ajax_default_receive_fn, error_fn=_ajax_default_error_fn, type="GET") {
+	$.ajax({
+		type: type,
+		url: url,
+		success: success_fn,
+		error: error_fn,
+	});
+}
+

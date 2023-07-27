@@ -47,31 +47,45 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
         """Enter the edit page where we can submit new data to database; rollback and deleting data (preferably duplicated question)
         TODO restrict access
         """
-        return flask.render_template("edit.html", title="Modify", questions=[])
+        return flask.render_template("edit.html", title="Modify", display_legend=True, questions=[])
     
     @app.route("/delete_questions", methods=["DELETE"])
     @login_decorator
     def delete_questions():
-        # TODO restrict access 
+        """Delete selected questions in specific category. Should allow a rollback."""
         delete_ids = request.get_json()
         category = request.args.get("category", None)
         if category is None:
-            raise NotImplementedError
+            return flask.jsonify(result=False, error="Must supply a valid category to delete") 
         if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
             return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
         else:
-            # delete by id
+            # delete by id. TODO ensure rollback capacity
             current_data.delete_data_by_ids(category, delete_ids)
             if request.args.get("wipe", "true").lower() == "true":
                 # wipe by default, selectively for only this category. TODO evaluate
                 wipe_session(for_categories=[category])
-    #        if(result["result"]):
-    #            nocommit = request.args.get("nocommit")
-    #            if(not nocommit or nocommit.lower() != "true"):
-    #                # if nocommit is not enabled; push the current data to backup and write down new one 
-    #                perform_commit(filepath_dict["current_path"])
             return flask.jsonify(result=True)
     
+    @app.route("/swap_category", methods=["POST"])
+    @login_decorator
+    def swap_category():
+        """Swapping two questions in category. This probably can't allow a rollback, but if it does, great."""
+        swap_ids = request.get_json()
+        category = request.args.get("from", None)
+        new_category = request.args.get("to", None)
+        if category is None or new_category is None:
+            return flask.jsonify(result=False, error="Must supply valid categories to swap") 
+        if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
+            return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
+        else:
+            raise NotImplementedError
+            current_data.swap_to_new_category(category, delete_ids, new_category)
+            if request.args.get("wipe", "true").lower() == "true":
+                # wipe by default, selectively for only this category. TODO evaluate
+                wipe_session(for_categories=[category, new_category])
+            return flask.jsonify(result=True)
+
     @app.route("/export")
     @login_decorator
     def file_export():

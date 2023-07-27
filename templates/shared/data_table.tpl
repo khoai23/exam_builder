@@ -74,22 +74,28 @@
 			</tr>
 			{% endfor %}
 		</tbody>
-		<tfoot id="table_button_bar">
-			<tr>
-				<th colspan='10' class="align-bottom bg-white" style="position: sticky; bottom: 0; z-index: 5;">
-					<div class="d-flex p-1">
-						<div class="ml-auto">
-							<button class="btn btn-primary ml-auto m-1" id="table_button_first">1</button>
-							<span class="p-1" id="elipse_start">...</span>
-							<button class="btn btn-outline-primary m-1" id="table_button_previous">2</button>
-							<button class="btn btn-outline-primary m-1" id="table_button_current">3</button>
-							<button class="btn btn-outline-primary m-1" id="table_button_next">4</button>
-							<span class="p-1" id="elipse_end">...</span>
-							<button class="btn btn-outline-primary m-1" id="table_button_last">5</button>
-						</div>
-					</div>
-				</th>
-			</tr>
-		</tfoot>
 	</table>
+	<div class="container-fluid d-flex p-1" id="table_button_bar">
+		<div id="legend" {% if not display_legend %} style="display: none;" {% endif %}>
+			<span class="m-1"><b>Correct Answer:</b></span>
+			<div class="m-1 bg-success border" style="width: 25px; height: 25px;"></div>
+			<span class="m-1">Single Choice</span>
+			<div class="m-1 bg-info border" style="width: 25px; height: 25px;"></div>
+			<span class="m-1">Multiple Choice</span>
+			<span class="m-1 pl-3"><b>Duplicate:</b></span>
+			<div class="m-1 bg-warning border" style="width: 25px; height: 25px;"></div>
+			<span class="m-1">Older</span>
+			<div class="m-1 bg-danger border" style="width: 25px; height: 25px;"></div>
+			<span class="m-1">Newer</span>
+		</div>
+		<div class="ml-auto">
+			<button class="btn btn-primary ml-auto m-1" id="table_button_first">1</button>
+			<span class="p-1" id="elipse_start">...</span>
+			<button class="btn btn-outline-primary m-1" id="table_button_previous">2</button>
+			<button class="btn btn-outline-primary m-1" id="table_button_current">3</button>
+			<button class="btn btn-outline-primary m-1" id="table_button_next">4</button>
+			<span class="p-1" id="elipse_end">...</span>
+			<button class="btn btn-outline-primary m-1" id="table_button_last">5</button>
+		</div>
+	</div>
 </div>
