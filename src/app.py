@@ -54,6 +54,17 @@ def map():
         p[-1].pop("text")
     return flask.render_template("map.html", polygons=polygons, arrows=arrows)
 
+from src.campaign.default import CampaignMap
+campaign_data = {}
+@app.route("/play", methods=["GET"])
+def play():
+    if "map" not in campaign_data or request.arg.get("redo", "false").lower() == "true":
+        print("Create new campaign map")
+        campaign_data["map"] = campaign = CampaignMap()
+    else:
+        campaign = campaign_data["map"]
+    return flask.render_template("campaign.html", polygons=campaign.retrieve_draw_map())
+
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():
     # read a specified html and strip it down to pure text.
@@ -65,7 +76,6 @@ def retrieve_text():
     except Exception as e:
         logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
         return flask.jsonify(result=False, error=str(e))
-
    
 @app.route("/convert")
 def convert():

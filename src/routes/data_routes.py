@@ -61,7 +61,7 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
             return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
         else:
             # delete by id. TODO ensure rollback capacity
-            current_data.delete_data_by_ids(category, delete_ids)
+            current_data.delete_data_by_ids(delete_ids, category)
             if request.args.get("wipe", "true").lower() == "true":
                 # wipe by default, selectively for only this category. TODO evaluate
                 wipe_session(for_categories=[category])
@@ -70,21 +70,81 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
     @app.route("/swap_category", methods=["POST"])
     @login_decorator
     def swap_category():
-        """Swapping two questions in category. This probably can't allow a rollback, but if it does, great."""
+        """Swapping questions to a new category. This probably can't allow a rollback, but if it does, great."""
         swap_ids = request.get_json()
         category = request.args.get("from", None)
         new_category = request.args.get("to", None)
         if category is None or new_category is None:
             return flask.jsonify(result=False, error="Must supply valid categories to swap") 
-        if(not delete_ids or not isinstance(delete_ids, (tuple, list)) or len(delete_ids) == 0):
-            return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(delete_ids, type(delete_ids)))
+        if(not swap_ids or not isinstance(swap_ids, (tuple, list)) or len(swap_ids) == 0):
+            return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(swap_ids, type(swap_ids)))
         else:
-            raise NotImplementedError
-            current_data.swap_to_new_category(category, delete_ids, new_category)
+            current_data.swap_to_new_category(swap_ids, category, new_category)
             if request.args.get("wipe", "true").lower() == "true":
                 # wipe by default, selectively for only this category. TODO evaluate
                 wipe_session(for_categories=[category, new_category])
             return flask.jsonify(result=True)
+
+    @app.route("/add_tag", methods=["POST"])
+    @login_decorator
+    def add_tag():
+        """Add a new tag into existing questions."""
+        target_ids = request.get_json()
+        category = request.args.get("category", None)
+        tag = request.args.get("tag", None)
+        if category is None or tag is None:
+            return flask.jsonify(result=False, error="Must supply valid category & tag to add") 
+        if(not target_ids or not isinstance(target_ids, (tuple, list)) or len(target_ids) == 0):
+            return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(target_ids, type(target_ids)))
+        else:
+            # simply update all tags of targetted ids 
+            strict = request.args.get("strict", "false").lower() == "true"
+            warnings = []
+            data = current_data.load_category(category)
+            for i in target_ids:
+                if tag in data[i].get("tag", []):
+                    if strict:
+                        # break immediately. TODO revert appropriate changes 
+                        return flask.jsonify(result=False, error="Mismatch add request: question {} already have tag {}".format(i, tag))
+                    else:
+                        warnings.append("Question {:d} already have tag {}, ignoring.".format(i, tag))
+                elif "tag" in data[i]:
+                    data[i]["tag"].append(tag)
+                else:
+                    data[i]["tag"] = [tag]
+            # once everything is done, re-write to disk
+            current_data.update_category(category, data)
+            return flask.jsonify(result=True, warnings=warnings)
+
+    @app.route("/remove_tag", methods=["POST"])
+    @login_decorator
+    def remove_tag():
+        """Remove a tag from existing questions."""
+        target_ids = request.get_json()
+        category = request.args.get("category", None)
+        tag = request.args.get("tag", None)
+        if category is None or tag is None:
+            return flask.jsonify(result=False, error="Must supply valid category & tag to add") 
+        if(not target_ids or not isinstance(target_ids, (tuple, list)) or len(target_ids) == 0):
+            return flask.jsonify(result=False, error="Invalid ids sent {}({}); try again.".format(target_ids, type(target_ids)))
+        else:
+            strict = request.args.get("strict", "false").lower() == "true"
+            warnings = []
+            data = current_data.load_category(category)
+            for i in target_ids:
+                if tag not in data[i].get("tag", []):
+                    if strict:
+                        # break immediately. TODO revert appropriate changes 
+                        return flask.jsonify(result=False, error="Mismatch add request: question {} already have tag {}".format(i, tag))
+                    else:
+                        warnings.append("Question {:d} does not have tag {}, ignoring.".format(i, tag))
+                else:
+                    data[i]["tag"].remove(tag)
+                    if len(data[i]["tag"]) == 0: # no more tag, throw away the property 
+                        data[i].pop("tag")
+            # once everything is done, re-write to disk
+            current_data.update_category(category, data)
+            return flask.jsonify(result=True, warnings=warnings)
 
     @app.route("/export")
     @login_decorator
@@ -98,7 +158,7 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
     def file_import():
         """Allow overwriting or appending to the database file."""
         try:
-            is_replace_mode = request.args.get("replace").lower() == "true"
+            is_replace_mode = request.args.get("replace", "false").lower() == "true"
             file = request.files["file"]
             _, file_extension = os.path.splitext(file.filename)
             # use timestamp as filename for temporary file

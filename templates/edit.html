@@ -3,26 +3,26 @@
 {% include 'shared/data_table.tpl' %}
 <div class="container-fluid d-flex p-1" id="modify_bar" hidden>
 	<!-- Allow modifying items here: swapping category, appending/removing tags, deleting -->
-	<div class="mx-2 dropup">
+	<div class="dropup">
 		<button class="btn btn-outline-secondary dropdown-toggle" type="button" id="swap_category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			Swap Category
+			<span class="bi-arrow-down-up" /> Swap Category
 		</button>
-		<div class="dropdown-menu" aria-labelledby="swap_category_dropdown" id="swap_category_dropdown_menu">
+		<div class="dropdown-menu" aria-labelledby="swap_category_dropdown" id="swap_category_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
 		</div>
 	</div>
 	<div class="input-group mx-2 w-25">
 		<input type="text" class="form-control border-secondary" placeholder="New tag.." id="new_tag_field"/>
-		<button class="btn btn-outline-secondary" onclick="add_tag_to_questions(event)">Add</button>
+		<button class="btn btn-outline-secondary" onclick="update_modal_add_tag(event)"><span class="bi-plus"> Add</button>
 	</div>
 	<div class="mr-auto border border-secondary" id="removable_tags" style="display: none;">
 	</div>
-	<button class="mx-2 btn btn-danger ml-auto" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)">Delete Selected</button>
+	<button class="mx-2 btn btn-danger ml-auto" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)"><span class="bi-trash3" /> Delete Selected</button>
 </div>
 <div class="container-fluid d-flex p-1" id="button_bar">
-	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)">Import</button>
-	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)">Import &amp; Replace</button>
-	<button class="mx-2 btn btn-info" onclick="export_file(event)">Export</button>
-	<button class="mx-2 btn btn-warning ml-auto" onclick="rollback(event)">Rollback</button>
+	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)"><span class="bi-arrow-up" /> Import</button>
+	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)"><span class="bi-arrow-bar-up" /> Import &amp; Replace</button>
+	<button class="mx-2 btn btn-info" onclick="export_file(event)"><span class="bi-arrow-bar-down" /> Export</button>
+	<button class="mx-2 btn btn-warning ml-auto" onclick="rollback(event)"><span class="bi-arrow-left" /> Rollback</button>
 </div>
 <div hidden>
 	<a href="export" target="_blank" id="export_link" download>Export</a>

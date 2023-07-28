@@ -1,4 +1,10 @@
 {% extends 'shared/base.html' %}
+<!-- Appropriate form of the campaign game.
+Each player have an amount of units to be distributed on all its controlled tiles. It also have a "capital", which is either its first starting tile, or the highest value tile the player still control
+Each tile have a score, the sum of this score decide the amount of units each player has. If the number exceeded this sum, units are disbanded randomly. If the number is less, new units will spawn in any tile -3 away from nearest hostile tile.
+For every turn, each player get to move a number of adjacent units against one external tile. If that exceeds the units presently on the tile, the tile is captured by half of the remaining attacking unit. If not, substract upto -1 of attacker units on both side.
+Winning condition is achieved by having 75% of total tile points.
+-->
 {% block content %}
 <div class="m-2 p-2" style="position: relative;">
 	{% for x, y, width, height, pointlist, attr in polygons %}

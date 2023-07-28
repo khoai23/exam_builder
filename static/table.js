@@ -83,6 +83,7 @@ function show_by_category_and_tag(request_tags=false) {
 		load_data_into_table(undefined, undefined, request_tags=request_tags)
 	}
 }
+
 // show only a category depending on the clicked button 
 function select_category(event) {
 	var category = event.currentTarget.innerText;
@@ -104,6 +105,13 @@ function select_category(event) {
 	// $("#filter_category_clear").show();
 }
 
+function selector_update(event) {
+	// function on checkbox click and/or tag click; should not do anything by default 
+	if(selector_update_function !== null) {
+		selector_update_function(event);
+	}
+}
+
 // add or remove the tag depending on which one
 function toggle_view_tag(event) {
 	let tag = $(event.currentTarget.parentNode).find(".form-check-label").text().trim();
@@ -123,6 +131,7 @@ function clear_tag(event) {
 	$("thead").find(".form-check-input").each(function() { $(this).prop("checked", false); } )
 	currently_selected_tag = [];
 	show_by_category_and_tag();
+	selector_update(event);
 }
 
 function toggle_select_tag(event) {
@@ -140,6 +149,7 @@ function toggle_select_tag(event) {
 		// zero/some box checked; select
 		boxes.each(function() { $(this).prop("checked", true); })
 	}
+	selector_update(event);
 }
 
 function toggle_all_tag(event) {
@@ -154,13 +164,7 @@ function toggle_all_tag(event) {
 		// zero/some box checked; select
 		boxes.each(function() { $(this).prop("checked", true); })
 	}
-}
-
-function selector_update(event) {
-	// function on checkbox click; should not do anything by default 
-	if(selector_update_function !== null) {
-		selector_update_function(event);
-	}
+	selector_update(event);
 }
 
 const length_per_view = 1000;
@@ -179,9 +183,18 @@ function update_view_index(current_index, max_index) {
 			$("#table_button_bar").show();
 			if(max_index < 5) {
 				// between 2-5(index 1-4), repurpose the buttons in direct format 
-				for(let i=0; i<max_index; i++) {
-					$("#" + button_list[i]).text((i+1).toString()).attr("onclick", "load_data_into_table(" + (i*length_per_view).toString() + "," + ((i+1)*length_per_view).toString() + ")");
+				for(let i=0; i<5; i++) {
+					let btn = $("#" + button_list[i]);
+					if(i <= max_index) {
+						// changing text as needed; and show it
+						btn.text((i+1).toString()).attr("onclick", "load_data_into_table(" + (i*length_per_view).toString() + "," + ((i+1)*length_per_view).toString() + ")");
+						btn.show();
+					} else { // not needed, hide it
+						btn.hide();
+					}
 				}
+				$("#elipse_start").hide();
+				$("#elipse_end").hide();
 			} else {
 				// 5+, set button in default format with correct end index
 				$("#table_button_first").text("1").attr("onclick", "load_data_into_table(0," + length_per_view.toString() + ")");
@@ -196,9 +209,9 @@ function update_view_index(current_index, max_index) {
 		// direct format 
 		button_list.forEach(function(name, index){
 			if(index == current_index) {
-				$("#" + button_list).addClass("btn-primary").removeClass("btn-outline-primary");
+				$("#" + name).addClass("btn-primary").removeClass("btn-outline-primary");
 			} else {
-				$("#" + button_list).removeClass("btn-primary").addClass("btn-outline-primary");
+				$("#" + name).removeClass("btn-primary").addClass("btn-outline-primary");
 			}
 		})
 	} else {

@@ -87,6 +87,8 @@ def build_login_routes(app: Flask) -> Tuple[Flask, LoginManager, callable]:
 
     # create first default user (khoai23/khoai23)
     add_user(User("khoai23", "khoai23", "default_admin", name="Creator", role=-1))
+    # auto-redirect to the main login page
+    manager.login_view = "main"
     manager.init_app(app)
 
     return app, manager, login_required

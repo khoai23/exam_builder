@@ -25,7 +25,7 @@
 			</li>
 			<li class="nav-item">
 				<a class="nav-link" href="logout">
-					<img src="/static/icons/img_logout.svg" class="img-fluid" alt="Logout" style="width: 20px; -webkit-filter: invert(100%); filter: invert(100%)">
+					<span class="bi-box-arrow-right"></span>
 				</a>
 			</li>
 			{% endif %}

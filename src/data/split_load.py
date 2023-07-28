@@ -136,16 +136,32 @@ class OnRequestData(dict):
             # clear out the cache if not updated; TODO sort by old_i?
             self._cache = {k: (i+1, v) for i, (k, (old_i, v)) in enumerate(filter(lambda it: it[0] in categorized, self._cache.items()))}
     
-    # compatibility with app.py
-
+    # compatibility with app routes. See src/routes/data_routes.py for details
     def update_data_from_file(self, data_location: str, update_cache: bool=False):
         data = read_file(data_location)
         return self.update_data(data, update_cache=update_cache)
     
-    def delete_data_by_ids(self, category: str, list_ids: List[int], update_cache: bool=True):
+    def delete_data_by_ids(self, list_ids: List[int], category: str, update_cache: bool=True):
         old_data = self.load_category(category)
         new_data = [d for i, d in enumerate(old_data) if i in list_ids]
         self.update_category(category, new_data, update_cache=update_cache)
+
+    def swap_to_new_category(self, list_ids: List[int], old_category: str, new_category: str, update_id: bool=True, update_cache: bool=True):
+        old_data = self.load_category(old_category)
+        new_data = self.load_category(new_category)
+        removed_data = []
+        for i, d in enumerate(old_data):
+            if i in list_ids:
+                # is in the moved one; append to new_data 
+                d["id"] = len(new_data)
+                new_data.append(d)
+            else:
+                # is in unmoved; add back into the removed section 
+                d["id"] = len(removed_data)
+                removed_data.append(d)
+        # reupdate both 
+        self.update_category(new_category, new_data, update_cache=update_cache)
+        self.update_category(old_category, removed_data, update_cache=update_cache)
 
 if __name__ == "__main__":
     data_obj = OnRequestData(_initiate_blank=True)

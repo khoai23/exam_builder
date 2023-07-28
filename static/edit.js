@@ -1,5 +1,14 @@
+function set_modifiers_state(enable) {
+	// set the modifier (swap category, add tag, remove tag, delete) to appropriate state
+	$("#modify_bar").find("button").prop("disabled", !enable);
+	$("#new_tag_field").prop("disabled", !enable);
+	if(!enable){
+		$("#removable_tags").hide(); // always hide when nothing selected
+	}
+}
+
 function set_buttons_state(working) {
-	// set all buttons in respective bar with to disabled/enabled accordingly
+	// set all mass buttons (import, export, rollback) to disabled/enabled accordingly
 	// also switch the spinner and text depending on which
 	// TODO set spinner color
 	if(working){
@@ -102,13 +111,16 @@ function update_modal_swap_category(event) {
 	var target_category = $(event.currentTarget).text().trim();
 	modal_target = target_category;
 	$("#modal_body").html("Do you want to swap to category <b>" + target_category + "</b>?");
+	$("#confirmation_modal").modal("show");
 }
 
 function update_modal_add_tag(event) {
 	modal_action = "addtag";
-	var expected_tag = $("#new_tag_field").text().trim();
+	var expected_tag = $("#new_tag_field").val().trim();
 	modal_target = expected_tag;
+//	console.log("Tagging in as: ", expected_tag);
 	$("#modal_body").html("Do you want to add a new tag <b>" + expected_tag + "</b>?");
+	$("#confirmation_modal").modal("show");
 }
 
 function update_modal_remove_tag(event) {
@@ -116,6 +128,7 @@ function update_modal_remove_tag(event) {
 	var expected_tag = $(event.currentTarget).text().trim();
 	modal_target = expected_tag;
 	$("#modal_body").html("Do you want to delete a tag <b>" + expected_tag + "</b>?");
+	$("#confirmation_modal").modal("show");
 }
 
 function perform_confirm_modal(event) {
@@ -133,7 +146,8 @@ function perform_confirm_modal(event) {
 }
 
 // delete the selected boxes. Sending the command and reload the data 
-// should be called by perform_confirm_modal
+// should be called by perform_confirm_modal 
+// no need to show the modal manually through jquery; 
 function delete_selected() {
 	set_buttons_state(true);
 	var category = $("#category_dropdown").text();
@@ -221,18 +235,62 @@ function remove_tag(new_tag) {
 
 // setup the appropriate function for table
 selector_update_function = function(event) {
+	// console.log("selector_update_function triggered");
+	let tagbox = $("#removable_tags");
 	// update fields accordingly 
 	var checklist = $("#question_table").find("[id^=use_question_]");
-	var checked = checklist.filter((i, it) => it[0].checked });
+	var checked = checklist.filter((i, it) => it.checked);
+	if(checked.length === 0) { // always setup the bar depending on how many selector updated
+		// console.log("disabled (no box)")
+		set_modifiers_state(false);
+		return;
+	} else {
+		// console.log("enabled (w/ box)")
+		set_modifiers_state(true)
+	}
 	// backrefer to the next tag list 
 	var tag_fields = checked.parent().prev();
 	// select all buttons, filter as field
-	var tags = new Set(tag_fields.find("button").map((i, it) => it.text()));
-	// TODO create appropriate boxes.
+	var tags = new Set(tag_fields.find("button").map((i, it) => $(it).text().trim()));
+	if(tags.length == 0) {
+		// found no appropriate tag; also hide the bar away 
+		$("#removable_tags").hide();
+		return;
+	} else {
+		// there are appropriate tag, display 
+		$("#removable_tags").show();
+	}
+	// create appropriate boxes.
+	// check all children for existing tags 
+	tagbox.children().each(function(index, item){
+		let text = $(item).text().trim();
+		if( tags.has(text) ) {
+			// current box is part of acceptable tags; remove it from the set
+			tags.delete(text);
+		} else {
+			// current box is old tag; throw the box away 
+			$(item).remove();
+		}
+	});
+	// tagbox.empty();
+	tags.forEach(function(val) {  
+		// console.log("deleter: ", val);
+		// all remaining tags will get a corresponding button with close icon
+		let new_button = $("<button>").addClass("btn btn-outline-danger").attr("onclick", "update_modal_remove_tag(event)").text(val).append($("<span class=\"bi-x\">"));
+		tagbox.append(new_button);
+	});
 }
 
 category_update_function = function(categories, selected) {
+	// console.log("category_update_function triggered");
 	// update swapper 
-	
+	var swapper = $("#swap_category_dropdown_menu");
+	swapper.empty();
+	categories.forEach(function(it) {
+		// console.log("swapper: ", it);
+		swapper.append($("<button>").addClass("btn btn-link dropdown-item").attr("onclick", "update_modal_swap_category(event)").text(it));
+	});
+	// also force the modifier to disabled when the category got updated 
+	set_modifiers_state(false);
 }
 
