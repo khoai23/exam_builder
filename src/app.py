@@ -58,12 +58,17 @@ from src.campaign.default import CampaignMap
 campaign_data = {}
 @app.route("/play", methods=["GET"])
 def play():
-    if "map" not in campaign_data or request.arg.get("redo", "false").lower() == "true":
+    if "map" not in campaign_data or request.args.get("redo", "false").lower() == "true":
         print("Create new campaign map")
         campaign_data["map"] = campaign = CampaignMap()
     else:
+        # iterating
         campaign = campaign_data["map"]
-    return flask.render_template("campaign.html", polygons=campaign.retrieve_draw_map())
+        print("Iterating test.")
+        campaign.test_random_occupy()
+    polygons = campaign.retrieve_draw_map()
+    # print(polygons)
+    return flask.render_template("campaign.html", polygons=polygons)
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():

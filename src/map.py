@@ -219,13 +219,13 @@ def generate_map_by_subregion_boxed(data: List[Dict], width: float=1000, height:
         region_centers[cat] = (gs_x + width_cell / 2, gs_y + width_cell / 2)
     # apply voronoi to the new points
     tag_regions = create_voronoi(tag_centers, width=width, height=height)
+    trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
     if(return_connections):
         # has to perform connection check here since if shrinking is applied, has_border will fail 
-        connections = list_connections(tag_regions)
+        connections = list_connections(trimmed_polygons)
 #        print(connections)
     else:
         connections = None
-    trimmed_polygons = perform_trim(tag_regions, width=width, height=height)
 #    trimmed_polygons = tag_regions
     # additional formatting
     if(do_recenter):

@@ -95,7 +95,9 @@ function select_category(event) {
 		// filter all fields that does not contain this category 
 		current_selected_category = category;
 		$("#category_dropdown").text(category);
-		category_update_function(all_categories, category);
+		if(category_update_function !== null){
+			category_update_function(all_categories, category);
+		}
 		// also disable all tags and try again
 		currently_selected_tag = [];
 	}
