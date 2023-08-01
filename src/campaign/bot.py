@@ -7,15 +7,15 @@ from typing import Optional, List, Tuple, Any, Union, Dict
 
 class Bot:
     """Default interface for a bot."""
-    def calculate_attacks(self, campaign_map: List[Any, Dict], expected_attack_coef: float=1.0) -> Optional[Tuple[int, int, int]]:
+    def calculate_attacks(self, campaign_map: List[Tuple[Any, Dict]], expected_attack_coef: float=1.0) -> Optional[Tuple[int, int, int]]:
         """This should return None or (source, target, attack_amount); will be re-verified by the campaign"""
         raise NotImplementedError
 
-    def calculate_movement(self, campaign_map: List[Any, Dict], allowable_range: int=2) -> Optional[Tuple[int, int, int]]:
+    def calculate_movement(self, campaign_map: List[Tuple[Any, Dict]], allowable_range: int=2) -> Optional[Tuple[int, int, int]]:
         """This should return None or (source, target, movement_amount); will be re-verified by the campaign"""
         raise NotImplementedError
 
-    def calculate_deployment(self, campaign_map: List[Any, Dict], deployable: int) -> Optional[int]:
+    def calculate_deployment(self, campaign_map: List[Tuple[Any, Dict]], deployable: int) -> Optional[int]:
         """This should return None or deploy_region; will be re-verified by the campaign"""
         raise NotImplementedError 
 

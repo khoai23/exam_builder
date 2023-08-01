@@ -5,6 +5,7 @@ For every turn, each player get to move a number of adjacent units against one e
 Winning condition is achieved by having 75% of total tile points."""
 import random
 
+from src.campaign.bot import RandomBot
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
 
 from typing import Optional, List, Tuple, Any, Union, Dict 
@@ -12,7 +13,8 @@ from typing import Optional, List, Tuple, Any, Union, Dict
 class CampaignMap:
     """The map on which the game is played."""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30):
-        self._player_count = player_count
+        self._player_count = player_count 
+        self._player_bot = [RandomBot(i, self) for i in range(player_count)]
         # generate by region; this should help causing hubbed map 
         # TODO make varied subregions
         distribution = [dict(category=str(rg), tag=str(i)) for rg in range(region_count) for i in range(subregion_count)]
@@ -146,6 +148,31 @@ class CampaignMap:
         else:
             return False
 
+    #=====================
+    # Bot-compatible functions.
+    def all_owned_provinces(self, player_id: int) -> set:
+        return set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == player_id)
+
+    def all_attack_vectors(self, player_id: int, singular: bool=True) -> list:
+        # see Bot. if singular; only show attacks on province-to-province basis, if not, show all possible strength when attacking 
+        player_province = self.all_owned_provinces(player_id) # in id format
+        all_bordered = set((bp for ip in player_province for bp in self._map[ip][-1]["connection"]))
+        bordered = all_bordered - player_province
+        targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
+        if singular:
+            # all possible vectors
+            vectors = ((s, t, self._map[s][-1]["units"]-1) for t in targetable for s in self._map[t][-1]["connection"] if s in player_province)
+            # actual vectors (units > 1)
+            vectors = [it for it in vectors if it[-1] > 0]
+            return vectors
+        else:
+            raise NotImplementedError
+        
+    def all_deployable_provinces(self, player_id: int) -> set:
+        return {ip for ip in self.all_owned_provinces(player_id) if self.check_deployable(ip)}
+
+    #=====================
+    # Test functions.
     def test_start_phase(self):
         # testing the start phase. 
         # If somebody lost a capital, move it to the remaining region with the highest score. If they recaptured it AND it's not bordered with any hostile region, move it back in
@@ -198,11 +225,13 @@ class CampaignMap:
             elif current_strength < max_strength:
                 # understrength, find an appropriate deployable region and throw them there
                 reinforcement = max_strength - current_strength 
-                deployable = [ip for ip in player_province if self.check_deployable(ip)]
-                # should always have at least one (capital)
-                target_id = random.choice(deployable)
-                self.perform_action_deploy(reinforcement, target_id, recheck=False)
-                print("Player {:d} received {:d} reinforcement at {:d}".format(i, reinforcement, target_id))
+                target_id = self._player_bot[i].calculate_deployment(self._map, reinforcement)
+#                target_id = random.choice(self.all_deployable_provinces())
+                if target_id is not None:
+                    self.perform_action_deploy(reinforcement, target_id, recheck=False)
+                    print("Player {:d} received {:d} reinforcement at {:d}".format(i, reinforcement, target_id))
+                else:
+                    print("Player {:d} declined reinforcement.".format(i))
             # else ignore
 
 
@@ -211,41 +240,52 @@ class CampaignMap:
         # testing the perform_action_movement - each iteration when cannot attack, move units from reserve (non-border) to front (border)
         print("Performing new occupying test, targetting hostile allowed: {}".format(targetting_hostile))
         for i in range(self._player_count):
-            player_province = set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == i) # in id format
-            all_bordered = set((bp for ip in player_province for bp in self._map[ip][-1]["connection"]))
-            bordered = all_bordered - player_province
-            # print("player_province: {}, all bordered: {}; bordered: {}".format(player_province, all_bordered, bordered))
-            ## MOVE section
-            if targetting_hostile:
-                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
+#            player_province = set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == i) # in id format
+#            all_bordered = set((bp for ip in player_province for bp in self._map[ip][-1]["connection"]))
+#            bordered = all_bordered - player_province
+#            # print("player_province: {}, all bordered: {}; bordered: {}".format(player_province, all_bordered, bordered))
+#            ## MOVE section
+#            # no occupyable; move a random province around. Currently prefer an unbordered going to bordered province
+#            external = {ip for ep in bordered for ip in self._map[ep][-1]["connection"]} & player_province
+#            internal = (player_province - external)
+#            valid_internal = {ip for ip in internal if self._map[ip][-1]["units"] > 1}
+#            if len(valid_internal) == 0:
+#                # no unit available 
+#                print("No reserve left, ignoring for player {:d}".format(i))
+#            else:
+#                # attempt to send an unit to a border province 
+#                source = random.choice(list(valid_internal))
+#                target = random.choice(list(external & self.check_range(source, 2)))
+#                amount = self._map[source][-1]["units"] - 1
+            action = self._player_bot[i].calculate_movement(self._map, allowable_range=2)
+            if action is None:
+                print("Player {:d} do not move.".format(i))
             else:
-                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] is None}
-            # no occupyable; move a random province around. Currently prefer an unbordered going to bordered province
-            external = {ip for ep in bordered for ip in self._map[ep][-1]["connection"]} & player_province
-            internal = (player_province - external)
-            valid_internal = {ip for ip in internal if self._map[ip][-1]["units"] > 1}
-            if len(valid_internal) == 0:
-                # no unit available 
-                print("No reserve left, ignoring for player {:d}".format(i))
-            else:
-                # attempt to send an unit to a border province 
-                source = random.choice(list(valid_internal))
-                target = random.choice(list(external & self.check_range(source, 2)))
-                amount = self._map[source][-1]["units"] - 1
+                source, target, amount = action
                 result, result_str = self.perform_action_movement(amount, source, target, allowable_range=2)
                 if result:
                     print("Player {:d} moved {:d} units from {:d} to {:d}".format(i, amount, source, target))
                 else:
                     print("Player {:d} failed to move {:d} units from {:d} to {:d}, error: {}".format(i, amount, source, target, result_str))
             ## OCCUPY section 
-            if len(targetable) == 0:
-                print("Player {:d} has no targetable border province (bordered {}). Ignoring.".format(i, bordered))
-                continue 
-            else:
-                target_id = random.choice(list(targetable))
-                print("Attacking {:d} with fixed 10 units...".format(target_id))
-                result, target, casualty = self.perform_action_attack(i, 10, target_id)
+#            if targetting_hostile:
+#                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
+#            else:
+#                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] is None}
+#            if len(targetable) == 0:
+#                print("Player {:d} has no targetable border province (bordered {}). Ignoring.".format(i, bordered))
+#                continue 
+#            else:
+#                target_id = random.choice(list(targetable))
+            action = self._player_bot[i].calculate_attacks(self._map)
+            if action is not None:
+                source, target, amount = action
+                print("Attacking {:d} with {:d} units...".format(target_id, amount))
+                self._map[source][-1]["units"] -= amount # TODO incorporate into perform
+                result, target, casualty = self.perform_action_attack(i, amount, target_id)
                 if result:
                     print("Attack succeeded; Player {:d} occupied {:d} with {:d} units, casualty {:d} units".format(i, target_id, target["units"], casualty))
                 else:
                     print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], i, casualty))
+            else:
+                print("Player {:d} do not attack.".format(i))
