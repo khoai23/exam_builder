@@ -19,11 +19,13 @@ class CampaignMap:
         regions = generate_map_by_subregion(distribution, bundled_by_category=True, do_recenter=True, do_shrink=0.98, return_connections=True)
         # with the map created, assign appropriate player capital & ensure each region have relatively same score 
         player_starter = random.sample(list(range(region_count)), player_count)
+        self._original_capital = {}
         for i, tiles in enumerate(regions.values()):
             distribution = region_point
             if i in player_starter:
                 # apply the capital in a random province 
-                capital = random.choice(tiles)[-1]
+                self._original_capital[player_starter.index(i)] = capital_id = random.choice(list(range(len(tiles))))
+                capital = tiles[capital_id][-1]
                 capital["score"] = capital_point
                 capital["owner"] = player_starter.index(i)
                 capital["units"] = capital_point 
@@ -51,14 +53,15 @@ class CampaignMap:
         self._map = [subregion for region in regions.values() for subregion in region]
         print("Created map with {} subregion".format(len(self._map)))
     
-    def retrieve_draw_map(self, colorscheme=["green", "red", "blue", "yellow"], default="transparent"):
+    def retrieve_draw_map(self, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], default="transparent"):
         # just use the current map for now 
         # appropriate fg/bg; TODO set this as class property 
-        for srg in self._map:
+        for i, srg in enumerate(self._map):
             attr = srg[-1]
             attr["fg"] = colorscheme[attr["owner"]] if attr["owner"] is not None else default
             attr["bg"] = "black"
-            attr["text"] = "{:d} ({:d} star)".format(attr["units"], attr["score"]) # display only score for now
+            attr["name"] = str(i) + (" \u272A" if attr["is_capital"] else "")
+            attr["text"] = "{:d} ({:d}\u2605)".format(attr["units"], attr["score"]) # display only score for now
         return self._map
         
     def check_range(self, base: int, expected_range: int, owner: Optional[int]=None) -> set:
@@ -118,8 +121,7 @@ class CampaignMap:
         target["units"] += move 
         return True, None
 
-    def perform_action_deploy(self, deploy: int, target_id: int, distance_from_front: int=2):
-        # attempt to perform a deployment; province is allowed to deploy if it is more than {distance_from_front} away from nearest hostile border, or is the capital of the player.
+    def check_deployable(self, target_id: int, distance_from_front: int=2):
         target = self._map[target_id][-1]
         if target["is_capital"]:
             # complete bypass 
@@ -127,43 +129,123 @@ class CampaignMap:
         else:
             owner = target["owner"]
             border = self.check_range(target_id, distance_from_front)
-            return all((self._map[bp][-1]["owner"] != owner for bp in border))
+            if all((self._map[bp][-1]["owner"] == owner for bp in border)):
+                # deep enough, can deploy 
+                return True 
+            else:
+                # not deep enough, ignore 
+                return False
 
-    def test_random_occupy(self):
+    def perform_action_deploy(self, deploy: int, target_id: int, distance_from_front: int=2, recheck: bool=True):
+        # attempt to perform a deployment; province is allowed to deploy if it is more than {distance_from_front} away from nearest hostile border, or is the capital of the player.
+        # if recheck set to false, no need to check the deployable status
+        if not recheck or check_deployable(target_id, distance_from_front=distance_from_front):
+            target = self._map[target_id][-1]
+            target["units"] += deploy 
+            return True 
+        else:
+            return False
+
+    def test_start_phase(self):
+        # testing the start phase. 
+        # If somebody lost a capital, move it to the remaining region with the highest score. If they recaptured it AND it's not bordered with any hostile region, move it back in
+        # automatically spawn units to full strength at deployable positions. In real phase, this reinforcement will be multiplied with an improvable coefficient
+        # automatically delete random units if the current strength exceeded full. In real phase, this deletion might be partially delayed with a coefficient
+        for i in range(self._player_count):
+            # Capital-related
+            player_province = set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == i) # in id format 
+            # check for original capital 
+            orig_capital = self._map[self._original_capital[i]][-1]
+            if orig_capital["owner"] != i:
+                # not owning original; check if new capital had been created, if not, create one 
+                if all(not self._map[ip][-1]["is_capital"] for ip in player_province):
+                    # no new capital yet, create one 
+                    new_capital = max(player_province, key=lambda ip: self._map[ip][-1]["score"])
+                    self._map[new_capital][-1]["is_capital"] = True
+                    # announce
+                    print("New capital for Player {:d} is set at {:d}".format(i, new_capital))
+                # else has new capital; ignore
+            else:
+                # do own the original capital 
+                if not orig_capital["is_capital"]:
+                    # ..but not the current capital; check if there is any foreign direct-border region 
+                    bordered_foreign = any( (self._map[p][-1]["owner"] != i for p in self.check_range(self._original_capital[i], 1)) )
+                    if not bordered_foreign:
+                        # safe, move back 
+                        for p in player_province:
+                            self._map[p][-1]["is_capital"] = False 
+                        orig_capital["is_capital"] = True 
+                        print("Player {:d} restored {:d} as capital.".format(i, self._original_capital[i]))
+                # else do nothing
+            # Deployment-related 
+            owned = [self._map[ip][-1] for ip in player_province]
+            max_strength = sum((o["score"] for o in owned))
+            current_strength = sum((o["units"] for o in owned))
+            if current_strength > max_strength:
+                # overstrength, disbanding random units across the owned province 
+                disband = current_strength - max_strength
+                for _ in range(disband):
+                    # should only target provinces with more than one unit 
+                    available = [p for p in owned if p["units"] > 1]
+                    if len(available) == 0:
+                        print("No disband-able region left; only disbanded upto {:d}".format(_))
+                        break
+                    # select a random one
+                    random.choice(available)["units"] -= 1
+                if len(available) > 0:
+                    # recheck to make sure break had not been attempted. TODO shouldn't need this 
+                    print("Disbanded {:d} units of Player {:d} randomly.".format(disband, i))
+            elif current_strength < max_strength:
+                # understrength, find an appropriate deployable region and throw them there
+                reinforcement = max_strength - current_strength 
+                deployable = [ip for ip in player_province if self.check_deployable(ip)]
+                # should always have at least one (capital)
+                target_id = random.choice(deployable)
+                self.perform_action_deploy(reinforcement, target_id, recheck=False)
+                print("Player {:d} received {:d} reinforcement at {:d}".format(i, reinforcement, target_id))
+            # else ignore
+
+
+    def test_random_occupy(self, targetting_hostile: bool=False):
         # testing the perform_action_attack - each iteration, each player randomly target an empty bordered province & try occupying it with 10 units; repeat ad nauseam
         # testing the perform_action_movement - each iteration when cannot attack, move units from reserve (non-border) to front (border)
-        print("Performing new occupying test")
+        print("Performing new occupying test, targetting hostile allowed: {}".format(targetting_hostile))
         for i in range(self._player_count):
             player_province = set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == i) # in id format
             all_bordered = set((bp for ip in player_province for bp in self._map[ip][-1]["connection"]))
             bordered = all_bordered - player_province
             # print("player_province: {}, all bordered: {}; bordered: {}".format(player_province, all_bordered, bordered))
-            unoccupied = {ip for ip in bordered if self._map[ip][-1]["owner"] is None}
-            if len(unoccupied) == 0:
-#                print("Player {:d} has no unoccupied border province (bordered {}). Ignoring.".format(i, bordered))
-#                continue 
-                # no occupyable; move a random province around. Currently prefer an unbordered going to bordered province
-                external = {ip for ep in bordered for ip in self._map[ep][-1]["connection"]} & player_province
-                internal = (player_province - external)
-                valid_internal = {ip for ip in internal if self._map[ip][-1]["units"] > 1}
-                if len(valid_internal) == 0:
-                    # no unit available 
-                    print("No reserve left, ignoring for player {:d}".format(i))
-                else:
-                    # attempt to send an unit to a border province 
-                    source = random.choice(list(valid_internal))
-                    target = random.choice(list(external))
-                    amount = self._map[source][-1]["units"] - 1
-                    result, result_str = self.perform_action_movement(amount, source, target)
-                    if result:
-                        print("Player {:d} moved {:d} units from {:d} to {:d}".format(i, amount, source, target))
-                    else:
-                        print("Player {:d} failed to move {:d} units from {:d} to {:d}, error: {}".format(i, amount, source, target, result_str))
+            ## MOVE section
+            if targetting_hostile:
+                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
             else:
-                target_id = random.choice(list(unoccupied))
+                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] is None}
+            # no occupyable; move a random province around. Currently prefer an unbordered going to bordered province
+            external = {ip for ep in bordered for ip in self._map[ep][-1]["connection"]} & player_province
+            internal = (player_province - external)
+            valid_internal = {ip for ip in internal if self._map[ip][-1]["units"] > 1}
+            if len(valid_internal) == 0:
+                # no unit available 
+                print("No reserve left, ignoring for player {:d}".format(i))
+            else:
+                # attempt to send an unit to a border province 
+                source = random.choice(list(valid_internal))
+                target = random.choice(list(external & self.check_range(source, 2)))
+                amount = self._map[source][-1]["units"] - 1
+                result, result_str = self.perform_action_movement(amount, source, target, allowable_range=2)
+                if result:
+                    print("Player {:d} moved {:d} units from {:d} to {:d}".format(i, amount, source, target))
+                else:
+                    print("Player {:d} failed to move {:d} units from {:d} to {:d}, error: {}".format(i, amount, source, target, result_str))
+            ## OCCUPY section 
+            if len(targetable) == 0:
+                print("Player {:d} has no targetable border province (bordered {}). Ignoring.".format(i, bordered))
+                continue 
+            else:
+                target_id = random.choice(list(targetable))
                 print("Attacking {:d} with fixed 10 units...".format(target_id))
                 result, target, casualty = self.perform_action_attack(i, 10, target_id)
                 if result:
                     print("Attack succeeded; Player {:d} occupied {:d} with {:d} units, casualty {:d} units".format(i, target_id, target["units"], casualty))
                 else:
-                    print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target_result["units"], i, casualty))
+                    print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], i, casualty))

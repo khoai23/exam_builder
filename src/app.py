@@ -65,7 +65,8 @@ def play():
         # iterating
         campaign = campaign_data["map"]
         print("Iterating test.")
-        campaign.test_random_occupy()
+        campaign.test_start_phase()
+        campaign.test_random_occupy(targetting_hostile=False)
     polygons = campaign.retrieve_draw_map()
     # print(polygons)
     return flask.render_template("campaign.html", polygons=polygons)

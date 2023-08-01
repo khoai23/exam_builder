@@ -12,12 +12,21 @@ Winning condition is achieved by having 75% of total tile points.
 			<polygon 
 				points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
 				style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
-			{% if "text" in attr and "center" in attr %}
-				<g font-size="16" fill="black" text-anchor="middle">
-					<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}" id="region_text_{{loop.index0}}">
-						{{attr["text"]}}
-					</text>
-				</g>
+			{% if "center" in attr %}
+				{% if "name" in attr %}
+					<g font-size="20" fill="black" text-anchor="middle" style="stroke-width:.5;">
+						<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}" id="region_name_{{loop.index0}}">
+							{{attr["name"]}}
+						</text>
+					</g>
+				{% endif %}
+				{% if "text" in attr %}
+					<g font-size="16" fill="black" text-anchor="middle">
+						<text x="{{attr["center"][0]}}" y="{{attr["center"][1] + 20}}" id="region_text_{{loop.index0}}">
+							{{attr["text"]}}
+						</text>
+					</g>
+				{% endif %}
 			{% endif %}
 		</svg>
 		{% endfor %}
