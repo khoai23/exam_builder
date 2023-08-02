@@ -30,6 +30,11 @@ def main():
     """Enter the index page"""
     return flask.render_template("main.html")
 
+@app.route("/test")
+def test():
+    """Enter the test page, to put and test new stuff"""
+    return flask.render_template("test.html")
+
 @app.route("/map")
 def map():
     """Test the draw map. 

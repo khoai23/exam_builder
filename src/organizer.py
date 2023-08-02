@@ -117,6 +117,19 @@ def check_duplication_in_data(data: List[Dict], deviation: Optional[int]=None):
     # result is dictionary for duplicate_new vs duplicate_old; since newer one should be removed
     return check_dictionary
 
+def convert_text_with_image(data: List[Dict], image_delimiter: str="|||"):
+    # Checking all question + answer field; if there is text and inline image, separate them on representative list 
+    new_data = [dict(d) for d in data]
+    for d in new_data:
+        if image_delimiter in d["question"] and not d["question"].startswith(image_delimiter) or not d["question"].endswith(image_delimiter):
+            # if exist image, but field is not started or ended by the same delimiter, is text & image; split it 
+            d["question"] = [(l.strip().startswith("http"), l.strip()) for l in d["question"].split(image_delimiter) if l.strip()]
+        for ia, answer in enumerate(d["answers"]):
+            if image_delimiter in answer and not answer.startswith(image_delimiter) or not answer.endswith(image_delimiter):
+                # if exist image, but field is not started or ended by the same delimiter, is text & image; split it 
+                d["answers"][ia] = [(l.strip().startswith("http"), l.strip()) for l in answer.split(image_delimiter) if l.strip()]
+    return new_data
+
 
 if __name__ == "__main__":
     from reader import read_file, DEFAULT_FILE_PATH

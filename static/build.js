@@ -99,34 +99,11 @@ function update_group_count(event) {
 	}
 }
 
-function readQuestionnaireSetting(event) {
-	// read non-critical setting associated with the questionnaire 
-	var checked_student_list = $("#student_list").find("input").filter((index, node) => $(node).is(":checked"));
-	// double bracket to prevent auto-flattening. Javascript.
-	var valid_student_arr = checked_student_list.map((index, node) => [[$(node).attr("id"), $(node).attr("st_name")]]).toArray();
-//	console.log(valid_student_arr);
-//	console.log(Object.fromEntries(valid_student_arr));
-	var setting = {
-		"session_name": $("#session_name").val(),
-		"student_identifier_name": $("#id_name").val(),
-		"exam_duration": parseInt($("#session_duration").val()),
-		"grace_duration": parseInt($("#grace_duration").val()),
-		"session_start":$("#start_exam_time").val() + " " + $("#start_exam_date").val(), // leave parsing to server
-		"session_end": $("#end_exam_time").val() + " " + $("#end_exam_date").val(), 
-		"show_result": $("#allow_result").is(":checked"),
-		"show_score": $("#allow_score").is(":checked"),
-		"student_list": Object.fromEntries(valid_student_arr)
-	};
-	console.log("Chosen setting: ", setting)
-	return setting
-}
-
-
 function submit_questionnaire(event) {
 	// check for validity; then submit the data to the server; receiving an entry link
 //	var data = [[$("#group_0").val(), []], [$("#group_1").val(), []], 
 //		[$("#group_2").val(), []], [$("#group_3").val(), []]];
-	var data = [0, 1, 2, 3].map(i => [parseInt($("#group_" + i).val()), parseFloat($("#score_" + i).val()), []]);
+	groups = [0, 1, 2, 3].map(i => []);
 	$("#barebone_classifier").find("label").each(function(index) {
 		let question_index = parseInt($(this).attr("qidx"));
 		// console.log($(this), question_index)
@@ -137,25 +114,11 @@ function submit_questionnaire(event) {
 			return;
 		}
 		// append the index to the list of choices
-		data[question_category][2].push(question_index);
+		groups[question_category].push(question_index);
 	});
-	console.log("Raw result", data);
-	// Check phase.
-	var err_type = data.map(function(item, index) {
-		// console.log(item[2]);
-		if(item[2].length > 0) {
-			if(isNaN(item[0]) || item[0] == 0)
-				return "Category " + index + " is valid but want zero question.";
-			else if(item[0] > item[2].length)
-				return "Category " + index + " has insufficient base.";
-			else if(isNaN(item[1]) || item[1] <=0)
-				return "Score of " + index + " is NaN/non-positive";
-		} else if(item[2].length == 0) {
-			// should be disabled and value irrelevant
-			return null;
-		}
-		return null;
-	});
+	// check and convert the group data to appropriate formats ()
+	var data, err_type;
+	[data, err_type] = check_group_score(groups);
 	if(err_type.every(v => v === null) && err_type.length > 0) {
 		// everything is ok, clear and push to an event 
 		data = data.filter(v => v[2].length > 0);
@@ -164,48 +127,38 @@ function submit_questionnaire(event) {
 		var result_panel = $("#result_panel");
 		result_panel.hide();
 		var category = $("#category_dropdown").text().trim();
-		$.ajax({
-			url: "build_template?category=" + encodeURIComponent(category), 
-			type: "POST",
-			data: payload, 
-			contentType: "application/json",
-			dataType: "json",
-			success: function(data, textStatus, jqXHR){
-				console.log("Received: ", data);
-				if(data["result"]) {
-					// add the link for admin page & test page 
-					// TODO add a button to do link copying
-					var base = window.location.origin;
-					// set the admin and exam link 
-					var admin_path = base + "/single_manager" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
-					var admin_link = $("#admin_link");
-					admin_link.attr("href", admin_path); admin_link.text(admin_path)
-					var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
-					var exam_link = $("#exam_link");
-					exam_link.attr("href", exam_path); exam_link.text(exam_path)
-					// enable the good panel; hiding the bad one
-					$("#result_good").show(); $("#result_bad").hide()
-					// also close down the selector, shouldn't need it now
-					$("#category_selector").collapse('hide');
-				} else {
-					$("#result_bad_error").text(data["error"]);
-					$("#result_bad_traceback").text(data["error_traceback"]);
-					// enable the bad panel; hiding the good one
-					$("#result_good").show(); $("#result_bad").hide()
-					// still want the selector
-					// $("#category_selector").collapse('hide');
-				}
-				// also hiding the above panels
-				$("#data_table").collapse('hide'); 
-				// open the view 
-				$("#result_frame").collapse('show');
-				result_panel.show();
-			},
-			error: function(jqXHR, textStatus, error){
-				// TODO check failure here
-				console.log("Failure with error: " + error);
+		var success_fn = function(data, textStatus, jqXHR){
+			console.log("Received: ", data);
+			if(data["result"]) {
+				// add the link for admin page & test page 
+				// TODO add a button to do link copying
+				var base = window.location.origin;
+				// set the admin and exam link 
+				var admin_path = base + "/single_manager" + "?template_key=" + data["session_key"] + "&key=" + data["admin_key"];
+				var admin_link = $("#admin_link");
+				admin_link.attr("href", admin_path); admin_link.text(admin_path)
+				var exam_path = base + "/identify" + "?template_key=" + data["session_key"];
+				var exam_link = $("#exam_link");
+				exam_link.attr("href", exam_path); exam_link.text(exam_path)
+				// enable the good panel; hiding the bad one
+				$("#result_good").show(); $("#result_bad").hide()
+				// also close down the selector, shouldn't need it now
+				$("#category_selector").collapse('hide');
+			} else {
+				$("#result_bad_error").text(data["error"]);
+				$("#result_bad_traceback").text(data["error_traceback"]);
+				// enable the bad panel; hiding the good one
+				$("#result_good").show(); $("#result_bad").hide()
+				// still want the selector
+				// $("#category_selector").collapse('hide');
 			}
-		});
+			// also hiding the above panels
+			$("#data_table").collapse('hide'); 
+			// open the view 
+			$("#result_frame").collapse('show');
+			result_panel.show();
+		}
+		perform_post(payload, "build_template?category=" + encodeURIComponent(category), success_fn=success_fn);
 	} else {
 		// demand fixes with an alert
 		console.log(err_type);

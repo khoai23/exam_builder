@@ -1,55 +1,27 @@
 All possible extension regard the builder, unlikely first:
 - [ ] Procedurally generated problems (algebraic and geometric)
 - [ ] Mouse-driven, or later touch-driven geometric drawer (drawing parallel line, same length, perpendicular, etc.)
-- [x] Template problems (replacing variables)
-- [x] LaTeX-type formatting
-- [ ] Data source organized by category
-- [x] Statistics for session managing (student weakness by question category)
-- [x] Import check for duplication
-- [x] Split the current "build" page to "build", "edit" (for changing the data), and "table" (for generic display of the data)
-- [ ] Integrate the current game map into a game board
+- [x] Data source organized by category
+- [x] Integrate the current game map into a game board
+- [ ] Appropriate adjustable botting options
 - [ ] Option to show relevant solution with wrong answers
-- [x] Overhauling data loading procedure - data will be split and kept by category
-- [x] Authentication mechanism
-- [x] Multiple-choice options
 - [ ] Drag-n-drop categorizer
-- [x] Crawler to read data from online pages
-- [x] Template usage for shared components (navigation bar, question table, etc)
-- [x] Filter for question category/tags
-- [x] Redirect student with template key to a specializing page 
-- [x] Converter from textfile variant into table variants
-- [x] Optional choice to use hashed info as student key (enabled by creator); choice to allow only specific key to enter (enabled by creator)
-- [x] Add more info to session template (name, comment, expiry time, grace time, try to force submission upon end)
-- [x] Image and/or graph support
+- [ ] User management (add, delete, change roles etc.)
 
 Remaining bugfix/missing features:
 - [ ] Session expiration & archive 
-- [x] Manager panel to delete/kill sessions manually
-- [x] Force submission when exam ends
-- [x] Conditional variables for template problem (range, attributes e.g prime)
-- [x] Table auto-scroll upon large screen
-- [x] Import in append vs replace mode
-- [x] Finishing import/rollback should automatically reload the table 
-- [x] Build/Edit has dropdown for category & tag
-- [ ] Button to flag duplicate items
+- [ ] Button to flag possible duplicate items (remove or confirm as not-duplicate)
 - [ ] Loading icon while performing modifying action e.g import/rollback 
 - [ ] Commit-type import to prevent stupidity
-- [x] Import raw text from website (note: still need the host as intermediary)
-- [x] Text denoting import/export finished is not working
+- [ ] Shared & persistent last category, used for both Build & Modify
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter supporting multiple-choice question selection; exporting in the more generic xlsx instead.
 - [ ] Converter direct import and copy content to clipboard (right now not working on Firefox)
 - [ ] Import supporting xls file by xlrd
-- [x] Allow rollback in case of crappy import 
-- [x] CSV in utf-8 format cannot be read by Microsoft's Excel; likely requires full conversion to xlsx 
 - [ ] Image support is only in solo mode; import image should support inline as default as well
-- [x] Show error when the Imgur module is dead.
-- [x] Timer for each exam should not be hardcoded
-- [x] Redirection for identify is still (relatively) busted
-- [ ] Single manager capable of modifying settings (time limit, range, etc.)
-- [x] Single manager can export list of student in excel format; should be in the format/order of the original list
-- [ ] Student ID as key, which is not important considering the redirection 
-- [x] Student showing correct answer and/or score if the option is enabled 
-- [x] Mechanism to auto-test exam generation, especially for single_equation/single_option variants (UNTESTED)
-- [x] Mechanism to enforce rollback when import/deletion/whatever fail
+- [x] Single manager capable of modifying settings (time limit, range, etc.)
+- [ ] Single manager capable of modifying score composition & recalculate for all students
 - [ ] Mechanism to notify and show appropriate logs when failure/wrong format etc. happens
+- [ ] Game board invalid connection at edge; likely leftover from the extended 4-corner
+- [ ] Occasional failure when creating a map (invalid polygon)
+- [ ] Mechanism to do a test for increased coefficient of attacks and/or defense

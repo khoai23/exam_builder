@@ -4,7 +4,7 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.session import session
-from src.session import load_template, student_first_access_session, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session
+from src.session import load_template, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, convert_template_setting
 
 import logging 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,26 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         else:
             return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
     
+    @app.route("/update_setting_session", methods=["POST"])
+    @login_decorator
+    def update_setting_session():
+        """Allow changing specific part of the session, e.g setting. Will throw an error if something failed."""
+        template_key = request.args.get("template_key")
+        admin_key = request.args.get("key")
+        if(template_key is None or admin_key is None):
+            return flask.jsonify(result=False, error="Missing key, modification failed.")
+        data = request.get_json()
+        # TODO safe-check important setting argument later 
+        session_data = session[template_key]
+        if(admin_key == session_data["admin_key"]):
+            # reconvert appropriate setting
+            session_data["setting"].update(convert_template_setting(data, allow_student_list=False))
+            return flask.jsonify(result=True)
+        else:
+            return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
+        
+
+
     @app.route("/session_manager")
     @login_decorator
     def session_manager():
@@ -134,8 +154,11 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         if(student_key):
             return student_reaccess_session(student_key)
         else:
-            template_key = request.args.get("template_key", None)
-            return student_first_access_session(template_key)
+            # no longer allowed - anonymous or restricted must both redirect to here with a key
+#            raise NotImplementedError
+            return render_template("error.html", error="Keyless access to exam is prohibited.", error_traceback=None)
+#            template_key = request.args.get("template_key", None)
+#            return student_first_access_session(template_key)
     
     
     @app.route("/submit", methods=["POST"])

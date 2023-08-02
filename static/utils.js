@@ -46,6 +46,10 @@ function _ajax_default_receive_fn(data, textStatus, jqXHR) {
 
 // perform an appropriate ajax function. Usually just 
 function perform_post(payload, url, success_fn=_ajax_default_receive_fn, error_fn=_ajax_default_error_fn, type="POST") {
+	if(typeof payload !== 'string' && !(payload instanceof String)) {
+		// payload is not string; attempt to convert 
+		payload = JSON.stringify(payload);
+	}
 	$.ajax({
 		type: type,
 		url: url,
@@ -66,3 +70,6 @@ function perform_get(url, success_fn=_ajax_default_receive_fn, error_fn=_ajax_de
 	});
 }
 
+function build_wait_div(dot_count=5) {
+	// TODO build a indicator with {dot_count} dot that fade in/out sequentially
+}

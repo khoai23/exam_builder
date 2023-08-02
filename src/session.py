@@ -12,7 +12,7 @@ from contextlib import contextmanager
 
 from src.data.reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX 
 from src.data.split_load import OnRequestData
-from src.organizer import assign_ids, shuffle, check_duplication_in_data
+from src.organizer import assign_ids, shuffle, check_duplication_in_data, convert_text_with_image
 
 import logging
 logger = logging.getLogger(__name__)
@@ -99,18 +99,23 @@ def test_template_validity(template: List[Tuple[int, float, List]], category: st
         logger.error("Template test failed for question {}: {}\n{}".format(getattr(e, "wrong_question_id", "N/A"), e, traceback.format_exc()))
         return False, (e, traceback.format_exc())
 
-def load_template(data: Dict, category: str, check_template: bool=True):
-    # format setting: cleaning dates; voiding nulled fields
-    setting = {k: v for k, v in data["setting"].items() if v is not None and (not isinstance(v, str) or v.strip() != "")}
+_ALL_ALLOWABLE_SETTING = ["session_name", "student_identifier_name", "exam_duration", "grace_duration", "session_start", "session_end", "allow_score", "allow_result", "student_list"]
+def convert_template_setting(setting: Dict, allow_student_list: bool=True, allowed=_ALL_ALLOWABLE_SETTING):
+    setting = {k: v for k, v in setting.items() if v is not None and (not isinstance(v, str) or v.strip() != "") and k in allowed}
     if("session_start" in setting):
         # format date & limit entrance
         setting["true_session_start"] = datetime.strptime(setting["session_start"], "%H:%M %d/%m/%Y").timestamp()
     if("session_end" in setting):
         # format date & limit entrance
         setting["true_session_end"] = datetime.strptime(setting["session_end"], "%H:%M %d/%m/%Y").timestamp()
-    if("student_list" in setting and len(setting["student_list"]) == 0):
+    if(not allow_student_list or ("student_list" in setting and len(setting["student_list"]) == 0)):
         # void the student list if no entry available 
         setting.pop("student_list", None)
+    return setting
+
+def load_template(data: Dict, category: str, check_template: bool=True):
+    # format setting: cleaning dates; voiding nulled fields
+    setting = convert_template_setting(data["setting"], allow_student_list=True)
     
     if(check_template):
         result, error_type = test_template_validity(data["template"], category)
@@ -120,7 +125,6 @@ def load_template(data: Dict, category: str, check_template: bool=True):
     # generate a random key for this session.
     key = secrets.token_hex(8)
     admin_key = secrets.token_hex(8)
-    # Maybe TODO check here if the template is valid?
     # TODO add a timer to expire the session when needed 
     # calculate maximum score using current data 
     max_score = sum((count * score for count, score, ids in data["template"]))
@@ -148,7 +152,7 @@ def student_first_access_session(template_key: str):
     # redirect to self 
     return flask.redirect(url_for("enter", key=student_key))
 
-def student_reaccess_session(student_key: str):
+def student_reaccess_session(student_key: str, convert_embedded_image: bool=True):
     # retrieve the session key 
     template_key = student_belong_to_session.get(student_key, None)
     if(template_key is None):
@@ -175,7 +179,11 @@ def student_reaccess_session(student_key: str):
         return flask.render_template("error.html", error="Exam over; cannot submit", error_traceback=None)
     else:
         # allow entering
-        return flask.render_template("exam.html", student_name=student_data["student_name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session_data["setting"], custom_navbar=True, score=student_score)
+        exam_data = student_data["exam_data"]
+        if convert_embedded_image:
+            # run a function to convert text + inline image into list of options 
+            exam_data = convert_text_with_image(exam_data)
+        return flask.render_template("exam.html", student_name=student_data["student_name"], exam_data=exam_data, submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=session_data["setting"], custom_navbar=True, score=student_score)
 
 def retrieve_submit_route_anonymous(template_key: str):
     """This is for submitting the student info; NOT for submitting the exam result 

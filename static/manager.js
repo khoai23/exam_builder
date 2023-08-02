@@ -237,51 +237,19 @@ function draw_for_student(key, obj, question_template, maximum_score=10) {
 	}
 }
 
-
-// draw a chart by a specified elements. Test function, throw away soon
-function draw_chart_for_student(element) {
-	let student_key = element.attr("id").replace("graph_");
-	if(student_key.length > 0) {
-		// valid key, started retrieving data 
-		let chart_type = element.attr("chart_type");
-		//let chart = bb.generate({
-		//	bindto: "#" + element.attr("id"),
-		//	data: {
-		//		x: "x",
-		//		columns: [
-		//			["x", "Subject A", "Subject B", "Subject C"],
-		//			["Student", 5, 8, 5]
-		//		],
-		//		type: "radar",
-		//		labels: true
-		//	},
-		//	radar: {
-		//		axis: { max: 10 },
-		//		level: { depth: 5 }
-		//	}
-		//});
-		//chart.load();
-		const data = google.visualization.arrayToDataTable([
-			["Student Name", "Student Score"],
-			["Subject A", 5],
-			["Subject A Loss", 5],
-			["Subject B", 7],
-			["Subject B Loss", 3],
-			["Subject C", 8],
-			["Subject C Loss", 2],
-		]);
-		const options = { 
-			legend: 'none',
-			slices: {
-				1: { color: 'transparent' },
-				3: { color: 'transparent' },
-				5: { color: 'transparent' }
-			}
-		};
-		const chart = new google.visualization.PieChart(element[0]);
-		chart.draw(data, options);
-	} else {
-		console.log("No valid student key for ", element.attr("id"));
+function update_setting(event) {
+	// attempt to update the session config 
+	let setting = readQuestionnaireSetting(event);
+	let admin_key = getUrlParameter("key");
+	let template_key = getUrlParameter("template_key");
+	var success_fn = function(data, textStatus, jqXHR){
+		if(data["result"]) {
+			// everything is ok; TODO update a bar or smth
+			console.log("Setting updated.");
+		} else {
+			// failed, TODO revert failed changes back to default
+			console.err("Setting update failed, error", data["error"]);
+		}
 	}
+	perform_post(setting, "update_setting_session?template_key=" + template_key + "&key=" + admin_key);
 }
-

@@ -158,7 +158,7 @@ class CampaignMap:
         player_province = self.all_owned_provinces(player_id) # in id format
         all_bordered = set((bp for ip in player_province for bp in self._map[ip][-1]["connection"]))
         bordered = all_bordered - player_province
-        targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
+        targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != player_id}
         if singular:
             # all possible vectors
             vectors = ((s, t, self._map[s][-1]["units"]-1) for t in targetable for s in self._map[t][-1]["connection"] if s in player_province)
@@ -279,9 +279,9 @@ class CampaignMap:
 #                target_id = random.choice(list(targetable))
             action = self._player_bot[i].calculate_attacks(self._map)
             if action is not None:
-                source, target, amount = action
+                source_id, target_id, amount = action
                 print("Attacking {:d} with {:d} units...".format(target_id, amount))
-                self._map[source][-1]["units"] -= amount # TODO incorporate into perform
+                self._map[source_id][-1]["units"] -= amount # TODO incorporate into perform
                 result, target, casualty = self.perform_action_attack(i, amount, target_id)
                 if result:
                     print("Attack succeeded; Player {:d} occupied {:d} with {:d} units, casualty {:d} units".format(i, target_id, target["units"], casualty))

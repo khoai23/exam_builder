@@ -84,7 +84,20 @@
 	{% else %}
 		<span class="text-warning">Only restricted test have autofill feature due to ID.</span>
 	{% endif %}
-	<button class="mx-2 ml-auto btn btn-success" onclick="alert(event)">Download Result</button>
+	<button class="mx-2 ml-auto btn btn-success" onclick="alert(event)" disabled>Download Result</button>
+</div>
+<div class="accordion d-flex flex-column my-2" id="accordion_main">
+	<div class="card flex-grow-2">
+		<div class="card-header" id="accordion_data_header"> 
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#setting_table" aria-expanded="true" aria-controls="setting_table">
+				Setting 
+			</button>
+		</div>
+		<div class="collapse show" aria-labelledby="accordion_data_header" data-bs-parent="#accordion_main" id="setting_table">
+			{% include 'shared/session_option.tpl' %}
+			<button class="my-2 btn btn-success" onclick="update_setting(event)">Update</button>
+		</div>
+	</div>
 </div>
 {% endblock %}
 
@@ -97,6 +110,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/billboard.js/3.8.2/billboard.pkgd.min.js" integrity="sha512-W6rv9SeEbkfttJTjzB6/BJCk8mmcfZzzFn1c8UsgO4UT+W+xvX5MhlcmZuIxVWal8XiJ+K2hwsaz/mcDXF262Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
 -->
 <script src={{ url_for('static', filename="utils.js") }}></script>
+<script src={{ url_for('static', filename="session_option.js") }}></script>
 <script src={{ url_for('static', filename="manager.js") }}></script>
 <script>
 	$(document).ready(function() {
@@ -106,12 +120,11 @@
 			$("#fill_col_dropdown_menu").append( $("<button class=\"m-1 btn btn-link\" onclick=\"update_fill_col(event)\">" + character + "</button>") );
 		}
 		google.charts.load('current',{packages:['corechart']});
-		google.charts.setOnLoadCallback(function () 
-				//{ draw_chart_for_student($("#graph_test_student")); });
-				// { retrieve_session_data(); });
-				{ autoupdate_session_data(); });
-//		let test_graph = $("#graph_test_student");
-//		draw_chart_for_student(test_graph);
+		google.charts.setOnLoadCallback(autoupdate_session_data);
+		// update the appropriate setting from default data 
+		updateQuestionnaireSetting( {{ session_data["setting"] | safe }} );
+		// hide the toggleable setting by default
+		$("#setting_table").collapse('hide'); 
 	});
 </script>
 {% endblock %}
