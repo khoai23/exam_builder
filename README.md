@@ -24,4 +24,7 @@ Remaining bugfix/missing features:
 - [ ] Mechanism to notify and show appropriate logs when failure/wrong format etc. happens
 - [ ] Game board invalid connection at edge; likely leftover from the extended 4-corner
 - [ ] Occasional failure when creating a map (invalid polygon)
-- [ ] Mechanism to do a test for increased coefficient of attacks and/or defense
+- [ ] Mechanism to attack a region with a combined force of neighbor regions
+- [ ] Mechanism for player actions to execute concurrently instead of sequentially. 
+- [ ] Mechanism to do a test for increased coefficient of attacks and/or defense 
+- [ ] Mechanism to show actions done by last phase

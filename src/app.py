@@ -59,13 +59,28 @@ def map():
         p[-1].pop("text")
     return flask.render_template("map.html", polygons=polygons, arrows=arrows)
 
-from src.campaign.default import CampaignMap
+from src.campaign.default import CampaignMap, RussianNameGenerator, LandGrabBot
 campaign_data = {}
 @app.route("/play", methods=["GET"])
 def play():
     if "map" not in campaign_data or request.args.get("redo", "false").lower() == "true":
         print("Create new campaign map")
-        campaign_data["map"] = campaign = CampaignMap()
+        # give 0 a superior bot 
+        def PrioritizedBot(player_id, *args, **kwargs):
+            if player_id == 0:
+                print("Allegedly better bot for player 0")
+                # attack with enough forces, penalized with every move more
+                # still not good enough, the bot will still stream its maximum units forward. Should use another bot altogether
+                kwargs["certainty_coef"] = lambda a, d: -99.0 if a <= d else 5.0 if a < d + 3 else (5.0 - (a-d)*0.25)
+                # try attacking great gain target if available 
+                kwargs["return_coef"] = 1.0
+                # attack anything 
+                kwargs["unowned_coef"] = 0.0
+                return LandGrabBot(player_id, *args, **kwargs)
+            else:
+                print("Normal bot for player {:d}".format(player_id))
+                return LandGrabBot(player_id, *args, **kwargs)
+        campaign_data["map"] = campaign = CampaignMap(bot_class=PrioritizedBot, name_generator=RussianNameGenerator)
     else:
         # iterating
         campaign = campaign_data["map"]
