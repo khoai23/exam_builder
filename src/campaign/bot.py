@@ -71,7 +71,7 @@ class LandGrabBot(Bot):
 
     def _sorting_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None) -> float:
         # calculate the score & validity of an action 
-        # return the expected score of an attack and the actual value for attacking
+        # return the expected score of an attack
         if available is None: # maybe throw this away?
             available = campaign_map[source_id][-1]["units"] - 1
         defense = campaign_map[target_id][-1]["units"]
@@ -119,3 +119,19 @@ class LandGrabBot(Bot):
     def calculate_deployment(self, campaign_map, deployable: int) -> Optional[int]:
         # just deploy randomly for now
         return RandomBot.calculate_deployment(self, campaign_map, deployable)
+
+class FrontlineBot(Bot):
+    """A bot that prioritize taking regions that are defensible, and distribute deployed units to the front even-ish"""
+    def __init__(self, *args, merge=False, defensiveness_coef: float=1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0):
+        # by default, prioritize grabbing provinces that are defensible (least vectors of attacks) and close to the capital 
+        # if grabbing this province allow reinforcement to immediately deploy to defend it, also give it a bonus
+        if not merge:
+            super(FrontlineBot, self).__init__(*args)
+            self.defensiveness_coef = defensiveness_coef
+            self.distance_coef = distance_coef
+            self.reinforcement_coef = reinforcement_coef
+
+    def _sorting_coef(self, campaign_map, player_id: int, source_id: int, target_id: int, available: Optional[int]=None) -> float:
+        target_connections = campaign_map[target_id][-1]["connection"]
+        hostile_connections = [bp for bp in target_connections if campaign_map[bp][-1]["owner"] != player_id and campaign_map[bp][-1]["owner"] is not None]
+        distance_to_capital = self._campaign.check_distance(self._campaign.capital(player_id), target_id)

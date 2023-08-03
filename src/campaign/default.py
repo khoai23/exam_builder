@@ -62,8 +62,62 @@ class CampaignMap:
             province_names = name_generator.batch_generate_name(len(self._map), name_generator.generate_province_name)
             for n, (*_, m) in zip(province_names, self._map):
                 m["province_name"] = n
+        # build cached distance for quick usage 
+        self.build_cached_distance()
         print("Created map with {} subregion".format(len(self._map)))
     
+    def build_cached_distance(self):
+        # generate cached distance between all provinces.
+        self._cached_distance = dict()
+        # direct neighbors (distance = 1)
+        for i, (*_, p) in enumerate(self._map):
+            connections = p["connection"]
+            for j in connections:
+                key = (i, j) if i < j else (j, i)
+                if key not in self._cached_distance:
+                    self._cached_distance[key] = 1
+        # while not reaching the alloted key (n*(n-1)/2); keep updating the distance 
+        expected_size = len(self._map) * (len(self._map) - 1) // 2
+        current_distance = 2
+        while len(self._cached_distance) < expected_size:
+            # keep an old size for log 
+            old_size = len(self._cached_distance)
+            # plus all possible distance together 
+            # have to do list instead of generator due to update
+            distance_1 = [d1 for d1, k1 in self._cached_distance.items() if k1 == 1]
+            distance_other = [do for do, ko in self._cached_distance.items() if ko == (current_distance - 1)]
+            for d1_1, d1_2 in distance_1:
+                for do_1, do_2 in distance_other:
+                    # check if they bind together 
+                    if d1_1 == do_1:
+                        # same lower, need to check
+                        if d1_2 != do_2:
+                            # can bind together 
+                            key = (d1_2, do_2) if d1_2 < do_2 else (do_2, d1_2)
+                            if key not in self._cached_distance:
+                                # is indeed the smallest values; put in 
+                                self._cached_distance[key] = current_distance 
+                    elif d1_2 == do_1:
+                        # key will always be d1_1, do_2 since they are ordered 
+                        if (d1_1, do_2) not in self._cached_distance:
+                            self._cached_distance[(d1_1, do_2)] = current_distance
+                    elif d1_1 == do_2:
+                        # key will always be do_1, d1_2 since they are ordered 
+                        if (do_1, d1_2) not in self._cached_distance:
+                            self._cached_distance[(do_1, d1_2)] = current_distance
+                    elif d1_2 == do_2:
+                        # same upper, need to check order, not equality
+                        key = (d1_1, do_1) if d1_1 < do_1 else (do_1, d1_1)
+                        if key not in self._cached_distance:
+                            # is indeed the smallest values; put in 
+                            self._cached_distance[key] = current_distance 
+            # print update to debug
+            print("_cached_distance updated: {} -> {} for {}".format(old_size, len(self._cached_distance), current_distance))
+
+            # after everything, increasing the next calculation
+            current_distance += 1
+        print("Cached distance created")
+
     def retrieve_draw_map(self, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], default="transparent"):
         # just use the current map for now 
         # appropriate fg/bg; TODO set bg in accordance with the amount of available units, or maybe transparency?
@@ -74,7 +128,12 @@ class CampaignMap:
             attr["name"] = attr.get("province_name", str(i)) + (" \u272A" if attr["is_capital"] else "")
             attr["text"] = "{:d} ({:d}\u2605)".format(attr["units"], attr["score"]) # display only score for now
         return self._map
-        
+     
+    def check_distance(self, source_id: int, target_id: int):
+        # check flat distance between two provinces. Value is cached.
+        key = (source_id, target_id) if source_id < target_id else (target_id, source_id)
+        return self._cached_distance[key]
+
     def check_range(self, base: int, expected_range: int, owner: Optional[int]=None) -> set:
         # put all provinces of less than {expected_range} distance from {base} into a set 
         result = set()
@@ -190,6 +249,10 @@ class CampaignMap:
         """Get province name; return id if not exist"""
         return self._map[pid][-1].get("province_name", str(pid))
 
+    def capital(self, plid: int) -> int:
+        """Get capital of specific player id; return None if no capital"""
+        return next((ip for ip in self.all_owned_provinces(plid) if self._map[ip][-1]["is_capital"]), None)
+
     #=====================
     # Test functions.
     def test_start_phase(self):
@@ -224,7 +287,7 @@ class CampaignMap:
                 # do own the original capital 
                 if not orig_capital["is_capital"]:
                     # ..but not the current capital; check if there is any foreign direct-border region 
-                    bordered_foreign = any( (self._map[p][-1]["owner"] != i for p in self.check_range(self._original_capital[i], 1)) )
+                    bordered_foreign = any( (self._map[p][-1]["owner"] != i for p in self._map[self._original_capital[i]][-1]["connection"]) ) 
                     if not bordered_foreign:
                         # safe, move back 
                         for p in player_province:
@@ -270,7 +333,7 @@ class CampaignMap:
                 if self._map[ip][-1]["is_capital"]:
                     # capital is exempted from this check 
                     continue
-                immediate_border = self.check_range(ip, 2) - {ip}
+                immediate_border = self._map[bp][-1]["connection"]
                 if all((self._map[bp][-1]["owner"] != i for bp in immediate_border)):
                     # encircled 
                     before = self._map[ip][-1]["units"]
