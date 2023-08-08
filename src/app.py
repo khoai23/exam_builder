@@ -6,7 +6,7 @@ import traceback
 import shutil
 
 from src.session import current_data, submit_route 
-from src.routes import build_login_routes, build_session_routes, build_data_routes
+from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
@@ -22,6 +22,7 @@ app.config["UPLOAD_FOLDER"] = "test"
 app, login_manager, login_decorator = build_login_routes(app)
 app = build_session_routes(app, login_decorator=login_decorator)
 app = build_data_routes(app, login_decorator=login_decorator)
+_, app = build_game_routes(app, login_decorator=login_decorator)
 ### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
 
@@ -58,38 +59,6 @@ def map():
     for p in polygons:
         p[-1].pop("text")
     return flask.render_template("map.html", polygons=polygons, arrows=arrows)
-
-from src.campaign.default import CampaignMap, RussianNameGenerator, LandGrabBot
-campaign_data = {}
-@app.route("/play", methods=["GET"])
-def play():
-    if "map" not in campaign_data or request.args.get("redo", "false").lower() == "true":
-        print("Create new campaign map")
-        # give 0 a superior bot 
-        def PrioritizedBot(player_id, *args, **kwargs):
-            if player_id == 0:
-                print("Allegedly better bot for player 0")
-                # attack with enough forces, penalized with every move more
-                # still not good enough, the bot will still stream its maximum units forward. Should use another bot altogether
-                kwargs["certainty_coef"] = lambda a, d: -99.0 if a <= d else 5.0 if a < d + 3 else (5.0 - (a-d)*0.25)
-                # try attacking great gain target if available 
-                kwargs["return_coef"] = 1.0
-                # attack anything 
-                kwargs["unowned_coef"] = 0.0
-                return LandGrabBot(player_id, *args, **kwargs)
-            else:
-                print("Normal bot for player {:d}".format(player_id))
-                return LandGrabBot(player_id, *args, **kwargs)
-        campaign_data["map"] = campaign = CampaignMap(bot_class=PrioritizedBot, name_generator=RussianNameGenerator)
-    else:
-        # iterating
-        campaign = campaign_data["map"]
-        print("Iterating test.")
-        campaign.test_start_phase()
-        campaign.test_random_occupy(targetting_hostile=False)
-    polygons = campaign.retrieve_draw_map()
-    # print(polygons)
-    return flask.render_template("campaign.html", polygons=polygons)
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():
