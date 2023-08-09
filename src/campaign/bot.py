@@ -4,7 +4,7 @@ Should have multiple criteria / selectable coefficient to prioritize different t
 import random 
 from collections import defaultdict
 
-from typing import Optional, List, Tuple, Any, Union, Dict 
+from typing import Optional, List, Tuple, Any, Union, Dict, Set
 
 class Bot:
     """Default interface for a bot."""
@@ -190,6 +190,12 @@ class FrontlineBot(Bot):
         raise NotImplementedError
         return (source_id, target_id, true_attack)
 
+    def province_distance_to_frontline(self, province_id: int, frontline: Set[int]):
+        # check the distance from a province_id to a frontline. Use cached distance to reduce complexity 
+        if province_id in frontline:
+            return 0 
+        return min((self._campaign.check_distance(province_id, i) for i in frontline))
+
     def calculate_movement(self, campaign_map, allowable_range=2) -> List[Tuple[int, int, int]]:
         # distribute all moveable units across frontline, tile with more outward connections first.
         all_owned = self._campaign.all_owned_provinces(self.player_id)
@@ -256,7 +262,15 @@ class FrontlineBot(Bot):
             else:
                 print("[Debug] moving request {} -> {} ({})".format(source, target, amount))
                 assert (source, target) not in movements, "Algorithm should not have duplicate attempt; but has {} - ({}, {})".format(movements, source, target)
-                movements[(source, target)] = amount 
+                movements[(source, target)] = amount  
+        # if there is still movable units; check if there is a "better" tile to move to; better here being closest to the frontline 
+        for source, amount in movable_units.items():
+            possible = [tp for tp in self._campaign.check_range(source, allowable_range, owner=self.player_id) if tp in all_owned]
+            best_target = min(possible, key=lambda i: self.province_distance_to_frontline(i, frontline) * 100 + len(campaign_map[i][-1]["connection"])) # between same distance, use the one with the most connection 
+            if source != best_target:
+                # move if they are different 
+                print("[Debug] additional moving request {} -> {} ({})".format(source, best_target, amount))
+                movements[(source, best_target)] = amount
         # after everything ran, convert back to a default movement format 
         true_movements = [(s, t, a) for (s, t), a in movements.items()]
         return true_movements

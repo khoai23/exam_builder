@@ -12,7 +12,10 @@ from src.map import generate_map_by_region, generate_map_by_subregion, format_ar
 from typing import Optional, List, Tuple, Any, Union, Dict 
 
 class CampaignMap:
-    """The map on which the game is played."""
+    """The map on which the game is played. Support:
+        Region names: regions can be named by a NameGenerator if available. If not, use simple index 
+        Bot: autonomous unit that take control of the player units. 
+        Arrows: Performed actions will receive corresponding arrows, depending on the display mode, these arrows will be shown on the map"""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30, 
             bot_class: Bot=RandomBot, name_generator: Optional[NameGenerator]=None):
         self._player_count = player_count 
@@ -64,6 +67,10 @@ class CampaignMap:
                 m["province_name"] = n
         # build cached distance for quick usage 
         self.build_cached_distance()
+        # use for player_alive's cache 
+        self._dead = set()
+        # use for arrow caches 
+        self._arrows = {i: list() for i in range(self._player_count)}
         print("Created map with {} subregion".format(len(self._map)))
     
     def build_cached_distance(self):
@@ -129,6 +136,35 @@ class CampaignMap:
             attr["text"] = "{:d} ({:d}\u2605)".format(attr["units"], attr["score"]) # display only score for now
         return self._map
      
+    def retrieve_draw_arrows(self, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], default="black"):
+        # load the arrows in appropriate format
+        all_arrows = []
+        for player_id, player_arrows in self._arrows.items():
+            for (action_type, source_id, target_id, amount) in player_arrows:
+                # convert accordingly from center to points 
+                # print("Map index:", self._map[source_id], self._map[target_id])
+                base_sx, base_sy, _, _, _, source = self._map[source_id]
+                raw_sx, raw_sy = source["center"]
+                source_coord = (base_sx + raw_sx, base_sy + raw_sy)
+                base_tx, base_ty, _, _, _, target = self._map[target_id]
+                raw_tx, raw_ty = target["center"]
+                target_coord = (base_tx + raw_tx, base_ty + raw_ty)
+                # TODO limiting the associating regions within coordinates
+                # if delta of source -> target close to vertical (deltax / deltay < 10), use straight arrow; if not, use bevel
+                offset = (0, -0.5)
+                if abs(target_coord[0] - source_coord[0]) * 10 < abs(target_coord[1] - source_coord[1]):
+                    offset = None 
+                # scale the thickness according to the amount moved 
+                thickness = max(min(int(amount / 4), 14), 2) # limit in 2-14 range
+                arrow = (0, 0, 1000, 1000, format_arrow((source_coord, target_coord), thickness=thickness, color=default, control_offset=offset, offset_in_ratio_mode=True))
+                # add a dashing format for movement 
+                if action_type == "move":
+                    arrow[-1]["dash"] = 5
+                # append 
+                all_arrows.append(arrow)
+        return all_arrows
+            
+
     def check_distance(self, source_id: int, target_id: int):
         # check flat distance between two provinces. Value is cached.
         key = (source_id, target_id) if source_id < target_id else (target_id, source_id)
@@ -205,7 +241,7 @@ class CampaignMap:
         # everything is ok, performing movement 
         # TODO put into queue, allow multiple movement submission for a phase
         source["units"] -= move 
-        target["units"] += move 
+        target["units"] += move  
         return True, None
 
 
@@ -269,6 +305,16 @@ class CampaignMap:
     def capital(self, plid: int) -> int:
         """Get capital of specific player id; return None if no capital"""
         return next((ip for ip in self.all_owned_provinces(plid) if self._map[ip][-1]["is_capital"]), None)
+
+    def player_alive(self, plid: int, use_cache: bool=True) -> bool:
+        """If use_cache, check from set; if not check directly"""
+        if use_cache: # use cache
+            alive = plid not in self._dead
+        else: # not using cache; check directly
+            alive = not len(self.all_owned_provinces(plid)) == 0
+            if not alive:
+                self._dead.add(plid)
+        return alive
 
     #=====================
     # Phasing function 
@@ -340,6 +386,64 @@ class CampaignMap:
                 self._map[ip][-1]["units"] = after = max(int(before // 2), 1)
                 print("Player {:d} is encircled at {}(border: {}); units halved {:d}->{:d}".format(player_id, self.pname(ip), immediate_border, before, after))
 
+    def phase_perform_movement(self, player_id: int, override_action: Optional[list]=None):
+        # Reinforcement distribution related. 
+        # override_action is a backup option to allow manual action to replace it 
+        action = override_action if override_action is not None else self._player_bot[player_id].calculate_movement(self._map, allowable_range=2)
+        # if None and/or blank list, is not performing anything
+        if not action:
+            print("Player {:d} do not move.".format(player_id))
+        else:
+            if isinstance(action, tuple) and len(action) == 3 and isinstance(action[0], int):
+                # old bot, outputting only a single movement 
+                action = [action]
+            for source_id, target_id, amount in action:
+                result, result_str = self.perform_action_movement(amount, source_id, target_id, allowable_range=2)
+                self._arrows[player_id].append( ("move", source_id, target_id, amount) )
+                if result:
+                    print("Player {:d} moved {:d} units from {} to {}".format(player_id, amount, self.pname(source_id), self.pname(target_id)))
+                else:
+                    print("Player {:d} failed to move {:d} units from {} to {}, error: {}".format(player_id, amount, self.pname(source_id), self.pname(target_id), result_str))
+
+    def phase_perform_attack(self, player_id: int, override_action: Optional[list]=None):
+        # Attack related 
+        # also have override_action
+        action = override_action if override_action is not None else self._player_bot[player_id].calculate_attacks(self._map)
+        if isinstance(action, list) and len(action) > 0 and isinstance(action[0], tuple):
+            # do nothing 
+            pass 
+        elif action: # dont accept either None or empty list 
+            # if single action, set to a list and perform accordingly 
+            action = [action]
+            print("Single action attack detected (likely old bot); converting to list.")
+        else:
+            # no action, do nothing
+            print("Player {:d} do not attack.".format(player_id))
+            return 
+        # reach here means have valid attacks to run
+        # list of attacks, MUST have the same target id or is discarded 
+        source_ids, target_ids, draw_amount = [list(it) for it in zip(*action)] 
+        target_ids = set(target_ids)
+        if len(target_ids) == 1:
+            # valid target, attempt to perform draw 
+            target_id = list(target_ids)[0]
+            print("Player {:d} try to attack {} with total {:d} units".format(player_id, self.pname(target_id), sum(draw_amount)))
+            can_draw = self.perform_action_draw(source_ids, draw_amount, target_id)
+            if can_draw:
+                # valid and drawn the necessary force 
+                amount = sum(draw_amount)
+                result, target, casualty = self.perform_action_attack(player_id, amount, target_id)
+                for source_id, draw in zip(source_ids, draw_amount):
+                    self._arrows[player_id].append( ("attack", source_id, target_id, draw) )
+                if result:
+                    print("Attack succeeded; player occupied {} with {:d} units, casualty {:d} units".format(self.pname(target_id), target["units"], casualty))
+                else:
+                    print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], player_id, casualty))
+            else:
+                print("Submitted attacks cannot gain enough force; requested: {}".format({self.pname(player_id): a for player_id, a in zip(source_ids, draw_amount)}))
+        else:
+            print("Player {:d} submitted multiple attacks targets: {}({}). Ignoring.".format(player_id, target_ids, action))
+
     #=====================
     # Test functions.
     def test_start_phase(self):
@@ -352,10 +456,9 @@ class CampaignMap:
             player_province = self.all_owned_provinces(i) # in id format 
             
             #==========
-            # knockout related
-            if len(player_province) == 0:
-                print("Player {:d} knocked out; phase skipped.".format(i))
-                continue 
+            # knockout related - check if player is alive here
+            if not self.player_alive(i, use_cache=False):
+                continue
             # run appropriate phasing function
             self.phase_set_capital(i, player_province)
             self.phase_deploy_reinforcement(i, player_province)
@@ -366,74 +469,56 @@ class CampaignMap:
         # testing the perform_action_attack & perform_action_movement - each iteration will attempt movement and attacking in sequence. For now, attacking only support the single-vector variant
         print("Performing new occupying test, targetting hostile allowed: {} (currently not allowed)".format(targetting_hostile))
         for i in range(self._player_count):
-            player_province = self.all_owned_provinces(i) # in id format 
             # knockout related
-            if len(player_province) == 0:
-                print("Player {:d} knocked out; movement skipped.".format(i))
-                continue
+            if not self.player_alive(i, use_cache=False):
+                continue 
+            self.phase_perform_movement(i)
 
-            action = self._player_bot[i].calculate_movement(self._map, allowable_range=2)
-            if action is None:
-                print("Player {:d} do not move.".format(i))
-            else:
-                if isinstance(action, tuple) and len(action) == 3 and isinstance(action[0], int):
-                    # old bot, outputting only a single movement 
-                    action = [action]
-                for source_id, target_id, amount in action:
-                    result, result_str = self.perform_action_movement(amount, source_id, target_id, allowable_range=2)
-                    if result:
-                        print("Player {:d} moved {:d} units from {} to {}".format(i, amount, self.pname(source_id), self.pname(target_id)))
-                    else:
-                        print("Player {:d} failed to move {:d} units from {} to {}, error: {}".format(i, amount, self.pname(source_id), self.pname(target_id), result_str))
-            ## OCCUPY section 
-#            if targetting_hostile:
-#                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] != i}
-#            else:
-#                targetable = {ip for ip in bordered if self._map[ip][-1]["owner"] is None}
-#            if len(targetable) == 0:
-#                print("Player {:d} has no targetable border province (bordered {}). Ignoring.".format(i, bordered))
-#                continue 
-#            else:
-#                target_id = random.choice(list(targetable))
         for i in range(self._player_count):
-            player_province = self.all_owned_provinces(i) # in id format 
             # knockout related
-            if len(player_province) == 0:
-                print("Player {:d} knocked out; movement skipped.".format(i))
+            if not self.player_alive(i, use_cache=False):
                 continue
-            action = self._player_bot[i].calculate_attacks(self._map)
-            if isinstance(action, list) and len(action) > 0 and isinstance(action[0], tuple):
-                # list of attacks, MUST have the same target id or is discarded 
-                source_ids, target_ids, draw_amount = [list(it) for it in zip(*action)] 
-                target_ids = set(target_ids)
-                if len(target_ids) == 1:
-                    # valid target, attempt to perform draw 
-                    target_id = list(target_ids)[0]
-                    print("Player {:d} try to attack {} with total {:d} units".format(i, self.pname(target_id), sum(draw_amount)))
-                    can_draw = self.perform_action_draw(source_ids, draw_amount, target_id)
-                    if can_draw:
-                        # valid and drawn the necessary force 
-                        amount = sum(draw_amount)
-                        result, target, casualty = self.perform_action_attack(i, amount, target_id)
-                        if result:
-                            print("Attack succeeded; player occupied {} with {:d} units, casualty {:d} units".format(self.pname(target_id), target["units"], casualty))
-                        else:
-                            print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], i, casualty))
-                    else:
-                        print("Submitted attacks cannot gain enough force; requested: {}".format({self.pname(i): a for i, a in zip(source_ids, draw_amount)}))
-                else:
-                    print("Player {:d} submitted multiple attacks targets: {}({}). Ignoring.".format(i, target_ids, action))
-            elif action is not None:
-                source_id, target_id, amount = action
-                if self._map[source_id][-1]["units"] < amount + 1:
-                    print("Player {:d} failed to attack {}(belong to {}): requested {}; only has {}(-1)".format(i, self.pname(target_id), self._map[target_id][-1]["owner"], amount, self._map[source_id][-1]["units"]))
-                else:
-                    print("Player {:d} attacking {}(belong to {}) with {:d} units...".format(i, self.pname(target_id), self._map[target_id][-1]["owner"], amount))
-                    self._map[source_id][-1]["units"] -= amount # TODO incorporate into perform
-                    result, target, casualty = self.perform_action_attack(i, amount, target_id)
-                    if result:
-                        print("Attack succeeded; player occupied {} with {:d} units, casualty {:d} units".format(self.pname(target_id), target["units"], casualty))
-                    else:
-                        print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], i, casualty))
-            else:
-                print("Player {:d} do not attack.".format(i))
+            self.phase_perform_attack(i)
+    
+    def end_turn(self):
+        # clean up all cached data each turn 
+        for arrows in self._arrows.values():
+            arrows.clear()
+        # TODO perform winning condition check
+
+
+class PlayerCampaignMap(CampaignMap):
+    """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion"""
+    def __init__(self, *args, players: List[int], **kwargs):
+        super(PlayerCampaignMap, self).__init__(*args, **kwargs)
+        self._is_players = set(players)
+        self._action_dict = {}
+
+    def update_action(self, player_id: int, action_type: str, action_data: list) -> Tuple[bool, Optional[str]]:
+        # save the supposed actions of the player; if anything gone wrong, throw back the issue
+        if player_id not in self._is_players:
+            # trying to do action of non-player, kick 
+            return False, "Player {:d} is a bot; cannot update the actions.".format(player_id)
+        if not isinstance(action_data, list) or any(len(a) != 3 for a in action_data): # both move & attack use same format for now
+            return False, "Invalid submitted action data: {}".format(action_data)
+        self._action_dict[(player_id, action_type)] = action_data
+        return True, None
+
+    def phase_perform_attack(self, player_id: int, override_action: Optional[list]=None):
+        # override the action, if exist then use itself, if not use empty list to disable bot action 
+        # TODO allow option to let bots take over 
+        if player_id in self._is_players:
+            override_action = self._action_dict.get( (player_id, "attack"), [] )
+        return super(PlayerCampaignMap, self).phase_perform_attack(player_id, override_action=override_action)
+
+    def phase_perform_movement(self, player_id: int, override_action: Optional[list]=None):
+        # override the action, if exist then use itself, if not use empty list to disable bot action 
+        # TODO allow option to let bots take over 
+        if player_id in self._is_players:
+            override_action = self._action_dict.get( (player_id, "move"), [] )
+        return super(PlayerCampaignMap, self).phase_perform_movement(player_id, override_action=override_action)
+
+    def end_turn(self):
+        # also wipe the action dict 
+        self._action_dict.clear()
+        return super(PlayerCampaignMap, self).end_turn()

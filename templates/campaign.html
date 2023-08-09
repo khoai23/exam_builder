@@ -51,6 +51,9 @@ Winning condition is achieved by having 75% of total tile points.
 			{% endfor %}"  
 			stroke="{{arrow["color"]}}"
 			stroke-width="{{arrow["thickness"]}}"
+			{% if "dash" in arrow and arrow["dash"] %}
+				stroke-dasharray="{{arrow["dash"]}},{{arrow["dash"]}}"
+			{% endif %}
 			fill="none"
 			marker-end="url(#head{{loop.index}})"
 			/>

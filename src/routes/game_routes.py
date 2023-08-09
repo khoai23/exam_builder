@@ -43,6 +43,8 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         elif request.args.get("next", "false") == "true":
             # iterating with test & update
             campaign = campaign_data["map"]
+            # end previous turn, this wipe whatever data is left
+            campaign.end_turn()
             print("Iterating test.")
             campaign.test_start_phase()
             campaign.test_random_occupy(targetting_hostile=False)
@@ -50,7 +52,23 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             # do nothing at the moment
             campaign = campaign_data["map"]
         polygons = campaign.retrieve_draw_map()
+        arrows = campaign.retrieve_draw_arrows()
         # print(polygons)
-        return flask.render_template("campaign.html", polygons=polygons)
+        return flask.render_template("campaign.html", polygons=polygons, arrows=arrows)
+
+    @app.route("/submit_action", methods=["POST"])
+    def submit_action():
+        # submitting the action coming from user 
+        action_type, action_data = request.get_json()
+        if "map" not in campaign_data:
+            return flask.jsonify(result=False, error="No campaign exist, action invalid.")
+        if action_type in ("attack", "move"):
+            # TODO check appropriate phase in the campaign, and appropriate player; for now use 0
+            campaign = campaign_data["map"]
+            campaign.update_action(0, action_type, action_data)
+            return flask.jsonify(result=True)
+        else:
+            return flask.jsonify(result=False, error="Invalid action_type: {}".format(action_type))
+        
 
     return campaign_data, app
