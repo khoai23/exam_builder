@@ -53,7 +53,7 @@ class OnRequestData(dict):
     def categories(self):
         return list(self._data.keys())
 
-    def load_category(self, category: str, with_ids: bool=True, use_cache: bool=True):
+    def load_category(self, category: str, with_ids: bool=True, use_cache: bool=True) -> List[Dict]:
         """Load data specifically belong to a category. Can use cache to reduce IO overhead at expense of idle memory."""
         # load data from necessary filepath 
         if use_cache and category in self._cache:

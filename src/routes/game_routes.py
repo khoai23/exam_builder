@@ -1,11 +1,13 @@
 """Routes for accessing, monitoring or playing campaign. Also will settle accordingly with an exam trigger.
 """
-
+import random
 import flask
 from flask import Flask, request, url_for
 import traceback 
 
-from src.campaign.default import CampaignMap, RussianNameGenerator, LandGrabBot, FrontlineBot
+from src.campaign.default import CampaignMap, RussianNameGenerator, PolishNameGenerator, LandGrabBot, FrontlineBot 
+from src.session import current_data
+from src.session import create_campaign_session, build_order_quiz, access_order_quiz, submit_order_quiz_result
 
 import logging 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,12 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                 else:
                     print("Normal bot for player {:d}".format(player_id))
                     return LandGrabBot(player_id, *args, **kwargs)
-            campaign_data["map"] = campaign = CampaignMap(bot_class=PrioritizedBot, name_generator=RussianNameGenerator)
+            campaign_data["map"] = campaign = CampaignMap(bot_class=PrioritizedBot, name_generator=PolishNameGenerator(shared_kwargs={"filter_generation_rule": True}))
+            # similarly, create a symbiotic session 
+            # random 4 category 
+            categories = random.sample(current_data.categories, k=4)
+            print("Creating session with categories: {}".format(categories))
+            campaign_data["session"] = session = create_campaign_session(campaign, categories)
         elif request.args.get("next", "false") == "true":
             # iterating with test & update
             campaign = campaign_data["map"]
@@ -54,9 +61,15 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         polygons = campaign.retrieve_draw_map()
         arrows = campaign.retrieve_draw_arrows()
         # print(polygons)
-        return flask.render_template("campaign.html", polygons=polygons, arrows=arrows)
+        # print(arrows)
+        if(request.method == "GET"):
+            # for get, return whole page
+            return flask.render_template("campaign.html", polygons=polygons, arrows=arrows)
+        else:
+            # for post, return jsonified data 
+            return flask.jsonify(result=True, polygons=polygons, arrows=arrows)
 
-    @app.route("/submit_action", methods=["POST"])
+    @app.route("/campaign_action", methods=["POST"])
     def submit_action():
         # submitting the action coming from user 
         action_type, action_data = request.get_json()
@@ -70,5 +83,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         else:
             return flask.jsonify(result=False, error="Invalid action_type: {}".format(action_type))
         
+    @app.route("/")
+
 
     return campaign_data, app

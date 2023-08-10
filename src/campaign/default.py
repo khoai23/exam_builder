@@ -6,14 +6,14 @@ Winning condition is achieved by having 75% of total tile points."""
 import random
 
 from src.campaign.bot import Bot, RandomBot, LandGrabBot, FrontlineBot
-from src.campaign.name import NameGenerator, RussianNameGenerator
+from src.campaign.name import NameGenerator, RussianNameGenerator, PolishNameGenerator
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
 
 from typing import Optional, List, Tuple, Any, Union, Dict 
 
 class CampaignMap:
     """The map on which the game is played. Support:
-        Region names: regions can be named by a NameGenerator if available. If not, use simple index 
+        Region names: regions can be named by a NameGenerator if available. If not, use simple index as name
         Bot: autonomous unit that take control of the player units. 
         Arrows: Performed actions will receive corresponding arrows, depending on the display mode, these arrows will be shown on the map"""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30, 
@@ -155,15 +155,15 @@ class CampaignMap:
                 if abs(target_coord[0] - source_coord[0]) * 10 < abs(target_coord[1] - source_coord[1]):
                     offset = None 
                 # scale the thickness according to the amount moved 
-                thickness = max(min(int(amount / 4), 14), 2) # limit in 2-14 range
-                arrow = (0, 0, 1000, 1000, format_arrow((source_coord, target_coord), thickness=thickness, color=default, control_offset=offset, offset_in_ratio_mode=True))
+                thickness = max(min(int(amount / 4), 14), 2) # limit in 2-14 range 
+                # rescale accordingly
+                bound, arrow_dict = format_arrow((source_coord, target_coord), thickness=thickness, color=default, control_offset=offset, offset_in_ratio_mode=True, create_bound=True)
                 # add a dashing format for movement 
                 if action_type == "move":
-                    arrow[-1]["dash"] = 5
-                # append 
-                all_arrows.append(arrow)
+                    arrow_dict["dash"] = 5
+                # append; bound should be flattened as it control the rect
+                all_arrows.append( (*bound, arrow_dict) )
         return all_arrows
-            
 
     def check_distance(self, source_id: int, target_id: int):
         # check flat distance between two provinces. Value is cached.
@@ -341,7 +341,7 @@ class CampaignMap:
             # else do nothing
         # else has new capital; ignore
         assert self.capital(player_id) is not None, "Capital for Player {:d} must have been set after this".format(player_id)
-    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25):
+    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, per_province_coef: float=1.0, disbanding_coef: float=0.25):
         # Deployment-related (deploying & disbanding)
         owned = [self._map[ip][-1] for ip in player_province]
         max_strength = sum((o["score"] for o in owned))
@@ -362,8 +362,9 @@ class CampaignMap:
                 print("Disbanded {:d} units of Player {:d} randomly.".format(disband, player_id))
         elif current_strength < max_strength:
             # understrength, find an appropriate deployable region and throw them there
-            # TODO additional upper limit
-            reinforcement = max(int( (max_strength - current_strength) * reinforcement_coef ), 1)
+            # ownership as additional upper limit (cannot reinforce more than 1 per owned province)
+            upper_limit = int(len(player_province) * per_province_coef)
+            reinforcement = min(max(int( (max_strength - current_strength) * reinforcement_coef ), 1), upper_limit)
             target_id = self._player_bot[player_id].calculate_deployment(self._map, reinforcement)
 #            target_id = random.choice(self.all_deployable_provinces())
             if target_id is not None:
@@ -488,7 +489,7 @@ class CampaignMap:
 
 
 class PlayerCampaignMap(CampaignMap):
-    """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion"""
+    """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion and/or substitution"""
     def __init__(self, *args, players: List[int], **kwargs):
         super(PlayerCampaignMap, self).__init__(*args, **kwargs)
         self._is_players = set(players)
@@ -506,17 +507,37 @@ class PlayerCampaignMap(CampaignMap):
 
     def phase_perform_attack(self, player_id: int, override_action: Optional[list]=None):
         # override the action, if exist then use itself, if not use empty list to disable bot action 
-        # TODO allow option to let bots take over 
+        # If need to let bots take over, the dict value must be written with None
         if player_id in self._is_players:
             override_action = self._action_dict.get( (player_id, "attack"), [] )
         return super(PlayerCampaignMap, self).phase_perform_attack(player_id, override_action=override_action)
 
     def phase_perform_movement(self, player_id: int, override_action: Optional[list]=None):
         # override the action, if exist then use itself, if not use empty list to disable bot action 
-        # TODO allow option to let bots take over 
+        # If need to let bots take over, the dict value must be written with None
         if player_id in self._is_players:
             override_action = self._action_dict.get( (player_id, "move"), [] )
         return super(PlayerCampaignMap, self).phase_perform_movement(player_id, override_action=override_action)
+
+    def retrieve_possible_attacks(self, player_id: int):
+        # retrieve all possible attacks vector for the player.
+        return self.all_attack_vectors(player_id) 
+
+    def retrieve_all_movements(self, player_id: int, allowable_range: int=2):
+        # retrieve all possible movements vector-bundle for the player.
+        owned = self.all_owned_provinces(player_id)
+        movable = []
+        for ip in owned:
+            source = self._map[ip][-1]
+            if source["units"] <= 1:
+                continue # not enough unit, dont try anything 
+            # output 
+            movable.append( (ip, source["units"]-1, [p for p in self.check_range(ip, allowable_range, owner=player_id)]) )
+        return movable 
+
+    def retrieve_all_deployment(self, player_id: int):
+        # retrieve all possible deploy point for the player 
+        return self.all_deployable_provinces(player_id)
 
     def end_turn(self):
         # also wipe the action dict 

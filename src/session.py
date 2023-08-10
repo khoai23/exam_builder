@@ -114,6 +114,7 @@ def convert_template_setting(setting: Dict, allow_student_list: bool=True, allow
     return setting
 
 def load_template(data: Dict, category: str, check_template: bool=True):
+    """Create the session with a normal id key & admin key in the session """
     # format setting: cleaning dates; voiding nulled fields
     setting = convert_template_setting(data["setting"], allow_student_list=True)
     
@@ -124,6 +125,10 @@ def load_template(data: Dict, category: str, check_template: bool=True):
             return False, error_type
     # generate a random key for this session.
     key = secrets.token_hex(8)
+    if key in session:
+        # duplicate generation; do again 
+        key = secrets.token_hex(8)
+        assert key not in session, "Rare issue when id key cannot be generated; swap to while"
     admin_key = secrets.token_hex(8)
     # TODO add a timer to expire the session when needed 
     # calculate maximum score using current data 
@@ -132,25 +137,6 @@ def load_template(data: Dict, category: str, check_template: bool=True):
     logger.debug("New template: {}".format(session[key]))
     return True, (key, admin_key)
 
-def student_first_access_session(template_key: str):
-    """Deprecated as retrieve_submit_route_anonymous & retrieve_submit_route_restricted will perform duty for this hardpoint"""
-    session_data = session.get(template_key, None)
-    if(template_key is None or session_data is None):
-        # TODO return a warning that session is not correct/expired; also enter the key as above
-        return flask.render_template("error.html", error="Missing key or missing exam session; TODO allow input box", error_traceback=None)   
-    # create the new student key 
-    student_key = secrets.token_hex(8)
-    # write to session retrieval 
-    student_belong_to_session[student_key] = template_key
-    # write to session data itself.
-    selected, correct = shuffle(current_data.load_category(session_data["category"]), session_data["template"])
-    session_data["student"][student_key] = student_data = {
-            "exam_data": selected,
-            "correct": correct,
-            "start_time": time.time()
-    }
-    # redirect to self 
-    return flask.redirect(url_for("enter", key=student_key))
 
 def student_reaccess_session(student_key: str, convert_embedded_image: bool=True):
     # retrieve the session key 
@@ -325,4 +311,81 @@ def remove_session(session_key: str, verify: bool=False, verify_admin_key: Optio
     # once finished deletion, if callback exist, send the session data over 
     if(callback):
         callback(session_data)
-    return flask.jsonify(result=True, deleted=True)
+    return flask.jsonify(result=True, deleted=True) 
+
+"""This is for a special campaign session. Instead of student id, this session object receives a specific player order and shuffle an appropriate quiz for that."""
+
+def create_campaign_session(campaign, categories: List[str]):
+    # select specific quiz range for campaign 
+#    print([c not in current_data.categories for c in categories])
+    assert isinstance(categories, list) and len(categories) > 0 and all((c in current_data.categories for c in categories)), "Invalid category selected: {} (available {})".format(categories, data.categories)
+    session = {"categories": categories, "orders": dict()}
+    return session 
+
+_default_coefficient_calculator = lambda c, t: 2.0 * c / t # break even at 50% correct
+def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, select_category: Optional[str]=None, coefficient_calculator: callable=_default_coefficient_calculator) -> Tuple[bool, str]:
+    # attempt to build a quiz for the order, returning a referring key to be re-accessed if necessary 
+    # get a random key
+    key = secrets.token_hex(8)
+    if select_category:
+        # if there is a valid select_category, use that 
+        if select_category not in session["categories"]:
+            # invalid category, break out 
+            return False, "Invalid category {} (possible: {})".format(select_category, session["categories"])
+    else:
+        # if not, select one of the category randomly
+        select_category = random.choice(session["categories"])
+    # with a valid category, generate appropriate quiz on range of that category
+    # TODO deeper selection mode (e.g by tag)
+    available = current_data.load_category(select_category)
+    if len(available) < quiz_count:
+        # not enough question to load, throw a warning 
+        logger.warning("Category \"{}\" only has {} question, while requiring {}. Trimming requirement.".format(select_category, len(available), quiz_count))
+        quiz_count = len(available)
+    question_ids = random.sample(range(len(available)), k=quiz_count)
+    questions, correct = shuffle(available, [(len(question_ids), 0.0, question_ids)])
+    # write it into the "orders" section 
+    start_time = time.time()
+    end_time = time.time() + duration_min * 60
+    session["orders"][key] = {"category": select_category, "exam_data": questions, "correct": correct, "start_time": start_time, "end_time": end_time, "coefficient_calculator": coefficient_calculator}
+    # return appropriate data to access
+    return True, key
+
+def access_order_quiz(session: dict, key: str):
+    order_data = session["orders"][key]
+    # calculate the remaining time
+    end_time = order_data["end_time"]
+    elapsed = min(time.time() - order_data["start_time"], exam_duration)
+    remaining = exam_duration - elapsed
+    # convert the exam_data into image-compatible version
+    exam_data = order_data["exam_data"]
+    if convert_embedded_image:
+        # run a function to convert text + inline image into list of options 
+        exam_data = convert_text_with_image(exam_data)
+    if(time.time() > end_time):
+        # render the error when timer is exceeded
+        return flask.render_template("error.html", error="Order quiz over; cannot submit", error_traceback=None)
+    else:
+        # render normally
+        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting=session_data["setting"], custom_navbar=True, score=student_score)
+
+def submit_order_quiz_result(session: dict, submitted_answers: Dict, key: str):
+    # simplified variant of the order quiz; 
+    order_data = session["orders"][key]
+    if("answers" in order_data):
+        return flask.jsonify(result=False, error="Already have an submitted answer.")
+    else:
+        # record to the student info
+        order_data["answers"] = submitted_answers 
+        # extract the correct vs total; session will create appropriate coefficient by its function
+        coefficient_calculator = order_data["coefficient_calculator"]
+        correct = 0
+        for sub, crt in zip(submitted_answers, order_data["correct"]):
+            if sub == crt:
+                correct += 1
+        total = len(order_data["correct"])
+        order_data["order_coef"] = order_coef = coefficient_calculator(correct, total)
+        # use the localstorage to trigger update from the campaign map 
+        # do not send it over through localstorage; since such data could be tampered with 
+        # TODO hook an update for campaign here through the order_data 
+        return flask.jsonify(result=True, coef=order_coef, trigger_campaign_update=True)

@@ -26,8 +26,9 @@ def list_connections(regions: List[ Tuple[Any, List] ], return_dict: bool=True) 
     else:
         return list(result)
             
-def format_arrow(arrow: Tuple[Tuple[float, float], Tuple[float, float]], thickness: float=1.0, color: str="black", control_offset: Tuple[float, float]=None, offset_in_ratio_mode: bool=False) -> Dict:
-    """Convert the attribute of an arrow depending on selected property. Output a dictionary containing all the properties."""
+def format_arrow(arrow: Tuple[Tuple[float, float], Tuple[float, float]], thickness: float=1.0, color: str="black", control_offset: Tuple[float, float]=None, offset_in_ratio_mode: bool=False, create_bound: bool=False) -> Dict:
+    """Convert the attribute of an arrow depending on selected property. Output a dictionary containing all the properties.
+    If create_bound; convert all coordinates to this specific bound"""
     result = {}
     # arrow/edges will be formatted as ({point}, {contour point}); contour point can be None at which the line is straight.
     result["points"] = [(p, None) for p in arrow]
@@ -57,4 +58,19 @@ def format_arrow(arrow: Tuple[Tuple[float, float], Tuple[float, float]], thickne
         "orient": "auto"
     }
     result["arrowhead_poly"] = [(0, 0), (2, 3/2), (0, 3)]
-    return result
+    if create_bound:
+        # normal bound - minimum/maximum rectangle
+        min_x = min(*(p[0][0] for p in result["points"]), *(p[1][0] for p in result["points"] if p[1] is not None))
+        min_y = min(*(p[0][1] for p in result["points"]), *(p[1][1] for p in result["points"] if p[1] is not None))
+        max_x = max(*(p[0][0] for p in result["points"]), *(p[1][0] for p in result["points"] if p[1] is not None))
+        max_y = max(*(p[0][1] for p in result["points"]), *(p[1][1] for p in result["points"] if p[1] is not None))
+        # add padding to prevent clipping 
+        pad = thickness * 5 
+        # convert all points accordingly. TODO prevent bound from exceeding expected width/height
+        bound = (min_x-pad, min_y-pad, max_x-min_x+pad, max_y-min_y+pad)
+        x, y = min_x-pad, min_y-pad 
+        # convert all points accordingly
+        result["points"] = [((p[0]-x, p[1]-y), (c if c is None else (c[0]-x, c[1]-y))) for p, c in result["points"]]
+        return bound, result
+    else:
+        return result

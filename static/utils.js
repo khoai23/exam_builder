@@ -37,7 +37,7 @@ function s2ab(s) {
 }
 
 function _ajax_default_error_fn(jqXHR, textStatus, error) {
-	console.log("Received error", error);
+	console.error("Received error", error);
 }
 
 function _ajax_default_receive_fn(data, textStatus, jqXHR) {

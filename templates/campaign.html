@@ -6,61 +6,89 @@ For every turn, each player get to move a number of adjacent units against one e
 Winning condition is achieved by having 75% of total tile points.
 -->
 {% block content %}
-<div class="m-2 p-2" style="position: relative;">
-		{% for x, y, width, height, pointlist, attr in polygons %}
-		<svg height="{{height}}" width="{{width}}" style="position: absolute; top: {{y}}px; left: {{x}}px" id="region_{{loop.index0}}">
-			<polygon 
-				points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
-				style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
-			{% if "center" in attr %}
-				{% if "name" in attr %}
-					<g font-size="20" fill="black" text-anchor="middle" style="stroke-width:.5;">
-						<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}" id="region_name_{{loop.index0}}">
-							{{attr["name"]}}
-						</text>
-					</g>
-				{% endif %}
-				{% if "text" in attr %}
-					<g font-size="16" fill="black" text-anchor="middle">
-						<text x="{{attr["center"][0]}}" y="{{attr["center"][1] + 20}}" id="region_text_{{loop.index0}}">
-							{{attr["text"]}}
-						</text>
-					</g>
-				{% endif %}
+<div class="hstack">
+
+<div class="m-2 p-2" id="canvas" style="position: relative; width: 1000px; height: 1000px; display: inline-block;">
+	{% for x, y, width, height, pointlist, attr in polygons %}
+	<svg height="{{height}}" width="{{width}}" style="position: absolute; top: {{y}}px; left: {{x}}px" id="region_{{loop.index0}}">
+		<polygon 
+			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
+			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
+		{% if "center" in attr %}
+			{% if "name" in attr %}
+				<g font-size="20" fill="black" text-anchor="middle" style="stroke-width:.5;">
+					<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}" id="region_name_{{loop.index0}}">
+						{{attr["name"]}}
+					</text>
+				</g>
 			{% endif %}
-		</svg>
-		{% endfor %}
-		{% for x, y, height, width, arrow in arrows %}
-		<svg height="{{height}}" width="{{width}}" style="position: absolute; left: {{x}}, top {{y}}">
-			<defs>
-				<marker id="head{{loop.index}}"
-					{% for attr, val in arrow["arrowhead"].items() %}
-						{{attr}}="{{val}}"
-					{% endfor %}>
-					{% set ap = arrow["arrowhead_poly"] %}
-					<path d="M {{ap[0][0]}},{{ap[0][1]}} L {{ap[1][0]}},{{ap[1][1]}} L {{ap[2][0]}},{{ap[2][1]}} z" fill="{{arrow["color"]}}">
-					</path>
-				</marker>
-			</defs>
-			{% set pts = arrow["points"] %}
-			<path d="M {% for p, q in pts %} 
-				{% if q %}
-				Q {{q[0]}},{{q[1]}}
-				{% endif %}
-				{{p[0]}},{{p[1]}}
-			{% endfor %}"  
-			stroke="{{arrow["color"]}}"
-			stroke-width="{{arrow["thickness"]}}"
-			{% if "dash" in arrow and arrow["dash"] %}
-				stroke-dasharray="{{arrow["dash"]}},{{arrow["dash"]}}"
+			{% if "text" in attr %}
+				<g font-size="16" fill="black" text-anchor="middle">
+					<text x="{{attr["center"][0]}}" y="{{attr["center"][1] + 20}}" id="region_text_{{loop.index0}}">
+						{{attr["text"]}}
+					</text>
+				</g>
 			{% endif %}
-			fill="none"
-			marker-end="url(#head{{loop.index}})"
-			/>
-		</svg>
-		{% endfor %}
+		{% endif %}
+	</svg>
+	{% endfor %}
+	{% for x, y, width, height, arrow in arrows %}
+	<svg height="{{height}}" width="{{width}}" style="position: absolute; left: {{x}}px; top: {{y}}px;">
+		<defs>
+			<marker id="head{{loop.index}}"
+				{% for attr, val in arrow["arrowhead"].items() %}
+					{{attr}}="{{val}}"
+				{% endfor %}>
+				{% set ap = arrow["arrowhead_poly"] %}
+				<path d="M {{ap[0][0]}},{{ap[0][1]}} L {{ap[1][0]}},{{ap[1][1]}} L {{ap[2][0]}},{{ap[2][1]}} z" fill="{{arrow["color"]}}">
+				</path>
+			</marker>
+		</defs>
+		{% set pts = arrow["points"] %}
+		<path d="M {% for p, q in pts %} 
+			{% if q %}
+			Q {{q[0]}},{{q[1]}}
+			{% endif %}
+			{{p[0]}},{{p[1]}}
+		{% endfor %}"  
+		stroke="{{arrow["color"]}}"
+		stroke-width="{{arrow["thickness"]}}"
+		{% if "dash" in arrow and arrow["dash"] %}
+			stroke-dasharray="{{arrow["dash"]}},{{arrow["dash"]}}"
+		{% endif %}
+		fill="none"
+		marker-end="url(#head{{loop.index}})"
+		/>
+	</svg>
+	{% endfor %}
+</div> 
+
+<div id="command_panel" class="h-100" style="display: inline-block;">
+	<ul class="nav nav-tabs" id="phase_tabs" role="tablist">
+		<li class="nav-item">
+			<a class="nav-link active" href="#">Deployment</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link active" href="#">Movement</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link active" href="#">Attack</a>
+		</li>
+	</ul>
+	<div class="tab-content" id="phase_content">
+		<div id="deployment_content"></div>
+		<div id="movement_content"></div>
+		<div id="attack_content"></div>
 	</div>
+	<button class="btn btn-primary" onclick="perform_and_reload(event, 'next')">Next</button>
+	<div id="log">
+	</div>
+</div>
+
+</div>
 {% endblock %}
 
 {% block script %}
+<script src={{ url_for('static', filename="utils.js") }}></script>
+<script src={{ url_for('static', filename="campaign.js") }}></script>
 {% endblock %}

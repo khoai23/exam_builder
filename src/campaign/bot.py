@@ -223,7 +223,7 @@ class FrontlineBot(Bot):
             # if still has remainder, spawn a warning 
             if remaining > 0:
                 print("Frontline distribution still have {} units remaining.".format(remaining))
-        print("Expected distribution: ", distribute)
+        # print("Expected distribution: ", distribute)
         # Second, find set of all appropriate movements to best put all units to necessary positions 
         # TODO minimize the amount of movements needed 
         movements = dict() 
@@ -260,7 +260,7 @@ class FrontlineBot(Bot):
                 # somehow attempt to move to self, dont have to perform 
                 pass
             else:
-                print("[Debug] moving request {} -> {} ({})".format(source, target, amount))
+                # print("[Debug] moving request {} -> {} ({})".format(source, target, amount))
                 assert (source, target) not in movements, "Algorithm should not have duplicate attempt; but has {} - ({}, {})".format(movements, source, target)
                 movements[(source, target)] = amount  
         # if there is still movable units; check if there is a "better" tile to move to; better here being closest to the frontline 
@@ -269,7 +269,7 @@ class FrontlineBot(Bot):
             best_target = min(possible, key=lambda i: self.province_distance_to_frontline(i, frontline) * 100 + len(campaign_map[i][-1]["connection"])) # between same distance, use the one with the most connection 
             if source != best_target:
                 # move if they are different 
-                print("[Debug] additional moving request {} -> {} ({})".format(source, best_target, amount))
+                # print("[Debug] additional moving request {} -> {} ({})".format(source, best_target, amount))
                 movements[(source, best_target)] = amount
         # after everything ran, convert back to a default movement format 
         true_movements = [(s, t, a) for (s, t), a in movements.items()]
