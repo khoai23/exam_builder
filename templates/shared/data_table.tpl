@@ -9,7 +9,7 @@
 	</div>
 	<span class="h3 m-2">Category:</span>
 </div>
-<div class="table-responsive card-body p-1">
+<div class="table-responsive card-body w-100 d-md-table">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
 		<thead class="thead-light">
 			<tr>

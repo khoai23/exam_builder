@@ -6,11 +6,21 @@ from collections import defaultdict
 
 from typing import Optional, List, Tuple, Any, Union, Dict, Set
 
+class Aspect:
+    """Default interface for an addon 'aspect' of the bot, which should allow tweaking behavior of a bot (e.g related to context, personality etc.)"""
+    def _weighing_coef(self, *args, **kwargs):
+        raise NotImplementedError
+
 class Bot:
-    """Default interface for a bot."""
-    def __init__(self, player_id: int, campaign: Any):
+    """Default interface for a bot. This should contain the logical structure of the bot itself."""
+    def __init__(self, player_id: int, campaign: Any, aspects: Optional[List[Aspect]]=None, debug: bool=False):
         self.player_id = player_id
-        self._campaign = campaign 
+        self._campaign = campaign  
+        self._aspects = aspects  
+
+        self._debug = debug
+        if debug:
+            self._debug_record = {}
 
     def calculate_attacks(self, campaign_map: List[Tuple[Any, Dict]], expected_attack_coef: float=1.0) -> Optional[Tuple[int, int, int]]:
         """This should return None or (source, target, attack_amount); will be re-verified by the campaign"""
@@ -23,6 +33,34 @@ class Bot:
     def calculate_deployment(self, campaign_map: List[Tuple[Any, Dict]], deployable: int) -> Optional[int]:
         """This should return None or deploy_region; will be re-verified by the campaign"""
         raise NotImplementedError 
+        
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        """Internal function to weigh an attack vector amongst other."""
+        raise NotImplementedError
+
+    def weigh_attack_vector(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        # same as _weighing_coef below; except will also take into account any aspects modifiers  
+        if self._debug:
+            # clear out at start; all _weighing_coef will modify this and not create its new instance
+            self._debug_record["attack"][(source_id, target_id, available)] = attack_record = list()
+        score = self._weighing_coef(campaign_map, source_id, target_id, available=available, merge=merge)
+        if self._aspects and len(self._aspects) > 0:
+            for a in self._aspects:
+                modifier = a._weighing_coef(self, campaign_map, source_id, target_id, available=available, merge=merge)
+                if self._debug:
+                    attack_record.append((type(a).__name__, modifier, 1.0))
+                score += modifier 
+        if self._debug:
+            attack_record.append(score)
+        return score 
+
+    def print_debug_attack_chart(self):
+        for key, value in self._debug_record["attack"].items():
+            source_id, target_id, available = key 
+            print_key = "[{:14s}--{:0d}->{:14s}]".format(self._campaign.pname(source_id) if source_id is not None else "N/A", available or -1, self._campaign.pname(target_id))
+            total = value[-1]
+            print_value = "{:.1f} = ".format(total) +  " + ".join(("({:s}){:.1f}x{:.1f}".format(*v) for v in value[:-1]))
+            print(print_key, print_value)
 
 
 class RandomBot(Bot):
@@ -60,18 +98,18 @@ class LandGrabBot(Bot):
     Third coefficient to prevent deadlock if two bot started competing over a weak province; the higher the score, the more likely that the bot will try to take unowned provinces first
     Grabbing the biggest province is dangerous because a counterattack may just get it back (as the deadlock demonstrated), hence the need for the 2nd and/or 3rd
     """
-    def __init__(self, *args, merge=False, certainty_coef: float=1.0, return_coef: float=0.0, unowned_coef: float=10.0, limit_attack_force: bool=False):
+    def __init__(self, *args, merge=False, certainty_coef: float=1.0, return_coef: float=0.0, unowned_coef: float=10.0, limit_attack_force: bool=False, **kwargs):
         # by default, do a landgrab with no afterthought of defense or gain 
         # always vastly prefer an unowned province
         # probably very retarded
         if not merge:
-            super(LandGrabBot, self).__init__(*args)
+            super(LandGrabBot, self).__init__(*args, **kwargs)
         self.certainty_coef = certainty_coef
         self.return_coef = return_coef 
         self.unowned_coef = unowned_coef 
         self.limit_attack_force = limit_attack_force
 
-    def _sorting_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None) -> float:
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None) -> float:
         # calculate the score & validity of an action 
         # return the expected score of an attack
         if available is None: # maybe throw this away?
@@ -84,14 +122,16 @@ class LandGrabBot(Bot):
             score = self.certainty_coef(available, defense)
         else:
             score = (available - defense) * self.certainty_coef 
-        score += gain * self.return_coef + unowned * self.unowned_coef
+        score += gain * self.return_coef + unowned * self.unowned_coef 
+        if self._debug:
+            self._debug_record["attack"][(source_id, target_id, available)].extend([("gain", gain, self.return_coef), ("unowned", unowned, self.unowned_coef)])
         return score
 
     def calculate_attacks(self, campaign_map, expected_attack_coef=1.0) -> Optional[Tuple[int, int, int]]:
         attack_vectors = self._campaign.all_attack_vectors(self.player_id)
         if len(attack_vectors) == 0:
             return None 
-        best = max(attack_vectors, key=lambda v: self._sorting_coef(campaign_map, v[0], v[1], available=v[2]))
+        best = max(attack_vectors, key=lambda v: self._weighing_coef(campaign_map, v[0], v[1], available=v[2]))
         if self.limit_attack_force:
             # if this flag is enabled; only attack with the minimum force needed along with the attack coefficient 
             source_id, target_id, max_attack = best 
@@ -113,7 +153,7 @@ class LandGrabBot(Bot):
                  max_reinforce[sid] = highest 
         # calculate the best score AFTER the reinforcement 
 #        print("[Debug] Max reinforcement in a province-basis: {}".format(max_reinforce))
-        best_source, _, _ = max(attack_vectors, key=lambda v: self._sorting_coef(campaign_map, v[0], v[1], available=v[2]+max_reinforce.get(v[0], (None, 0))[1]), default=(None, None, None))
+        best_source, _, _ = max(attack_vectors, key=lambda v: self.weigh_attack_vector(campaign_map, v[0], v[1], available=v[2]+max_reinforce.get(v[0], (None, 0))[1]), default=(None, None, None))
         if best_source in max_reinforce:
             # has to reinforce this province with that maximum amount
             reinforce_province, reinforce_amount = max_reinforce[best_source]
@@ -129,16 +169,21 @@ class LandGrabBot(Bot):
 
 class FrontlineBot(Bot):
     """A bot that prioritize taking regions that are defensible, and distribute deployed units to the front even-ish"""
-    def __init__(self, *args, merge=False, defensiveness_coef: float=-1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0):
+    def __init__(self, *args, merge=False, defensiveness_coef: float=-1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0, availability_coef: float=0.1, gain_tile_factor: float=-30, **kwargs):
         # by default, prioritize grabbing provinces that are defensible (least vectors of attacks) and close to the capital 
         # if grabbing this province allow reinforcement to immediately deploy to defend it, also give it a bonus
         if not merge:
-            super(FrontlineBot, self).__init__(*args)
-            self.defensiveness_coef = defensiveness_coef
-            self.distance_coef = distance_coef
-            self.reinforcement_coef = reinforcement_coef
+            super(FrontlineBot, self).__init__(*args, **kwargs)
+        self.defensiveness_coef = defensiveness_coef
+        self.distance_coef = distance_coef
+        self.reinforcement_coef = reinforcement_coef 
+        self.availability_coef = availability_coef 
+        self.gain_tile_factor = gain_tile_factor  
+        
+        # if weighing is below this threshold, attack will not launch
+        self.attack_threshold = self.gain_tile_factor / 2
 
-    def _sorting_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
         # count the number of hostile province bordering it
         target_connections = campaign_map[target_id][-1]["connection"]
         hostile_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] != self.player_id and campaign_map[bp][-1]["owner"] is not None)
@@ -152,13 +197,20 @@ class FrontlineBot(Bot):
         # calculate 
         # with a bit extra for availability
         score = self.defensiveness_coef * len(hostile_connections) + self.distance_coef * distance_to_capital + self.reinforcement_coef * int(capturing_will_unblock)
+        if self._debug:
+            self._debug_record["attack"][(source_id, target_id, available)].extend([("defensiveness", len(hostile_connections), self.defensiveness_coef), ("capital_distance", distance_to_capital, self.distance_coef), ("reinforcement", int(capturing_will_unblock), self.reinforcement_coef)])
         if not merge:
-            # add extra for availability & possible load 
-            score += 0.1 * available 
-            score += 0 if available > campaign_map[target_id][-1]["units"] else -99
+            # add extra for force availability & possible load 
+            attack_will_gain = available > campaign_map[target_id][-1]["units"]
+            score += self.availability_coef * available 
+            score += 0 if attack_will_gain else self.gain_tile_factor 
+            if self._debug:
+                self._debug_record["attack"][(source_id, target_id, available)].extend([("available", available, self.availability_coef), ("gain_tile", int(attack_will_gain), self.gain_tile_factor)])
         return score
 
-    def calculate_attacks(self, campaign_map, expected_attack_coef=1.0, always_attack: bool=False) -> List[Tuple[int, int, int]]:
+    def calculate_attacks(self, campaign_map, expected_attack_coef=1.0) -> List[Tuple[int, int, int]]:
+        if self._debug:
+            self._debug_record["attack"] = defaultdict(list)
         attack_vectors = self._campaign.all_attack_vectors(self.player_id)
         if len(attack_vectors) == 0:
             return None 
@@ -166,13 +218,14 @@ class FrontlineBot(Bot):
         total_vectors = defaultdict(int)
         for s, i, a in attack_vectors:
             total_vectors[i] += a
-        best = max(total_vectors.items(), key=lambda v: self._sorting_coef(campaign_map, None, v[0], available=v[1]))
+        target_id, max_attack, weight = max( ((tid, av, self.weigh_attack_vector(campaign_map, None, tid, available=av)) for tid, av in total_vectors.items()), key=lambda v: v[-1], default=(None, None, -999) )
+        if self._debug:
+            self.print_debug_attack_chart()
         # only attack with enough force to occupy with expected_attack_coef. 
-        target_id, max_attack = best 
         true_attack = int(campaign_map[target_id][-1]["units"] / expected_attack_coef) + 1
         if true_attack > max_attack:
-            # not enough force; if not always_attack, return None
-            if not always_attack:
+            if weight < self.attack_threshold:
+                # not enough force & weight is not enough to cross threshold (no aspect involved)
                 return None 
             # if do, set the true_attack down to max_attack again
             true_attack = max_attack
@@ -236,7 +289,7 @@ class FrontlineBot(Bot):
             scored_source = {ip: sum((distribute[tp] for tp in self._campaign.check_range(ip, allowable_range, owner=self.player_id) if tp in distribute))
                     for ip in self._campaign.check_range(target, allowable_range, owner=self.player_id) if ip in movable_units}
             if len(scored_source) == 0:
-                print("Cannot find valid reinforcement tile; reinforcing {} failed.".format(target))
+                print("[P{}] Cannot find valid reinforcement tile; reinforcing {} failed.".format(self.player_id, self._campaign.pname(target)))
                 distribute.pop(target)
                 continue
             source, _ = min(scored_source.items(), key=lambda it: it[1])
@@ -282,3 +335,56 @@ class FrontlineBot(Bot):
         # deploy on the most connective positions. TODO deploy in anticipation of the reinforcement phase
         best = max(deployable_provinces, key=lambda dp: len(self._campaign.check_range(dp, 2, owner=self.player_id)))
         return best
+
+class OpportunistBot(FrontlineBot, LandGrabBot):
+    """FrontlineBot had demonstrated strength vs LandGrabBot when it comes to staying power. Time to merge with LandGrabBot with some decent ratio 
+    """
+    def __init__(self, *args, merge=False, grab_vs_security_coef: float=0.3, 
+            defensiveness_coef: float=-1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0, availability_coef: float=0.1, 
+            certainty_coef: float=1.0, return_coef: float=0.0, unowned_coef: float=10.0, limit_attack_force: bool=False, 
+            **kwargs):
+        Bot.__init__(self, *args, **kwargs)
+        FrontlineBot.__init__(self, merge=True, defensiveness_coef=defensiveness_coef, distance_coef=distance_coef, reinforcement_coef=reinforcement_coef, availability_coef=availability_coef)
+        LandGrabBot.__init__(self, merge=True, certainty_coef=certainty_coef, return_coef=return_coef, unowned_coef=unowned_coef, limit_attack_force=limit_attack_force)
+        self.grab_vs_security_coef = grab_vs_security_coef # gain multiply by this; security multiply by 1-this
+
+
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        security_score = FrontlineBot._weighing_coef(self, campaign_map, source_id, target_id, merge=True)
+        gain_score = LandGrabBot._weighing_coef(self, campaign_map, source_id, target_id, available=available) # this MUST put available; as it will try to use a specific source_id otherwise
+        score = gain_score * self.grab_vs_security_coef + security_score * (1.0 - self.grab_vs_security_coef)
+        if not merge:
+            # add extra for force availability & possible load 
+            score += self.availability_coef * available 
+            score += 0 if available > campaign_map[target_id][-1]["units"] else -99
+        return score 
+
+
+"""Aspect section."""
+
+class CoalitionAspect(Aspect):
+    """Aspect of a bot: factor in the relative strength on the board, and will attempt to attack biggest player if not itself. If is the biggest player, then attempt the reverse and try to kill off the smallest player"""
+    def __init__(self, antibig_factor: float=20.0, killoff_factor: float=20.0):
+        self.antibig_factor = antibig_factor 
+        self.killoff_factor = killoff_factor
+    
+    def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        biggest_player = bot._campaign.biggest_player()
+        target_owner = campaign_map[target_id][-1]["owner"]
+        if bot.player_id == biggest_player and (target_owner is not None and target_owner == bot._campaign.smallest_player()):
+            # attempt the killoff mechanism 
+            return self.killoff_factor   
+        elif target_owner == biggest_player: # dont have to check player_id != biggest_player since you cant hit yourself. Probably
+            return self.antibig_factor 
+        # just default to normal otherwise
+        return 0.0
+
+
+class ExplorerAspect(Aspect):
+    """Factor in if the province is unowned, and made a minor prioritization if true."""
+    def __init__(self, explore_factor: float=5.0):
+        self.explore_factor = explore_factor 
+
+    def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        return self.explore_factor if campaign_map[target_id][-1]["owner"] is None else 0
+        

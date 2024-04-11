@@ -112,6 +112,23 @@ class PolishNameGenerator(NameGenerator):
             prefix = prefix[0].upper() + prefix[1:]
         return prefix + padding + suffix
 
+class SinoLatinizedNameGenerator(NameGenerator):
+    """Gook names are.. what the hell I'm doing, I dont need guide for this shit."""
+    PROVINCE_PREFIX = ["Quảng", "Hà", "Trường", "Hoàng", "Lạng", "Sa", "Hoà", "Tiền", "Xích", "Phú", "Thục"]
+    PROVINCE_SUFFIX = ["Đông", "Tây", "Nội", "Ngoại", "Giang", "Sơn", "Thiên", "Nguyên", "Trị", "Kiến", "Phong"]
+    
+    @staticmethod
+    def generate_province_name(**kwargs) -> str:
+        prefix = random.choice(SinoLatinizedNameGenerator.PROVINCE_PREFIX)
+        suffix = random.choice(SinoLatinizedNameGenerator.PROVINCE_SUFFIX)
+        return prefix + " " + suffix
+
+NAME_GENERATOR_BY_CUE = {
+    "ruskie": RussianNameGenerator,
+    "polack": PolishNameGenerator,
+    "gook": SinoLatinizedNameGenerator
+}
+
 if __name__ == "__main__":
     dupnames = RussianNameGenerator.batch_generate_name(20, RussianNameGenerator.generate_province_name)
     print("Generate (dup):", dupnames)

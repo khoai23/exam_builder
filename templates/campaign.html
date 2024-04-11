@@ -6,9 +6,10 @@ For every turn, each player get to move a number of adjacent units against one e
 Winning condition is achieved by having 75% of total tile points.
 -->
 {% block content %}
-<div class="hstack">
+<div style="display: flex;">
 
-<div class="m-2 p-2" id="canvas" style="position: relative; width: 1000px; height: 1000px; display: inline-block;">
+<div id="canvas_wrapper" class="m-2 p-2">
+	<div id="canvas" style="position: relative; width: 1000px; height: 1000px; display: inline-block;">
 	{% for x, y, width, height, pointlist, attr in polygons %}
 	<svg height="{{height}}" width="{{width}}" style="position: absolute; top: {{y}}px; left: {{x}}px" id="region_{{loop.index0}}">
 		<polygon 
@@ -61,26 +62,72 @@ Winning condition is achieved by having 75% of total tile points.
 		/>
 	</svg>
 	{% endfor %}
+	</div>
 </div> 
 
-<div id="command_panel" class="h-100" style="display: inline-block;">
-	<ul class="nav nav-tabs" id="phase_tabs" role="tablist">
+<div id="command_panel" class="h-100 d-flex flex-column p-2" style="display: inline-block; vertical-align: top; width: 100%;">
+	<ul class="nav nav-tabs mb-2" id="phase_tabs" role="tablist">
 		<li class="nav-item">
-			<a class="nav-link active" href="#">Deployment</a>
+			<a class="nav-link" href="#" id="tab_deploy">Deployment</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link active" href="#">Movement</a>
+			<a class="nav-link" href="#" id="tab_move">Movement</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link active" href="#">Attack</a>
+			<a class="nav-link" href="#" id="tab_attack">Attack</a>
 		</li>
 	</ul>
 	<div class="tab-content" id="phase_content">
-		<div id="deployment_content"></div>
-		<div id="movement_content"></div>
-		<div id="attack_content"></div>
+		<ul class="list-group list-group-flush" id="deploy_content">
+			{% for deploy, deploy_id, max_deploy in deploys %}
+				<li class="list-group-item" id="deploy_field_{{loop.index0}}" deploy_source="{{deploy_id}}"> 
+					<span>At</span>
+					<span><b>{{deploy}}</b></span>
+					<input type="number" class="form-control attack_amount" min="0" max="{{max_deploy}}" />
+				</li>
+			{% endfor %}
+		</div>
+		<ul class="list-group list-group-flush" id="move_content">
+			{% if moves is defined %}
+				{% for source, source_id, targets, max_move in moves %}
+				<li class="list-group-item" id="move_field_{{loop.index0}}" move_source="{{source_id}}">
+					<span><b>({{max_move}})</b></span> 
+					<span> from </span> 
+					<span><b>{{source}}</b></span> 
+					<table>
+						{% for target, target_id in targets %}
+							<tr>
+								<td>
+									<span> &rarr;</span> 
+									<span><b>{{target}}</b></span> 
+								</td>
+								<td>
+									<input type="number" class="form-control move_amount" min="0" max="{{max_move}}" onchange="check_move_vectors(event)"/>
+								</td>
+							</tr>
+						{% endfor %}
+					</table>
+				</li>
+				{% endfor %}
+			{% endif %}
+		</ul>
+		<ul class="list-group list-group-flush" id="attack_content">
+			{% if attacks is defined %}
+				{% for source, target, source_id, target_id, max_strength in attacks %}
+				<li class="list-group-item" id="attack_field_{{loop.index0}}" attack_source="{{source_id}}" attack_target="{{target_id}}" onclick="toggle_attack_vector(event)">
+					<span><b>{{source}}</b></span> 
+					<span> &rarr;</span> 
+					<span><b>{{target}}</b></span> 
+					<input type="number" class="form-control attack_amount" min="0" max="{{max_strength}}" />
+				</li>
+				{% endfor %}
+			{% endif %}
+		</ul>
 	</div>
-	<button class="btn btn-primary" onclick="perform_and_reload(event, 'next')">Next</button>
+	<div id="button-bar">
+		<button class="btn btn-primary m-2" id="execute_btn" onclick="alert('testing')" {% if current_phase == "end" %}disabled{% endif %}>Execute</button>
+		<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')" {% if current_phase != "enddsb" %}disabled{% endif %}>Next</button>
+	</div>
 	<div id="log">
 	</div>
 </div>

@@ -6,7 +6,7 @@ Winning condition is achieved by having 75% of total tile points."""
 import random
 
 from src.campaign.bot import Bot, RandomBot, LandGrabBot, FrontlineBot
-from src.campaign.name import NameGenerator, RussianNameGenerator, PolishNameGenerator
+from src.campaign.name import NameGenerator, NAME_GENERATOR_BY_CUE
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
 
 from typing import Optional, List, Tuple, Any, Union, Dict 
@@ -17,7 +17,8 @@ class CampaignMap:
         Bot: autonomous unit that take control of the player units. 
         Arrows: Performed actions will receive corresponding arrows, depending on the display mode, these arrows will be shown on the map"""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30, 
-            bot_class: Bot=RandomBot, name_generator: Optional[NameGenerator]=None):
+            bot_class: Bot=RandomBot, name_generator: Optional[NameGenerator]=None,
+            attack_per_turn: int=1, movement_per_turn: int=2, deployment_province_count: int=2):
         self._player_count = player_count 
         # create random bot that handle the actions done by player
         self._player_bot = [bot_class(i, self) for i in range(player_count)]
@@ -71,6 +72,9 @@ class CampaignMap:
         self._dead = set()
         # use for arrow caches 
         self._arrows = {i: list() for i in range(self._player_count)}
+        # additinal setting 
+        self._setting = dict(attack_per_turn=attack_per_turn, movement_per_turn=movement_per_turn, deployment_province_count=deployment_province_count)
+        self._context = {} # mainly for Bot to know how to act.
         print("Created map with {} subregion".format(len(self._map)))
     
     def build_cached_distance(self):
@@ -275,6 +279,23 @@ class CampaignMap:
     def all_owned_provinces(self, player_id: int) -> set:
         return set(ip for ip, p in enumerate(self._map) if p[-1]["owner"] == player_id)
 
+    def _update_context(self):
+        provs = {pid: self.all_owned_provinces(pid) for pid in range(self._player_count)}
+        self._context["total_owned"] = {pid: len(powned) for pid, powned in provs.items()}
+        self._context["total_score"] = {pid: sum((self._map[p][-1]["score"] for p in powned)) for pid, powned in provs.items()} 
+        self._context["biggest_player"] = self.biggest_player(use_cache=False)
+        self._context["smallest_player"] = self.smallest_player(use_cache=False)
+
+    def biggest_player(self, use_cache: bool=True):
+        if use_cache:
+            return self._context["biggest_player"]
+        return max((pid for pid in range(self._player_count) if pid not in self._dead), key=lambda i: (self._context["total_owned"][i], self._context["total_score"][i])) 
+
+    def smallest_player(self, use_cache: bool=True):
+        if use_cache:
+            return self._context["smallest_player"]
+        return min((pid for pid in range(self._player_count) if pid not in self._dead), key=lambda i: (self._context["total_owned"][i], self._context["total_score"][i])) 
+
     def all_attack_vectors(self, player_id: int, singular: bool=True, show_zero_attack: bool=False) -> list:
         # see Bot. if singular; only show attacks on province-to-province basis, if not, show all possible strength when attacking 
         # if show_zero_attack, will also list attacks that are zeroes. This is to help calculating reinforcement movement
@@ -341,6 +362,7 @@ class CampaignMap:
             # else do nothing
         # else has new capital; ignore
         assert self.capital(player_id) is not None, "Capital for Player {:d} must have been set after this".format(player_id)
+
     def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, per_province_coef: float=1.0, disbanding_coef: float=0.25):
         # Deployment-related (deploying & disbanding)
         owned = [self._map[ip][-1] for ip in player_province]
@@ -359,7 +381,7 @@ class CampaignMap:
                 random.choice(available)["units"] -= 1
             if len(available) > 0:
                 # recheck to make sure break had not been attempted. TODO shouldn't need this 
-                print("Disbanded {:d} units of Player {:d} randomly.".format(disband, player_id))
+                print("[P{:d}] {:d} unit randomly disbanded.".format(player_id, disband))
         elif current_strength < max_strength:
             # understrength, find an appropriate deployable region and throw them there
             # ownership as additional upper limit (cannot reinforce more than 1 per owned province)
@@ -369,9 +391,9 @@ class CampaignMap:
 #            target_id = random.choice(self.all_deployable_provinces())
             if target_id is not None:
                 self.perform_action_deploy(reinforcement, target_id, recheck=False)
-                print("Player {:d} received {:d} reinforcement at {}".format(player_id, reinforcement, self.pname(target_id)))
+                print("[P{:d}] {:d} units deployed at {}".format(player_id, reinforcement, self.pname(target_id)))
             else:
-                print("Player {:d} declined reinforcement.".format(player_id))
+                print("[P{:d}] reinforcement declined.".format(player_id))
         # else ignore
 
     def phase_check_encirclement(self, player_id: int, player_province: set):
@@ -393,7 +415,7 @@ class CampaignMap:
         action = override_action if override_action is not None else self._player_bot[player_id].calculate_movement(self._map, allowable_range=2)
         # if None and/or blank list, is not performing anything
         if not action:
-            print("Player {:d} do not move.".format(player_id))
+            print("[P{:d}] Move declined.".format(player_id))
         else:
             if isinstance(action, tuple) and len(action) == 3 and isinstance(action[0], int):
                 # old bot, outputting only a single movement 
@@ -402,7 +424,7 @@ class CampaignMap:
                 result, result_str = self.perform_action_movement(amount, source_id, target_id, allowable_range=2)
                 self._arrows[player_id].append( ("move", source_id, target_id, amount) )
                 if result:
-                    print("Player {:d} moved {:d} units from {} to {}".format(player_id, amount, self.pname(source_id), self.pname(target_id)))
+                    print("[P{:d}] Moved {}--{:d}->{}".format(player_id, self.pname(source_id), amount, self.pname(target_id)))
                 else:
                     print("Player {:d} failed to move {:d} units from {} to {}, error: {}".format(player_id, amount, self.pname(source_id), self.pname(target_id), result_str))
 
@@ -419,7 +441,7 @@ class CampaignMap:
             print("Single action attack detected (likely old bot); converting to list.")
         else:
             # no action, do nothing
-            print("Player {:d} do not attack.".format(player_id))
+            print("[P{:d}] Attack declined.".format(player_id))
             return 
         # reach here means have valid attacks to run
         # list of attacks, MUST have the same target id or is discarded 
@@ -428,7 +450,8 @@ class CampaignMap:
         if len(target_ids) == 1:
             # valid target, attempt to perform draw 
             target_id = list(target_ids)[0]
-            print("Player {:d} try to attack {} with total {:d} units".format(player_id, self.pname(target_id), sum(draw_amount)))
+            target_owner = self._map[target_id][-1]["owner"]
+            print("[P{:d}] Attacking --{:d}--> {} ({})".format(player_id, sum(draw_amount), self.pname(target_id), "P{:d}".format(target_owner) if target_owner is not None else "unowned"))
             can_draw = self.perform_action_draw(source_ids, draw_amount, target_id)
             if can_draw:
                 # valid and drawn the necessary force 
@@ -445,19 +468,13 @@ class CampaignMap:
         else:
             print("Player {:d} submitted multiple attacks targets: {}({}). Ignoring.".format(player_id, target_ids, action))
 
-    #=====================
-    # Test functions.
-    def test_start_phase(self):
-        # testing the start phase. 
-        # If somebody lost a capital, move it to the remaining region with the highest score. If they recaptured it AND it's not bordered with any hostile region, move it back in
-        # automatically spawn units to full strength at deployable positions. In real phase, this reinforcement will be multiplied with an improvable coefficient
-        # automatically delete random units if the current strength exceeded full. In real phase, this deletion might be partially delayed with a coefficient 
-        # automatically delete half of units of a region being surrounded. In real phase, this deletion will be reliant on a coefficient and will happens starting from a 2nd turn; and will also affect a blob of region
+    #=========
+    # Phase functions. Use full_phase shorthand as it will
+    def full_phase_deploy(self):
         for i in range(self._player_count):
             player_province = self.all_owned_provinces(i) # in id format 
-            
             #==========
-            # knockout related - check if player is alive here
+            # knockout related - check if player is alive here, use this cached value on subsequent phases
             if not self.player_alive(i, use_cache=False):
                 continue
             # run appropriate phasing function
@@ -465,35 +482,42 @@ class CampaignMap:
             self.phase_deploy_reinforcement(i, player_province)
             self.phase_check_encirclement(i, player_province)
 
-
-    def test_random_occupy(self, targetting_hostile: bool=False):
-        # testing the perform_action_attack & perform_action_movement - each iteration will attempt movement and attacking in sequence. For now, attacking only support the single-vector variant
-        print("Performing new occupying test, targetting hostile allowed: {} (currently not allowed)".format(targetting_hostile))
+    def full_phase_move(self):
         for i in range(self._player_count):
             # knockout related
             if not self.player_alive(i, use_cache=False):
                 continue 
             self.phase_perform_movement(i)
 
+    def full_phase_attack(self):
         for i in range(self._player_count):
             # knockout related
             if not self.player_alive(i, use_cache=False):
                 continue
             self.phase_perform_attack(i)
-    
+
     def end_turn(self):
         # clean up all cached data each turn 
         for arrows in self._arrows.values():
             arrows.clear()
-        # TODO perform winning condition check
+        # TODO perform winning condition check 
+        # additionally, calculate the biggest player value for this phase
+        self._update_context()
+        print("Biggest player: {}; Smallest player {};\nFull context: {}".format(self.biggest_player(), self.smallest_player(), self._context))
 
 
 class PlayerCampaignMap(CampaignMap):
-    """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion and/or substitution"""
+    """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion and/or substitution.
+    """
     def __init__(self, *args, players: List[int], **kwargs):
         super(PlayerCampaignMap, self).__init__(*args, **kwargs)
         self._is_players = set(players)
         self._action_dict = {}
+        self._current_phase = "deploy"
+
+    @property
+    def current_phase(self):
+        return self._current_phase 
 
     def update_action(self, player_id: int, action_type: str, action_data: list) -> Tuple[bool, Optional[str]]:
         # save the supposed actions of the player; if anything gone wrong, throw back the issue
@@ -535,11 +559,29 @@ class PlayerCampaignMap(CampaignMap):
             movable.append( (ip, source["units"]-1, [p for p in self.check_range(ip, allowable_range, owner=player_id)]) )
         return movable 
 
+    # all phase functions also update the current phase to the next one
+    def full_phase_deploy(self):
+        # next phase is move
+        self._current_phase = "move"
+        return super(PlayerCampaignMap, self).full_phase_deploy()
+
+    def full_phase_move(self):
+        # next phase is attack 
+        self._current_phase = "attack"
+        return super(PlayerCampaignMap, self).full_phase_move()
+
+    def full_phase_attack(self):
+        # next phase is end; this should trigger the next button on the site
+        self._current_phase = "end"
+        return super(PlayerCampaignMap, self).full_phase_attack()
+
     def retrieve_all_deployment(self, player_id: int):
         # retrieve all possible deploy point for the player 
         return self.all_deployable_provinces(player_id)
 
     def end_turn(self):
         # also wipe the action dict 
-        self._action_dict.clear()
+        self._action_dict.clear() 
+        # next phase
+        self._current_phase = "deploy"
         return super(PlayerCampaignMap, self).end_turn()

@@ -73,7 +73,7 @@ function reload_map(poly_data, arrow_data) {
 function perform_and_reload(event, action) {
 	// performing an action, e.g NEXT, and receive appropriate updates 
 	// use url 
-	console.log(action);
+	// console.log(action);
 	var url = "play";
 	if(action == "next") {
 		url += "?next=true";
@@ -84,10 +84,155 @@ function perform_and_reload(event, action) {
 			// received data, reloading display elements 
 			console.log("Received map data: ", data);
 			reload_map(data["polygons"], data["arrows"]);
+			if ("attacks" in data) {
+				// phase is attack, update accordingly 
+				load_attack_vectors(event, data["attacks"]);
+				toggle_phase(event, "attack");
+			} else if ("moves" in data) {
+				load_movement_vectors(event, data["moves"]);
+				toggle_phase(event, "move");
+			} else if ("deploy" in data) {
+				load_deployment_spots(event, data["deployments"])
+				toggle_phase(event, "deploy");
+			} else {
+				console.log("No additional control allowed. TODO hide the entire control panel")
+				toggle_phase(event, "hide");
+			}
 		} else {
 			// failed, TODO revert failed changes back to default
 			console.error("Failed to get phase data, error", data["error"]);
 		}
 	};
 	perform_post(payload, url, success_fn=on_success);
+}
+
+function toggle_phase(event, phase_type) {
+//	let is_attack = phase_type === "attack"
+//	let is_deploy = phase_type === "deploy"
+//	let is_move = phase_type === "move"
+	//console.log(is_attack, is_deploy, is_move);
+	["attack", "deploy", "move"].forEach(function(v, i) {
+		if(v === phase_type) {
+			$("#tab_" + v).addClass("active text-primary").removeClass("disabled");
+			$("#" + v + "_content").show();
+			// also rename the execute button on appropriate phase
+			$("#execute_btn").text(v[0].toUpperCase() + v.slice(1).toLowerCase());
+		} else {
+			$("#tab_" + v).removeClass("active text-primary").addClass("disabled");
+			$("#" + v + "_content").hide();
+		}
+	});
+}
+
+function load_attack_vectors(event, data) {
+	// load attack vectors, each in a selector
+	// multiple attacks can be selected, but they must have the same destination 
+	var panel = $("#attack_content");
+	// purge current content 
+	panel.empty();
+	// load new data into the panel 
+	for (const [index, [sname, tname, sid, tid, max]] of Object.entries(data)) {
+		let field = $("<li>").attr("id", "attack_field_" + index.toString()).attr("attack_source", sid).attr("attack_target", tid).attr("onclick", "toggle_attack_vector(event)").addClass("list-group-item");
+		field.append($("<span>").append($("<b>").text(sname)));
+		field.append($("<span>").text("\u2192"));
+		field.append($("<span>").append($("<b>").text(tname)));
+		let input = $("<input>").attr("type", "number").attr("min", 0).attr("max", max).addClass("form-control attack_amount");
+		// inputs are disabled by default, until toggle allows it 
+		input.prop("disabled", true);
+		field.append(input);
+		panel.append(field);
+	}
+}
+
+function load_movement_vectors(event, data) {
+	// load movement vectors also in selector; each correspond to one origin points
+	// movement will have a limit of total units allowed out of each origin points. Crossing this value will grey out the submit button and add a red border for the selector 
+	var panel = $("#move_content");
+	// purge current content 
+	panel.empty();
+	for(const [index, [sname, sid, targets, max]] of Object.entries(data)) {
+		let field = $("<li>").attr("id", "move_field_" + index.toString()).attr("move_source", sid).attr("max", max).addClass("list-group-item d-flex flex-row");
+		// shared source 
+		field.append($("<span>").text(`(${max.toString()})`));
+		field.append($("<span>").text("from"));
+		field.append($("<span>").append($("<b>").text(sname)));
+		// splitted destination list - each correspond to a row
+		// use a table to ensure shared inputbox 
+		let table = $("<table>");
+		// console.log("Expected destinations", targets); 
+		for(const [tname, tid] of targets) { // iterate through targets
+			let row = $("<tr>")
+			// first cell, containing both arrow & target name
+			let first_cell = $("<td>");
+			first_cell.append($("<span>").text("\u2192"));
+			first_cell.append($("<span>").append($("<b>").text(tname)))
+			row.append( first_cell );
+			// second cell, the input will also autoupdate state of the parent henceforth
+			let input = $("<input>").attr("move_target", tid).attr("type", "number").attr("min", 0).attr("max", max).attr("onchange", "check_move_vectors(event)").addClass("form-control move_amount");
+			row.append( $("<td>").append(input) );
+			table.append(row);
+		}
+		field.append( table ); // $("<table>").append(table)
+		panel.append(field);
+	}
+}
+
+function toggle_attack_vector(event) {
+	// an attack vector is toggled. 
+	// If nothing has been selected yet, show all same-destination as green (included) and other as red (excluded). excluded fields are all disabled
+	// If itself has been selected, return everything to default white and clear & disable all field
+	// If itself had been excluded, do nothing. The toggle should only work on the same 
+	let field = $(event.currentTarget);
+	if(field.hasClass("list-group-item-success")) {
+		// check if focusing the internal input 
+		let field_input = field.find("input")[0];
+		if(!field_input.isSameNode(document.activeElement)) {
+			// not focused, return everything to default 
+			$("#attack_content").find("[id^=attack_field_]").each(function(index){
+				// remove the class
+				$(this).removeClass("list-group-item-success list-group-item-danger");
+				// deactivate internal input 
+				$(this).find("input").prop("disabled", true);
+			});
+		}
+		// else in focus, ignore
+	} else if(field.hasClass("list-group-item-danger")) {
+		console.log("Clicked on excluded, nothing happens");
+	} else {
+		// filter accordingly 
+		let all_fields = $("#attack_content").find("[id^=attack_field_]"); 
+		let target = field.attr("attack_target");
+		console.log("Shared target: ", target);
+		// field for sametarget - turn to green, and allow input
+		all_fields.filter(function(i) { 
+			return $(this).attr("attack_target") === target;
+		}).addClass("list-group-item-success").find("input").prop("disabled", false);
+		// field for different target - turn to red, no need to change hopefully
+		all_fields.filter(function(i) { 
+			return $(this).attr("attack_target") !== target;
+		}).addClass("list-group-item-danger");
+	}
+}
+
+function check_move_vectors(event) {
+	// originate from an input field in a move "selector" 
+	// assert that the sum of all requested do not exceed the maximum units available; if it does, visually indicate 
+	let target_element = $(event.currentTarget);
+	let field = target_element.parents("[id^=move_field_]");
+	// iterate through all possible inputs and sum the requested units together
+	var requested = 0;
+	field.find("input").each(function(i) { 
+		requested += parseInt($(this).val()) || 0; 
+	});
+	var valid_orders = requested < parseInt(field.attr("max"));
+	console.log("rqt", requested, "avb", parseInt(field.attr("max")), "valid", valid_orders);
+	if(valid_orders) {
+		// format & enable appropriately 
+		field.removeClass("list-group-item-danger");
+	} else {
+		field.addClass("list-group-item-danger");
+	}
+	// for execute_btn; check for all items in the list if any has the indicator class
+	var has_error = !valid_orders || $("[id^=move_field_]").is(".list-group-item-danger");
+	$("#execute_btn").prop("disabled", has_error);
 }
