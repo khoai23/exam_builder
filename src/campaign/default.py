@@ -140,7 +140,7 @@ class CampaignMap:
     def retrieve_player_color(self):
         return self._setting["colorscheme"]
 
-    def retrieve_draw_map(self, colorscheme: List[str]=None, default="transparent"):
+    def retrieve_draw_map(self, colorscheme: List[str]=None, default="white"):
         colorscheme = colorscheme or self._setting["colorscheme"]
         # just use the current map for now 
         # appropriate fg/bg; TODO set bg in accordance with the amount of available units, or maybe transparency?

@@ -38,7 +38,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, ScorchedRule])
             # similarly, create a symbiotic session 
             # random 4 category 
-            categories = random.sample(current_data.categories, k=4)
+            categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))
             print("Creating session with categories: {}".format(categories))
             campaign_data["session"] = session = create_campaign_session(campaign, categories)
         elif request.args.get("next", "false") == "true":

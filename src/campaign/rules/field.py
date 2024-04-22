@@ -34,7 +34,7 @@ class ScorchedRule(Rule):
     def modify_draw_map(self, draw_map):
         for *_, p in draw_map:
             if p["scorched"] >= 5:
-                p["symbol"] = "({}\u26A0)".format(p["scorched"]) + p.get("symbol", "")
+                p["symbol"] = "({}\u2278)".format(p["scorched"]) + p.get("symbol", "")
 
 TERRAIN = ["urban", "plain", "wood", "hill", "desert", "jagged"]
 TERRAIN_BONUSES = { # only have defensive coef & preserve (occupy) penalty for now
@@ -46,12 +46,20 @@ TERRAIN_BONUSES = { # only have defensive coef & preserve (occupy) penalty for n
     "desert": (-0.3, 1.0), # very hard to defend, very easy to roll past, balanced out by relatively worthless price 
 }
 TERRAIN_ICON = {
-    "urban": "\u2633",
-    "wood": "\u2698",
-    "jagged": "\u26E1",
-    "hill": "\u26F0",
+    "urban": "\u25A6",
+    "wood": "\u23C5",
+    "jagged": "\u2301",
+    "hill": "\u25B3",
     "plain": "\u268D",
     "desert": "\u268A"
+}
+TERRAIN_COLOR = {
+    "urban": "gold",
+    "wood": "olivedrab",
+    "jagged": "saddlebrown",
+    "hill": "#0000AA20",
+    "plain": "lightgrey",
+    "desert": "sandybrown"
 }
 class TerrainRule(Rule):
     """Adding terrain to the map; which confers different bonuses & penalties. For now, hardcoding them."""
@@ -79,3 +87,5 @@ class TerrainRule(Rule):
     def modify_draw_map(self, draw_map):
         for *_, p in draw_map:
             p["symbol"] = TERRAIN_ICON[p["terrain"]] + p.get("symbol", "")
+            p["bg"] = TERRAIN_COLOR[p["terrain"]]
+            #p["border_size"] = 4

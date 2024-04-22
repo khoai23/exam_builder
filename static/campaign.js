@@ -6,11 +6,11 @@ function draw_polygon(polygon_data) {
 	var base = $("<svg>").attr("height", h).attr("width", w).css({"position": "absolute", "top": `${y}px`, "left": `${x}px`});
 	// convert points into associating str 
 	points = points.map(p => `${p[0]},${p[1]}`).join(" ");
-	var poly = $("<polygon>").attr("points", points).css({"fill": attr["fg"], "stroke": attr["bg"], "stroke-width": 1});
+	var poly = $("<polygon>").attr("points", points).css({"fill": attr["fg"], "stroke": attr["bg"], "stroke-width": attr["border_size"] ?? 1 });
 	base.append(poly);
 	// if exist a center; paste it in the polygon 
 	if("center" in attr) {
-		if("symbol" in attr) {
+		if("symbol" in attr) { // if has additional utf-8 symbols, print them with bigger size (24px)
 			var symbol_wrapper = $("<g>").attr("font-size", 24).attr("fill", "black").attr("text-anchor", "middle");
 			var symbol_label = $("<text>").attr("x", attr["center"][0]).attr("y", attr["center"][1] - 20).text(attr["symbol"]);
 			symbol_wrapper.append(symbol_label);

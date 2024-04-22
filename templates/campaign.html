@@ -12,9 +12,19 @@ Winning condition is achieved by having 75% of total tile points.
 	<div id="canvas" style="position: relative; width: 1000px; height: 1000px; display: inline-block;">
 	{% for x, y, width, height, pointlist, attr in polygons %}
 	<svg height="{{height}}" width="{{width}}" style="position: absolute; top: {{y}}px; left: {{x}}px" id="region_{{loop.index0}}">
+		{% set region_color = attr.get("fg", "lime") %}
 		<polygon 
 			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
-			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
+			r="90%"
+			style="fill:{% if region_color is string %} {{region_color}} {% else %} url('#mapgrad{{loop.index0}}') {% endif %};stroke:{{attr.get("bg", "black")}};stroke-width:{{attr.get("border_size", 1)}}" />
+		{% if region_color is not string %}
+		<defs>
+			<radialGradient id="mapgrad{{loop.index0}}">
+			  <stop offset="90%" stop-color="{{region_color[0]}}" />
+			  <stop offset="98%" stop-color="{{region_color[1]}}" />
+			</radialGradient>
+		</defs>
+		{% endif %}
 		{% if "center" in attr %}
 			{% if "symbol" in attr %}
 				<g font-size="24" fill="black" text-anchor="middle">
