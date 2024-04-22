@@ -114,8 +114,8 @@ class PolishNameGenerator(NameGenerator):
 
 class SinoLatinizedNameGenerator(NameGenerator):
     """Gook names are.. what the hell I'm doing, I dont need guide for this shit."""
-    PROVINCE_PREFIX = ["Quảng", "Hà", "Trường", "Hoàng", "Lạng", "Sa", "Hoà", "Tiền", "Xích", "Phú", "Thục"]
-    PROVINCE_SUFFIX = ["Đông", "Tây", "Nội", "Ngoại", "Giang", "Sơn", "Thiên", "Nguyên", "Trị", "Kiến", "Phong"]
+    PROVINCE_PREFIX = ["Quảng", "Hà", "Trường", "Hoàng", "Lạng", "Sa", "Hoà", "Tiền", "Xích", "Phú", "Thục", "Quyền", "Lữ", "Viễn"]
+    PROVINCE_SUFFIX = ["Đông", "Tây", "Nội", "Ngoại", "Giang", "Sơn", "Thiên", "Nguyên", "Trị", "Kiến", "Phong", "Xương"]
     
     @staticmethod
     def generate_province_name(**kwargs) -> str:

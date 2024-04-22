@@ -5,9 +5,7 @@ import flask
 from flask import Flask, request, url_for
 import traceback 
 
-from src.campaign.default import CampaignMap, PlayerCampaignMap
-from src.campaign.name import NAME_GENERATOR_BY_CUE
-from src.campaign.bot import LandGrabBot, FrontlineBot, OpportunistBot, CoalitionAspect 
+from src.campaign import * # clamp down later
 from src.session import current_data
 from src.session import create_campaign_session, build_order_quiz, access_order_quiz, submit_order_quiz_result
 
@@ -37,7 +35,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                     return FrontlineBot(player_id, aspects=[CoalitionAspect()], debug=True, *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = PlayerCampaignMap(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}))
+            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, ScorchedRule])
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=4)
@@ -58,7 +56,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             campaign = campaign_data["map"]
         # check appropriate phases; this should enable corresponding fields down in the website
         phase = campaign.current_phase 
-        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase}
+        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase, "colorscheme": campaign.retrieve_player_color()}
         if phase == "attack":
             # attack is in (source_province_name, target_province_name, source_id, target_id, max_attack_amount)
             kwargs["attacks"] = [(campaign.pname(s), campaign.pname(t), s, t, a) for s, t, a in campaign.all_attack_vectors(0)]

@@ -73,8 +73,16 @@ class CampaignMap:
         # use for arrow caches 
         self._arrows = {i: list() for i in range(self._player_count)}
         # additinal setting 
-        self._setting = dict(attack_per_turn=attack_per_turn, movement_per_turn=movement_per_turn, deployment_province_count=deployment_province_count)
-        self._context = {} # mainly for Bot to know how to act.
+        self._setting = dict(colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], attack_per_turn=attack_per_turn, movement_per_turn=movement_per_turn, deployment_province_count=deployment_province_count, maximum_deployment=20, minimum_strength=10)
+        self._action_order = list(range(self._player_count))
+        self._update_action_order()
+        self._context = {
+            "casualties": {i: 0 for i in range(self._player_count)},
+            "province_seized": {i: 1 for i in range(self._player_count)},
+            "greatest_army_size": {i: 10 for i in range(self._player_count)},
+            "greatest_occupied": {i: 1 for i in range(self._player_count)},
+            "turn": 1
+        } # for displaying, allow rules to affect things, and bot to properly calculate necessary actions
         print("Created map with {} subregion".format(len(self._map)))
     
     def build_cached_distance(self):
@@ -129,18 +137,27 @@ class CampaignMap:
             current_distance += 1
         print("Cached distance created")
 
-    def retrieve_draw_map(self, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], default="transparent"):
+    def retrieve_player_color(self):
+        return self._setting["colorscheme"]
+
+    def retrieve_draw_map(self, colorscheme: List[str]=None, default="transparent"):
+        colorscheme = colorscheme or self._setting["colorscheme"]
         # just use the current map for now 
         # appropriate fg/bg; TODO set bg in accordance with the amount of available units, or maybe transparency?
         for i, srg in enumerate(self._map):
             attr = srg[-1]
             attr["fg"] = colorscheme[attr["owner"]] if attr["owner"] is not None else default
             attr["bg"] = "black"
-            attr["name"] = attr.get("province_name", str(i)) + (" \u272A" if attr["is_capital"] else "")
+            if attr["is_capital"]:
+                attr["symbol"] = "\u272A"
+            else:
+                attr.pop("symbol", None)
+            attr["name"] = attr.get("province_name", str(i))
             attr["text"] = "{:d} ({:d}\u2605)".format(attr["units"], attr["score"]) # display only score for now
         return self._map
      
-    def retrieve_draw_arrows(self, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], default="black"):
+    def retrieve_draw_arrows(self, colorscheme: List[str]=None, default="black"):
+        colorscheme = colorscheme or self._setting["colorscheme"]
         # load the arrows in appropriate format
         all_arrows = []
         for player_id, player_arrows in self._arrows.items():
@@ -207,23 +224,23 @@ class CampaignMap:
                 s["units"] -= d
         return can_draw
 
-    def perform_action_attack(self, player_id: int, attacking: int, target_id: int, critical_modifier: float=1.0, preserve_modifier: float=2.0):
+    def perform_action_attack(self, player_id: int, attacking: int, target_id: int, attack_modifier: float=1.0, defend_modifier: float=1.0, preserve_modifier: float=2.0):
         # perform an attack from a player, with up to {attacking} units, to target province
         # allow a "crit" modifier for later upgrade, and a "preserve" ratio which affect the amount of units kept after winning
         # all attacking units should have been consumed
         target = self._map[target_id][-1]
         assert target["owner"] is None or player_id != target["owner"], "Cannot attack same player province {}({})".format(target_id, player_id)
-        true_attack = attacking * critical_modifier # multiply by modifier, round 
-        if target["units"] > true_attack:
-            # less than acceptable; simply subtract from defender, round down
-            target["units"] -= int(true_attack)
-            return False, target, int(true_attack)
+        true_attack = attacking * attack_modifier # multiply by modifier, round 
+        true_defense = target["units"] * defend_modifier
+        if true_defense > true_attack:
+            # less than acceptable; subtract from defender 
+            target["units"] -= int(true_attack / defend_modifier)
+            return False, target, int(attacking)
         else:
             # more than acceptable; change ownership and put the remainder on the target 
-            defender = target["units"]
-            surplus = true_attack - defender
+            surplus = true_attack - true_defense
             new_occupant_units = min(max(int(surplus / preserve_modifier), 1), attacking) # minimum 1 occupant, maximum the original attacking force 
-            losses = attacking - new_occupant_units
+            losses = max(attacking - new_occupant_units, 0)
             target["owner"] = player_id
             target["units"] = new_occupant_units 
             # if capital, also delete its own flag. TODO allow a new capital setup/re-enable the flag when recaptured
@@ -237,16 +254,16 @@ class CampaignMap:
         target = self._map[target_id][-1]
         # check 
         if source["owner"] != target["owner"]:
-            return False, "can only move in friendly provinces"
+            return 0, "can only move in friendly provinces"
         if source["units"] < move + 1:
-            return False, "not enough units to move"
+            return 0, "not enough units to move"
         if target_id not in self.check_range(source_id, allowable_range, owner=source["owner"]):
-            return False, "{} not in {} range of {}".format(target_id, allowable_range, source_id)
+            return 0, "{} not in {} range of {}".format(target_id, allowable_range, source_id)
         # everything is ok, performing movement 
         # TODO put into queue, allow multiple movement submission for a phase
         source["units"] -= move 
         target["units"] += move  
-        return True, None
+        return move, None
 
 
     def check_deployable(self, target_id: int, distance_from_front: int=2):
@@ -270,9 +287,9 @@ class CampaignMap:
         if not recheck or check_deployable(target_id, distance_from_front=distance_from_front):
             target = self._map[target_id][-1]
             target["units"] += deploy 
-            return True 
+            return (deploy, target)
         else:
-            return False
+            return (0, target)
 
     #=====================
     # Bot-compatible functions.
@@ -285,6 +302,8 @@ class CampaignMap:
         self._context["total_score"] = {pid: sum((self._map[p][-1]["score"] for p in powned)) for pid, powned in provs.items()} 
         self._context["biggest_player"] = self.biggest_player(use_cache=False)
         self._context["smallest_player"] = self.smallest_player(use_cache=False)
+        # update statistics as well
+        self._context["greatest_occupied"] = {pid: max(self._context["greatest_occupied"][pid], self._context["total_owned"][pid]) for pid in range(self._player_count)}
 
     def biggest_player(self, use_cache: bool=True):
         if use_cache:
@@ -363,10 +382,10 @@ class CampaignMap:
         # else has new capital; ignore
         assert self.capital(player_id) is not None, "Capital for Player {:d} must have been set after this".format(player_id)
 
-    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, per_province_coef: float=1.0, disbanding_coef: float=0.25):
+    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25):
         # Deployment-related (deploying & disbanding)
         owned = [self._map[ip][-1] for ip in player_province]
-        max_strength = sum((o["score"] for o in owned))
+        max_strength = max( sum((o["score"] for o in owned)), self._setting["minimum_strength"] ) # max_strength is always at least `minimum_strength`; to allow 1pm to recover
         current_strength = sum((o["units"] for o in owned))
         if current_strength > max_strength:
             # overstrength, disbanding random units across the owned province 
@@ -384,20 +403,21 @@ class CampaignMap:
                 print("[P{:d}] {:d} unit randomly disbanded.".format(player_id, disband))
         elif current_strength < max_strength:
             # understrength, find an appropriate deployable region and throw them there
-            # ownership as additional upper limit (cannot reinforce more than 1 per owned province)
-            upper_limit = int(len(player_province) * per_province_coef)
+            # default upper limit is 20; limit-by-province owned would cause a death spiral
+            upper_limit = self._setting["maximum_deployment"]  # 
             reinforcement = min(max(int( (max_strength - current_strength) * reinforcement_coef ), 1), upper_limit)
             target_id = self._player_bot[player_id].calculate_deployment(self._map, reinforcement)
 #            target_id = random.choice(self.all_deployable_provinces())
             if target_id is not None:
-                self.perform_action_deploy(reinforcement, target_id, recheck=False)
-                print("[P{:d}] {:d} units deployed at {}".format(player_id, reinforcement, self.pname(target_id)))
+                deployed, target = self.perform_action_deploy(reinforcement, target_id, recheck=False)
+                print("[P{:d}] {:d} units deployed at {}".format(player_id, deployed, self.pname(target_id)))
+                self._context["greatest_army_size"][player_id] = max(self._context["greatest_army_size"][player_id], current_strength+deployed)
             else:
                 print("[P{:d}] reinforcement declined.".format(player_id))
         # else ignore
 
-    def phase_check_encirclement(self, player_id: int, player_province: set):
-        # TODO set coefficient
+    def phase_check_encirclement(self, player_id: int, player_province: set, deserter_coef: float=0.5):
+        # TODO set coefficient to count this type of casualty too, since it might be better
         for ip in player_province:
             if self._map[ip][-1]["is_capital"]:
                 # capital is exempted from this check 
@@ -406,8 +426,9 @@ class CampaignMap:
             if all((self._map[bp][-1]["owner"] != player_id for bp in immediate_border)):
                 # encircled 
                 before = self._map[ip][-1]["units"]
-                self._map[ip][-1]["units"] = after = max(int(before // 2), 1)
-                print("Player {:d} is encircled at {}(border: {}); units halved {:d}->{:d}".format(player_id, self.pname(ip), immediate_border, before, after))
+                self._map[ip][-1]["units"] = after = max(int(before * deserter_coef), 1)
+                print("Player {:d} is encircled at {}(border: {}); units deserted {:d}->{:d}".format(player_id, self.pname(ip), immediate_border, before, after))
+                self._context["casualties"][player_id] += max(before - after, 0)
 
     def phase_perform_movement(self, player_id: int, override_action: Optional[list]=None):
         # Reinforcement distribution related. 
@@ -424,7 +445,7 @@ class CampaignMap:
                 result, result_str = self.perform_action_movement(amount, source_id, target_id, allowable_range=2)
                 self._arrows[player_id].append( ("move", source_id, target_id, amount) )
                 if result:
-                    print("[P{:d}] Moved {}--{:d}->{}".format(player_id, self.pname(source_id), amount, self.pname(target_id)))
+                    print("[P{:d}] Moved {}--{:d}->{}".format(player_id, self.pname(source_id), result, self.pname(target_id)))
                 else:
                     print("Player {:d} failed to move {:d} units from {} to {}, error: {}".format(player_id, amount, self.pname(source_id), self.pname(target_id), result_str))
 
@@ -461,8 +482,10 @@ class CampaignMap:
                     self._arrows[player_id].append( ("attack", source_id, target_id, draw) )
                 if result:
                     print("Attack succeeded; player occupied {} with {:d} units, casualty {:d} units".format(self.pname(target_id), target["units"], casualty))
+                    self._context["province_seized"][player_id] += 1
                 else:
                     print("Attack failed; {:d} units remained in {:d}, {:d} units lost".format(target["units"], player_id, casualty))
+                self._context["casualties"][player_id] += max(casualty, 0)
             else:
                 print("Submitted attacks cannot gain enough force; requested: {}".format({self.pname(player_id): a for player_id, a in zip(source_ids, draw_amount)}))
         else:
@@ -471,7 +494,7 @@ class CampaignMap:
     #=========
     # Phase functions. Use full_phase shorthand as it will
     def full_phase_deploy(self):
-        for i in range(self._player_count):
+        for i in self._action_order:
             player_province = self.all_owned_provinces(i) # in id format 
             #==========
             # knockout related - check if player is alive here, use this cached value on subsequent phases
@@ -483,18 +506,23 @@ class CampaignMap:
             self.phase_check_encirclement(i, player_province)
 
     def full_phase_move(self):
-        for i in range(self._player_count):
+        for i in self._action_order:
             # knockout related
             if not self.player_alive(i, use_cache=False):
                 continue 
             self.phase_perform_movement(i)
 
     def full_phase_attack(self):
-        for i in range(self._player_count):
+        for i in self._action_order:
             # knockout related
             if not self.player_alive(i, use_cache=False):
                 continue
             self.phase_perform_attack(i)
+
+    def _update_action_order(self):
+        """Update the order of action for each player. This should at leasts alleviate some stalemate.
+        TODO orders need to be submitted simultaneously."""
+        random.shuffle(self._action_order)
 
     def end_turn(self):
         # clean up all cached data each turn 
@@ -504,6 +532,8 @@ class CampaignMap:
         # additionally, calculate the biggest player value for this phase
         self._update_context()
         print("Biggest player: {}; Smallest player {};\nFull context: {}".format(self.biggest_player(), self.smallest_player(), self._context))
+        self._update_action_order()
+        self._context["turn"] += 1
 
 
 class PlayerCampaignMap(CampaignMap):

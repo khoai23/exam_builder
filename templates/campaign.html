@@ -16,6 +16,13 @@ Winning condition is achieved by having 75% of total tile points.
 			points="{% for px, py in pointlist %} {{px}},{{py}} {% endfor %}"
 			style="fill:{{attr.get("fg", "lime")}};stroke:{{attr.get("bg", "black")}};stroke-width:1" />
 		{% if "center" in attr %}
+			{% if "symbol" in attr %}
+				<g font-size="24" fill="black" text-anchor="middle">
+					<text x="{{attr["center"][0]}}" y="{{attr["center"][1] - 20}}" id="region_symbol_{{loop.index0}}">
+						{{attr["symbol"]}}
+					</text>
+				</g>
+			{% endif %}
 			{% if "name" in attr %}
 				<g font-size="20" fill="black" text-anchor="middle" style="stroke-width:.5;">
 					<text x="{{attr["center"][0]}}" y="{{attr["center"][1]}}" id="region_name_{{loop.index0}}">
@@ -126,10 +133,18 @@ Winning condition is achieved by having 75% of total tile points.
 	</div>
 	<div id="button-bar">
 		<button class="btn btn-primary m-2" id="execute_btn" onclick="alert('testing')" {% if current_phase == "end" %}disabled{% endif %}>Execute</button>
-		<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')" {% if current_phase != "enddsb" %}disabled{% endif %}>Next</button>
+		<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')">Next</button>
 	</div>
 	<div id="log">
 	</div>
+</div>
+
+<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
+	{% for color in colorscheme %}
+	<p id="mr-auto p-2">
+	<span style="color: {{color}}">■</span>  <b>Player {{loop.index}}</b>	
+	</p>
+	{% endfor %}
 </div>
 
 </div>

@@ -1,17 +1,19 @@
 """Bot to control actions in the campaign map.
 Will calculate the targetting for moving & attacking, and where to deploy for best effect. 
 Should have multiple criteria / selectable coefficient to prioritize different things."""
+from abc import ABC, abstractmethod
 import random 
 from collections import defaultdict
 
 from typing import Optional, List, Tuple, Any, Union, Dict, Set
 
-class Aspect:
-    """Default interface for an addon 'aspect' of the bot, which should allow tweaking behavior of a bot (e.g related to context, personality etc.)"""
+class Aspect(ABC):
+    """Default interface for an addon 'aspect' of the bot, which should allow tweaking behavior of a bot (e.g related to context, personality etc.)""" 
+    @abstractmethod
     def _weighing_coef(self, *args, **kwargs):
         raise NotImplementedError
 
-class Bot:
+class Bot(ABC):
     """Default interface for a bot. This should contain the logical structure of the bot itself."""
     def __init__(self, player_id: int, campaign: Any, aspects: Optional[List[Aspect]]=None, debug: bool=False):
         self.player_id = player_id
@@ -22,18 +24,22 @@ class Bot:
         if debug:
             self._debug_record = {}
 
+    @abstractmethod
     def calculate_attacks(self, campaign_map: List[Tuple[Any, Dict]], expected_attack_coef: float=1.0) -> Optional[Tuple[int, int, int]]:
         """This should return None or (source, target, attack_amount); will be re-verified by the campaign"""
         raise NotImplementedError
 
+    @abstractmethod
     def calculate_movement(self, campaign_map: List[Tuple[Any, Dict]], allowable_range: int=2) -> Optional[Tuple[int, int, int]]:
         """This should return None or (source, target, movement_amount); will be re-verified by the campaign"""
         raise NotImplementedError
 
+    @abstractmethod
     def calculate_deployment(self, campaign_map: List[Tuple[Any, Dict]], deployable: int) -> Optional[int]:
         """This should return None or deploy_region; will be re-verified by the campaign"""
         raise NotImplementedError 
         
+    @abstractmethod
     def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
         """Internal function to weigh an attack vector amongst other."""
         raise NotImplementedError

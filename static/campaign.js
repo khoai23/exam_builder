@@ -10,6 +10,12 @@ function draw_polygon(polygon_data) {
 	base.append(poly);
 	// if exist a center; paste it in the polygon 
 	if("center" in attr) {
+		if("symbol" in attr) {
+			var symbol_wrapper = $("<g>").attr("font-size", 24).attr("fill", "black").attr("text-anchor", "middle");
+			var symbol_label = $("<text>").attr("x", attr["center"][0]).attr("y", attr["center"][1] - 20).text(attr["symbol"]);
+			symbol_wrapper.append(symbol_label);
+			base.append(symbol_wrapper);
+		}
 		if("name" in attr) { // if has polygon name, print it bolded (stroke-width) & 20px
 			var name_wrapper = $("<g>").attr("font-size", 20).attr("fill", "black").attr("text-anchor", "middle");
 			var name_label = $("<text>").attr("x", attr["center"][0]).attr("y", attr["center"][1]).text(attr["name"]);
@@ -34,7 +40,7 @@ function draw_arrow(arrow_data, arrow_index) {
 	// head of the arrow
 	var head = $("<marker>").attr("id", `head${arrow_index}`);
 	for (const [k, v] in Object.entries(attr["arrowhead"])) {
-		head.attr(k, v);
+		head = head.attr(k, v);
 	}
 	var [hp1, hp2, hp3] = attr["arrowhead_poly"];
 	let headpath = $("<path>").attr("d", `M ${hp1[0]} ${hp1[1]} L ${hp2[0]} ${hp2[1]} L ${hp3[0]} ${hp3[1]} z`).attr("fill", attr["color"]); 
