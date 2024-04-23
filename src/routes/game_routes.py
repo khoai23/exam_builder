@@ -35,7 +35,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                     return FrontlineBot(player_id, aspects=[CoalitionAspect()], debug=True, *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, RevanchismRule, RandomFactorRule])
+            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule])
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))

@@ -342,6 +342,7 @@ class FrontlineBot(Bot):
         best = max(deployable_provinces, key=lambda dp: len(self._campaign.check_range(dp, 2, owner=self.player_id)))
         return best
 
+
 class OpportunistBot(FrontlineBot, LandGrabBot):
     """FrontlineBot had demonstrated strength vs LandGrabBot when it comes to staying power. Time to merge with LandGrabBot with some decent ratio 
     """
@@ -354,7 +355,6 @@ class OpportunistBot(FrontlineBot, LandGrabBot):
         LandGrabBot.__init__(self, merge=True, certainty_coef=certainty_coef, return_coef=return_coef, unowned_coef=unowned_coef, limit_attack_force=limit_attack_force)
         self.grab_vs_security_coef = grab_vs_security_coef # gain multiply by this; security multiply by 1-this
 
-
     def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
         security_score = FrontlineBot._weighing_coef(self, campaign_map, source_id, target_id, merge=True)
         gain_score = LandGrabBot._weighing_coef(self, campaign_map, source_id, target_id, available=available) # this MUST put available; as it will try to use a specific source_id otherwise
@@ -364,6 +364,40 @@ class OpportunistBot(FrontlineBot, LandGrabBot):
             score += self.availability_coef * available 
             score += 0 if available > campaign_map[target_id][-1]["units"] else -99
         return score 
+
+
+class SecureFrontlineBot(FrontlineBot):
+    """This can be considered FrontlineBot v.2; two main improvement:
+       1. will attempt to properly reduce its frontline by enhancing the calculation mechanism.
+       2. will be aware of terrain characteristics and prioritize reinforcing between high-value targets, dangerous junctions, and hard-to-defend terrain."""
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        # count the number of hostile province bordering it
+        target_connections = campaign_map[target_id][-1]["connection"]
+        hostile_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] != self.player_id and campaign_map[bp][-1]["owner"] is not None)
+        # also count the number of province that would be "plugged" if it's captured 
+        closeoff_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] == self.player_id) 
+        # goal of this is to make sure if this is 
+
+        # count direct distance to current capital 
+        capital = self._campaign.capital(self.player_id)
+        distance_to_capital = self._campaign.check_distance(capital, target_id) if capital is not None else 0
+        # count possible "plug" - if another tile became possible to reinforce from occupying this tile, this will count as a yes 
+        all_owned = self._campaign.all_owned_provinces(self.player_id)
+        reinforcement_blocker = ({np for np in self._campaign.check_range(ip, 2) if campaign_map[np][-1]["owner"] != self.player_id} for ip in all_owned) # np for neighbor_province 
+        capturing_will_unblock = any((len(blks) == 1 and target_id in blks for blks in reinforcement_blocker))
+        # calculate 
+        # with a bit extra for availability
+        score = self.defensiveness_coef * (len(hostile_connections) - len(closeoff_connections)) + self.distance_coef * distance_to_capital + self.reinforcement_coef * int(capturing_will_unblock)
+        if self._debug:
+            self._debug_record["attack"][(source_id, target_id, available)].extend([("defensiveness", len(hostile_connections), self.defensiveness_coef), ("capital_distance", distance_to_capital, self.distance_coef), ("reinforcement", int(capturing_will_unblock), self.reinforcement_coef)])
+        if not merge:
+            # add extra for force availability & possible load 
+            attack_will_gain = available > campaign_map[target_id][-1]["units"]
+            score += self.availability_coef * available 
+            score += 0 if attack_will_gain else self.gain_tile_factor 
+            if self._debug:
+                self._debug_record["attack"][(source_id, target_id, available)].extend([("available", available, self.availability_coef), ("gain_tile", int(attack_will_gain), self.gain_tile_factor)])
+        return score
 
 
 """Aspect section."""
@@ -385,12 +419,19 @@ class CoalitionAspect(Aspect):
         # just default to normal otherwise
         return 0.0
 
-
 class ExplorerAspect(Aspect):
     """Factor in if the province is unowned, and made a minor prioritization if true."""
     def __init__(self, explore_factor: float=5.0):
-        self.explore_factor = explore_factor 
+        self.explore_factor = explore_factor  
 
     def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
         return self.explore_factor if campaign_map[target_id][-1]["owner"] is None else 0
         
+class IntegrityAspect(Aspect):
+    """Only compatible with CoreRule - if true, will prioritize retaking core province of self."""
+    def __init__(self, recover_core_factor: float=10.0):
+        self.recover_core_factor = recover_core_factor
+
+    def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        return self.recover_core_factor if campaign_map[target_id][-1]["core"] == bot.player_id else 0
+

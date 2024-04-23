@@ -3,6 +3,8 @@ import random
 
 from src.campaign.rules.base_campaign import Rule 
 
+from typing import Optional, List, Tuple, Any, Union, Dict 
+
 class ScorchedRule(Rule):
     """Adding a "scorched" parameter into each province. In every turn, if a battle occurred in that province, scorched + 2; if not, scorched -1. Province with this parameter receives defensive bonus & lose values accordingly."""
     def __init__(self, campaign, scorched_defensive_bonus: float=0.05, scorched_value_penalty: float=0.4):

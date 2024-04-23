@@ -3,6 +3,8 @@ import random
 
 from src.campaign.rules.base_campaign import Rule 
 
+from typing import Optional, List, Tuple, Any, Union, Dict 
+
 class RandomFactorRule(Rule):
     """Introduce a generic +-10% deviation to attack-related coefficients - attack, defend, preserve.
     Movement/deployment should be affected in other way.
@@ -81,4 +83,63 @@ class RevanchismRule(Rule):
             new_deploy_strength = int(deploy_strength * self.status_deploy_coef)
             new_deploy_distance_from_front = deploy_distance_from_front + 1 
             return new_deploy_strength, new_deploy_distance_from_front
-        return deploy_strength, deploy_distance_from_front
+        return deploy_strength, deploy_distance_from_front 
+
+CORE_ICON_UNICODE_VALUE = ord("\u2780")
+class CoreRule(Rule):
+    """If used, each province will has a "core" property indicating population loyalty. Core is declared by 1st occupier from unowned ground. Core can be allowed to drift after an amount of turns if specified to allow so.
+    When fighting on non-core region against rightful owner, player will suffer small penalty to combat effectiveness, and a moderate penalty for occupation.
+    NOTE: this must go after TerrainRule if any; due to it affecting preserve_modifier
+    """
+    def __init__(self, campaign, core_drift_duration: Optional[int]=None, core_combat_coef: float=0.1, noncore_preserve_penalty: float=0.5):
+        super(CoreRule, self).__init__(campaign)
+        # save the properties
+        self.core_drift_duration = core_drift_duration
+        self.core_combat_coef = core_combat_coef
+        self.noncore_preserve_penalty = noncore_preserve_penalty  
+        # set the core mechanism
+        for *_, p in self.campaign._map:
+            p["core"] = p["owner"]
+            if self.core_drift_duration:
+                p["core_drift"] = 0
+
+    def affect_attack(self, attack_modifier: float, defend_modifier: float, preserve_modifier: float, attack_strength: int, defend_strength: int, attacker_id: int, defender_id: int, target_province_id: int): 
+        target = self.campaign._map[target_province_id][-1]
+        if target["core"] is not None:
+            right_owner_id = target["core"]
+            if attacker_id == right_owner_id: # decrease enemy defense
+                new_defend_modifier = defend_modifier * (1.0 - self.core_combat_coef)
+                return attack_modifier, new_defend_modifier, preserve_modifier
+            elif defender_id == right_owner_id: # decrease enemy attack & increase penalty to 
+                new_attack_modifier = attack_modifier * (1.0 - self.core_combat_coef)
+                new_preserve_modifier = preserve_modifier + self.noncore_preserve_penalty 
+                return new_attack_modifier, defend_modifier, new_preserve_modifier
+        return attack_modifier, defend_modifier, preserve_modifier 
+
+    def after_attack(self, player_id: int, full_result):
+        result, province, casualty = full_result  
+        if not result:
+            return
+        if province["core"] is None:
+            # first occupation; granting core for the attacker 
+            province["core"] = player_id 
+        if self.core_drift_duration:
+            p["core_drift"] = 0 
+
+    def end_phase(self):
+        if self.core_drift_duration is None:
+            # core drift mechanism disabled 
+            return  
+        for *_, p in self.campaign._map:
+            if p["core"] != p["owner"]:
+                p["core_drift"] += 1
+                if p["core_drift"] >= self.core_drift_duration:
+                    p["core"] = p["owner"] 
+                    p["core_drift"] = 0
+                    print("@CoreRule: province {} had became core of [P{:d}]".format(p["province_name"], p["core"]))
+
+    def modify_draw_map(self, draw_map):
+        for *_, p in draw_map:
+            if p["core"] is not None:
+                # symbol is 1-10, so by plusing index0 it will just match what we need
+                p["symbol"] = p.get("symbol", "") + chr(CORE_ICON_UNICODE_VALUE+p["core"])
