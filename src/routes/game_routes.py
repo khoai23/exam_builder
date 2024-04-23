@@ -20,33 +20,33 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
     @app.route("/play", methods=["GET", "POST"])
     def play():
         if "map" not in campaign_data or request.args.get("redo", "false").lower() == "true":
-            print("Create new campaign map")
+            logger.debug("Create new campaign map")
             # give 0 a superior bot 
             def PrioritizedBot(player_id, *args, **kwargs):
                 if player_id == 0:
-                    print("Allegedly better bot for player 0")
+                    logger.debug("Allegedly better bot for player 0")
                     # combined variant between FrontlineBot & LandGrabBot; need tweaking for coef
                     return OpportunistBot(player_id, grab_vs_security_coef=0.2, *args, **kwargs)
                 elif player_id == 3:
-                    print("Rogue bot for player 3.")
+                    logger.debug("Rogue bot for player 3.")
                     return FrontlineBot(player_id, *args, **kwargs)
                 else:
-                    print("Normal bot for player {:d}".format(player_id))
+                    logger.debug("Normal bot for player {:d}".format(player_id))
                     return FrontlineBot(player_id, aspects=[CoalitionAspect()], debug=True, *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, ScorchedRule])
+            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, RevanchismRule, RandomFactorRule])
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))
-            print("Creating session with categories: {}".format(categories))
+            logger.debug("Creating session with categories: {}".format(categories))
             campaign_data["session"] = session = create_campaign_session(campaign, categories)
-        elif request.args.get("next", "false") == "true":
+        elif request.args.get("next", "false").lower() == "true":
             # iterating with test & update
             campaign = campaign_data["map"]
             # end previous turn, this wipe whatever data is left
             campaign.end_turn()
-            print("Running all 3 phases at once.")
+            logger.debug("Running all 3 phases at once.")
             # TODO delegate specific running into
             campaign.full_phase_deploy()
             campaign.full_phase_move()
@@ -56,7 +56,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             campaign = campaign_data["map"]
         # check appropriate phases; this should enable corresponding fields down in the website
         phase = campaign.current_phase 
-        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase, "colorscheme": campaign.retrieve_player_color()}
+        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase, "colorscheme": campaign.retrieve_player_color(), "terrain_scheme": {t: (t[0].upper() + t[1:], TERRAIN_COLOR[t], TERRAIN_ICON[t]) for t in TERRAIN_COLOR}}
         if phase == "attack":
             # attack is in (source_province_name, target_province_name, source_id, target_id, max_attack_amount)
             kwargs["attacks"] = [(campaign.pname(s), campaign.pname(t), s, t, a) for s, t, a in campaign.all_attack_vectors(0)]
@@ -64,10 +64,10 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             # move is in (source_province_name, source_id, [(target_province_name, target_id)..], move_amount)
             kwargs["moves"] = [(campaign.pname(s), s, [(campaign.pname(t), t) for t in ts], a) for a, s, ts in campaign.retrieve_all_movements(0)]
         elif phase == "deploy":
-            print("Deploy phase; TODO show deployment result") 
+            logger.debug("Deploy phase; TODO show deployment result") 
         else:
             # should be the end phase, need no extra data 
-            print("End phase; Next button should be enabled")
+            logger.debug("End phase; Next button should be enabled")
         if(request.method == "GET"):
             # for get, return whole page to read
             return flask.render_template("campaign.html", **kwargs)
@@ -123,13 +123,13 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             if campaign is None:
                 return flask.jsonify(result=False, error="No campaign available")
             if campaign.current_phase == "deploy":
-                print("Phase: executing deploy, -> moves")
+                logger.debug("Phase: executing deploy, -> moves")
                 campaign.phase_deploy_reinforcement()
             elif campaign.current_phase == "moves":
-                print("Phase: executing moves, -> attack")
+                logger.debug("Phase: executing moves, -> attack")
                 campaign.phase_perform_movement()
             elif campaign.current_phase == "attack":
-                print("Phase: executing attack, end turn -> next")
+                logger.debug("Phase: executing attack, end turn -> next")
                 campaign.phase_perform_attack()
                 campaign.end_turn()
             else:

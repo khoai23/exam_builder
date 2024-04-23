@@ -337,9 +337,24 @@ function reupdate_questions(data, clear_table = true) {
 			// TODO allow click to jump to the target row; or to show only the source & target ala Category
 			id_cell.addClass("table-danger");
 		}
+		let question_cell = $("<td>");
+		if(q["question"].includes("|||")) { // image-included; attempt to 
+			const pieces = q["question"].split("|||");
+			pieces.forEach(function (p) {
+				p = p.trim();
+				if(p) {
+					if(p.startsWith("http")){ // hack to detect image
+						question_cell.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
+					} else { //
+						question_cell.append($("<span>").text(p));
+					}
+				}
+			});
+		} else {
+			question_cell.text(q["question"]); // plaintext, just
+		}
 		let row = $("<tr>").append([
-			id_cell,
-			$("<td>").text(q["question"])
+			id_cell, question_cell
 		]);
 		if(data[i]["is_single_equation"]) {
 			row.append($("<td colspan='5'>").text(q["answer1"]));

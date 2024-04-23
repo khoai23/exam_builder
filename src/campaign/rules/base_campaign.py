@@ -111,9 +111,10 @@ class BaseCampaign(DefaultCampaignMap):
         return full_result
 
     def end_turn(self, *args, **kwargs):
+        result = super(BaseCampaign, self).end_turn(*args, **kwargs)
         for r in self.rules:
             r.end_phase()
-        return super(BaseCampaign, self).end_turn(*args, **kwargs)
+        return result
 
     def retrieve_draw_map(self, colorscheme: List[str]=None, default="white"):
         result = super(BaseCampaign, self).retrieve_draw_map(colorscheme=colorscheme, default=default)

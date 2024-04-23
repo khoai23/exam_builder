@@ -140,21 +140,32 @@ Winning condition is achieved by having 75% of total tile points.
 				{% endfor %}
 			{% endif %}
 		</ul>
-	</div>
-	<div id="button-bar">
-		<button class="btn btn-primary m-2" id="execute_btn" onclick="alert('testing')" {% if current_phase == "end" %}disabled{% endif %}>Execute</button>
-		<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')">Next</button>
+			<div id="button-bar">
+				<button class="btn btn-primary m-2" id="execute_btn" onclick="alert('testing')" {% if current_phase == "end" %}disabled{% endif %}>Execute</button>
+				<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')">Next</button>
+				<button class="btn btn-info m-2" id="autorun_btn" onclick="toggle_autorun(event)">Auto Run</button>
+			</div>
+
+		<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
+			{% for color in colorscheme %}
+			<p id="mr-auto p-2">
+			<span style="color: {{color}}">■</span>  <b>Player {{loop.index}}</b>	
+			</p>
+			{% endfor %}
+		</div>
+		
+		{% if terrain_scheme %}
+			<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
+				{% for terrain, (capitalized, color, icon) in terrain_scheme.items() %}
+				<p id="mr-auto p-2">
+				<span style="color: {{color}}">{{icon}}</span> {{capitalized}}
+				</p>
+				{% endfor %}
+			</div>
+		{% endif %}
 	</div>
 	<div id="log">
 	</div>
-</div>
-
-<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
-	{% for color in colorscheme %}
-	<p id="mr-auto p-2">
-	<span style="color: {{color}}">■</span>  <b>Player {{loop.index}}</b>	
-	</p>
-	{% endfor %}
 </div>
 
 </div>

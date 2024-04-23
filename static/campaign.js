@@ -1,5 +1,21 @@
 // provide appropriate update for the campaign 
  
+var autorun_interval = null;
+
+function toggle_autorun(event) {
+	if(autorun_interval == null) {
+		// switch on 
+		autorun_interval = window.setInterval(function() {
+			if(autorun_interval == null) return;
+			perform_and_reload(event, "next");
+		}, 2000)
+	} else {
+		// switch off
+		clearInterval(autorun_interval);
+		autorun_interval = null;
+	}
+}
+
 function draw_polygon(polygon_data) {
 	// draw the appropriate polygon on a <svg> tag; the data must be consistent with app.py data 
 	var [x, y, w, h, points, attr] = polygon_data;

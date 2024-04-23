@@ -300,6 +300,7 @@ class CampaignMap:
         provs = {pid: self.all_owned_provinces(pid) for pid in range(self._player_count)}
         self._context["total_owned"] = {pid: len(powned) for pid, powned in provs.items()}
         self._context["total_score"] = {pid: sum((self._map[p][-1]["score"] for p in powned)) for pid, powned in provs.items()} 
+        self._context["army_size"] = {pid: sum((self._map[p][-1]["units"] for p in powned)) for pid, powned in provs.items()}
         self._context["biggest_player"] = self.biggest_player(use_cache=False)
         self._context["smallest_player"] = self.smallest_player(use_cache=False)
         # update statistics as well
