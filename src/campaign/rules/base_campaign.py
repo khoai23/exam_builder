@@ -11,8 +11,8 @@ class Rule(ABC):
         self.campaign = campaign
 
     # phase-based function
-    def deployment_phase(self, player_id: int, reinforcement_coef: float, disbanding_coef: float):
-        return reinforcement_coef, disbanding_coef
+    def deployment_phase(self, player_id: int, reinforcement_coef: float, disbanding_coef: float, deploy_limit: int):
+        return reinforcement_coef, disbanding_coef, deploy_limit
 
     def movement_phase(self, player_id: int):
         pass 
@@ -56,11 +56,12 @@ class BaseCampaign(DefaultCampaignMap):
         self.rules = [rule_cls(self) for rule_cls in rules]
 
     # phase-based injection 
-    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25):
+    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25, upper_limit: Optional[int]=None):
         """TODO make these coef affect in perform_action_deploy instead."""
+        upper_limit = upper_limit or self._setting["maximum_deployment"]
         for r in self.rules:
-            reinforcement_coef, disbanding_coef = r.deployment_phase(player_id, reinforcement_coef, disbanding_coef)
-        return super(BaseCampaign, self).phase_deploy_reinforcement(player_id, player_province, reinforcement_coef=reinforcement_coef, disbanding_coef=disbanding_coef)
+            reinforcement_coef, disbanding_coef, upper_limit = r.deployment_phase(player_id, reinforcement_coef, disbanding_coef, upper_limit)
+        return super(BaseCampaign, self).phase_deploy_reinforcement(player_id, player_province, reinforcement_coef=reinforcement_coef, disbanding_coef=disbanding_coef, upper_limit=upper_limit)
 
     def phase_perform_movement(self, player_id: int, override_action: Optional[list]=None):
         for r in self.rules:

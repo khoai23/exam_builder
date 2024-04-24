@@ -143,3 +143,43 @@ class CoreRule(Rule):
             if p["core"] is not None:
                 # symbol is 1-10, so by plusing index0 it will just match what we need
                 p["symbol"] = p.get("symbol", "") + chr(CORE_ICON_UNICODE_VALUE+p["core"])
+
+
+class ExhaustionRule(Rule):
+    """Rule related to war exhaustion. Average `offensive` casualty (total casualty / total turn) inflicted on the attack will affect the amount of deployable troops.
+    Can have chance vs ratio (e.g 40% chance for completely botching deployment, or each deployment only output 60% of wanted units)
+    TODO only apply for recent event, decide between chance vs flat, & count for defensive casualty as well."""
+    def __init__(self, campaign, total_casualty_trigger_threshold: int=200, ratio_casualty_trigger_threshold: float=15.0, affect_mode_is_chance: bool=False, affect_value: float=0.4):
+        super(ExhaustionRule, self).__init__(campaign)
+        self.total_casualty_trigger_threshold = total_casualty_trigger_threshold 
+        self.ratio_casualty_trigger_threshold = ratio_casualty_trigger_threshold
+        self.affect_mode = "chance" if affect_mode_is_chance else "ratio"
+        self.affect_value = affect_value
+        # list of player in "exhausted" state
+        self.exhausted_players = set()
+
+    def end_phase(self):
+        # calculate the exhaustion & record them appropriately 
+        context = self.campaign._context
+        for pid in range(self.campaign._player_count):
+            casualty = context["casualties"][pid]
+            if casualty > self.total_casualty_trigger_threshold and (casualty / context["turn"]) / self.ratio_casualty_trigger_threshold:
+                self.exhausted_players.add(pid)
+            else:
+                self.exhausted_players.discard(pid)
+
+    def deployment_phase(self, player_id, reinforcement_coef, disbanding_coef, upper_limit):
+        if self.affect_mode == "ratio" and player_id in self.exhausted_players:
+            # ratio mode, deduce both the coef & limit 
+            new_reinforcement_coef = reinforcement_coef * (1.0 - self.affect_value)
+            new_upper_limit = int(upper_limit * (1.0 - self.affect_value))
+            return new_reinforcement_coef, disbanding_coef, upper_limit 
+        return reinforcement_coef, disbanding_coef, upper_limit
+
+    def affect_deployment(self, deploy_strength: int, deploy_distance_from_front: int, deployer_id: int, target_province_id: int):
+        if self.affect_mode == "chance" and deployer_id in self.exhausted_players:
+            # chance mode, roll dice and if in the chance, void the deploy_strength
+            if random.random() < self.affect_value:
+                print("@ExhaustionRule: chance mode, activated, [P{}] reinforcement had nulled.".format(deployer_id))
+                return 0, deploy_distance_from_front 
+        return deploy_strength, deploy_distance_from_front

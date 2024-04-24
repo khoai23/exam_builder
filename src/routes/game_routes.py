@@ -23,19 +23,19 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             logger.debug("Create new campaign map")
             # give 0 a superior bot 
             def PrioritizedBot(player_id, *args, **kwargs):
-                if player_id == 0:
-                    logger.debug("Allegedly better bot for player 0")
+                if player_id == 1:
+                    logger.debug("Allegedly better bot for player 1")
                     # combined variant between FrontlineBot & LandGrabBot; need tweaking for coef
-                    return OpportunistBot(player_id, grab_vs_security_coef=0.2, *args, **kwargs)
+                    return SecureFrontlineBot(player_id, aspects=[TerrainAwarenessAspect(), ExplorerAspect(), CoalitionAspect()], debug=True, *args, **kwargs)
                 elif player_id == 3:
                     logger.debug("Rogue bot for player 3.")
                     return FrontlineBot(player_id, *args, **kwargs)
                 else:
                     logger.debug("Normal bot for player {:d}".format(player_id))
-                    return FrontlineBot(player_id, aspects=[CoalitionAspect()], debug=True, *args, **kwargs) 
+                    return FrontlineBot(player_id, aspects=[CoalitionAspect()], *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule])
+            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule])
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))
@@ -44,13 +44,16 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         elif request.args.get("next", "false").lower() == "true":
             # iterating with test & update
             campaign = campaign_data["map"]
-            # end previous turn, this wipe whatever data is left
-            campaign.end_turn()
-            logger.debug("Running all 3 phases at once.")
-            # TODO delegate specific running into
-            campaign.full_phase_deploy()
-            campaign.full_phase_move()
-            campaign.full_phase_attack()
+            if campaign.game_is_active():
+                # end previous turn, this wipe whatever data is left
+                campaign.end_turn()
+                logger.debug("Running all 3 phases at once.")
+                # TODO delegate specific running into
+                campaign.full_phase_deploy()
+                campaign.full_phase_move()
+                campaign.full_phase_attack()
+            else:
+                logger.info("Game is finished; will only load the data.")
         else:
             # do nothing at the moment
             campaign = campaign_data["map"]

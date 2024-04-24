@@ -13,6 +13,9 @@ class Aspect(ABC):
     def _weighing_coef(self, *args, **kwargs):
         raise NotImplementedError
 
+    def _weighing_frontline_coef(self, bot, campaign_map, tile_id: int):
+        return 0
+
 class Bot(ABC):
     """Default interface for a bot. This should contain the logical structure of the bot itself."""
     def __init__(self, player_id: int, campaign: Any, aspects: Optional[List[Aspect]]=None, debug: bool=False):
@@ -40,16 +43,16 @@ class Bot(ABC):
         raise NotImplementedError 
         
     @abstractmethod
-    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0, merge: bool=False) -> float:
         """Internal function to weigh an attack vector amongst other."""
         raise NotImplementedError
 
-    def weigh_attack_vector(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+    def weigh_attack_vector(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0, merge: bool=False) -> float:
         # same as _weighing_coef below; except will also take into account any aspects modifiers  
         if self._debug:
             # clear out at start; all _weighing_coef will modify this and not create its new instance
             self._debug_record["attack"][(source_id, target_id, available)] = attack_record = list()
-        score = self._weighing_coef(campaign_map, source_id, target_id, available=available, merge=merge)
+        score = self._weighing_coef(campaign_map, source_id, target_id, available=available, expected_attack_coef=expected_attack_coef, merge=merge)
         if self._aspects and len(self._aspects) > 0:
             for a in self._aspects:
                 modifier = a._weighing_coef(self, campaign_map, source_id, target_id, available=available, merge=merge)
@@ -115,7 +118,7 @@ class LandGrabBot(Bot):
         self.unowned_coef = unowned_coef 
         self.limit_attack_force = limit_attack_force
 
-    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None) -> float:
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0) -> float:
         # calculate the score & validity of an action 
         # return the expected score of an attack
         if available is None: # maybe throw this away?
@@ -137,7 +140,7 @@ class LandGrabBot(Bot):
         attack_vectors = self._campaign.all_attack_vectors(self.player_id)
         if len(attack_vectors) == 0:
             return None 
-        best = max(attack_vectors, key=lambda v: self._weighing_coef(campaign_map, v[0], v[1], available=v[2]))
+        best = max(attack_vectors, key=lambda v: self._weighing_coef(campaign_map, v[0], v[1], available=v[2], expected_attack_coef=expected_attack_coef))
         if self.limit_attack_force:
             # if this flag is enabled; only attack with the minimum force needed along with the attack coefficient 
             source_id, target_id, max_attack = best 
@@ -159,7 +162,7 @@ class LandGrabBot(Bot):
                  max_reinforce[sid] = highest 
         # calculate the best score AFTER the reinforcement 
 #        print("[Debug] Max reinforcement in a province-basis: {}".format(max_reinforce))
-        best_source, _, _ = max(attack_vectors, key=lambda v: self.weigh_attack_vector(campaign_map, v[0], v[1], available=v[2]+max_reinforce.get(v[0], (None, 0))[1]), default=(None, None, None))
+        best_source, _, _ = max(attack_vectors, key=lambda v: self.weigh_attack_vector(campaign_map, v[0], v[1], available=v[2]+max_reinforce.get(v[0], (None, 0))[1]), expected_attack_coef=expected_attack_coef, default=(None, None, None))
         if best_source in max_reinforce:
             # has to reinforce this province with that maximum amount
             reinforce_province, reinforce_amount = max_reinforce[best_source]
@@ -175,7 +178,7 @@ class LandGrabBot(Bot):
 
 class FrontlineBot(Bot):
     """A bot that prioritize taking regions that are defensible, and distribute deployed units to the front even-ish"""
-    def __init__(self, *args, merge=False, defensiveness_coef: float=-1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0, availability_coef: float=0.1, gain_tile_factor: float=-30, **kwargs):
+    def __init__(self, *args, merge=False, defensiveness_coef: float=-1.0, distance_coef: float=-0.25, reinforcement_coef: float=10.0, availability_coef: float=0.1, gain_tile_factor: float=30, **kwargs):
         # by default, prioritize grabbing provinces that are defensible (least vectors of attacks) and close to the capital 
         # if grabbing this province allow reinforcement to immediately deploy to defend it, also give it a bonus
         if not merge:
@@ -189,7 +192,7 @@ class FrontlineBot(Bot):
         # if weighing is below this threshold, attack will not launch
         self.attack_threshold = self.gain_tile_factor / 2
 
-    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0, merge: bool=False) -> float:
         # count the number of hostile province bordering it
         target_connections = campaign_map[target_id][-1]["connection"]
         hostile_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] != self.player_id and campaign_map[bp][-1]["owner"] is not None)
@@ -207,9 +210,9 @@ class FrontlineBot(Bot):
             self._debug_record["attack"][(source_id, target_id, available)].extend([("defensiveness", len(hostile_connections), self.defensiveness_coef), ("capital_distance", distance_to_capital, self.distance_coef), ("reinforcement", int(capturing_will_unblock), self.reinforcement_coef)])
         if not merge:
             # add extra for force availability & possible load 
-            attack_will_gain = available > campaign_map[target_id][-1]["units"]
+            attack_will_gain = available * expected_attack_coef > campaign_map[target_id][-1]["units"]
             score += self.availability_coef * available 
-            score += 0 if attack_will_gain else self.gain_tile_factor 
+            score += self.gain_tile_factor if attack_will_gain else 0
             if self._debug:
                 self._debug_record["attack"][(source_id, target_id, available)].extend([("available", available, self.availability_coef), ("gain_tile", int(attack_will_gain), self.gain_tile_factor)])
         return score
@@ -224,7 +227,7 @@ class FrontlineBot(Bot):
         total_vectors = defaultdict(int)
         for s, i, a in attack_vectors:
             total_vectors[i] += a
-        target_id, max_attack, weight = max( ((tid, av, self.weigh_attack_vector(campaign_map, None, tid, available=av)) for tid, av in total_vectors.items()), key=lambda v: v[-1], default=(None, None, -999) )
+        target_id, max_attack, weight = max( ((tid, av, self.weigh_attack_vector(campaign_map, None, tid, available=av, expected_attack_coef=expected_attack_coef)) for tid, av in total_vectors.items()), key=lambda v: v[-1], default=(None, None, -999) ) 
         if self._debug:
             self.print_debug_attack_chart()
         # only attack with enough force to occupy with expected_attack_coef. 
@@ -255,6 +258,18 @@ class FrontlineBot(Bot):
             return 0 
         return min((self._campaign.check_distance(province_id, i) for i in frontline))
 
+    def distribute_by_weight(self, available: int, tiles_with_weights: Dict[int, float]) -> Dict[int, int]:
+        # attempt to distribute "available" amount into weighted tiles. If there is any spares remaining (due to int rounding down), distribute them on a lower-first basis (since the scaling is +1 from each tile.
+        full_weight = sum(tiles_with_weights.values())
+        assigned = {t: int(available * w / full_weight) for t, w in tiles_with_weights.items()}
+        if sum(assigned.values()) < available:
+            spares = available - sum(assigned.values())
+            assert spares <= len(tiles_with_weights), "@distribute_by_weight: having more spares than province, should not really be possible. Initial assign {} vs weight {}, available {}".format(assigned, tiles_with_weights, available)
+            lower_first = sorted(tiles_with_weights.keys(), key=lambda t: tiles_with_weights[t])
+            for _, target in zip(range(spares), lower_first):
+                assigned[target] += 1
+        return assigned 
+
     def calculate_movement(self, campaign_map, allowable_range=2) -> List[Tuple[int, int, int]]:
         # distribute all moveable units across frontline, tile with more outward connections first.
         all_owned = self._campaign.all_owned_provinces(self.player_id)
@@ -264,27 +279,9 @@ class FrontlineBot(Bot):
         # all moveable tile 
         tiles = {i: campaign_map[i][-1]["units"] - 1 for i in all_owned}
         movable_units = {i:u for i, u in tiles.items() if u > 0}
-        # perform distribution. First, calculate the full number, and allot to each weighted tile accordingly
         all_movable = sum(movable_units.values())
-        all_tile_weight = sum(weighted.values())
-        distribute = { i: int(all_movable * w / all_tile_weight) for i, w in weighted.items() }
-        if sum(distribute.values()) < all_movable:
-            # still have leftover
-            # assuming that remainder of distribution will have < 1 unit per all possible tiles. 
-            # TODO if not, need a different equation 
-            remaining = all_movable - sum(distribute.values())
-            for i, w in sorted(weighted.items(), key=lambda it: it[0], reverse=True):
-                if remaining <= 0:
-                    break # no more remaining
-                # from high to low, distribute the remaining points 
-                distribute[i] += 1
-                remaining -= 1
-            # if still has remainder, spawn a warning 
-            if remaining > 0:
-                print("Frontline distribution still have {} units remaining.".format(remaining))
-        # print("Expected distribution: ", distribute)
-        # Second, find set of all appropriate movements to best put all units to necessary positions 
-        # TODO minimize the amount of movements needed 
+        distribute = self.distribute_by_weight(all_movable, weighted)
+        # now to calculate movements to best fit the distribution
         movements = dict() 
         while len(distribute) > 0:
             # attempt to move point-by-point from distribution toward movement, least possible first 
@@ -355,8 +352,8 @@ class OpportunistBot(FrontlineBot, LandGrabBot):
         LandGrabBot.__init__(self, merge=True, certainty_coef=certainty_coef, return_coef=return_coef, unowned_coef=unowned_coef, limit_attack_force=limit_attack_force)
         self.grab_vs_security_coef = grab_vs_security_coef # gain multiply by this; security multiply by 1-this
 
-    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
-        security_score = FrontlineBot._weighing_coef(self, campaign_map, source_id, target_id, merge=True)
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0, merge: bool=False) -> float:
+        security_score = FrontlineBot._weighing_coef(self, campaign_map, source_id, target_id, expected_attack_coef=expected_attack_coef, merge=True)
         gain_score = LandGrabBot._weighing_coef(self, campaign_map, source_id, target_id, available=available) # this MUST put available; as it will try to use a specific source_id otherwise
         score = gain_score * self.grab_vs_security_coef + security_score * (1.0 - self.grab_vs_security_coef)
         if not merge:
@@ -368,15 +365,26 @@ class OpportunistBot(FrontlineBot, LandGrabBot):
 
 class SecureFrontlineBot(FrontlineBot):
     """This can be considered FrontlineBot v.2; two main improvement:
-       1. will attempt to properly reduce its frontline by enhancing the calculation mechanism.
-       2. will be aware of terrain characteristics and prioritize reinforcing between high-value targets, dangerous junctions, and hard-to-defend terrain."""
-    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+       1. will attempt to properly reduce its frontline by enhancing the calculation mechanism. defensiveness is now counter balanced by closeoff; the first seek to take province as defensible as possible (least vector of attack), the second seek to enhance whole line by closing off current avenue
+       2. will be receptive to TerrainAwarenessAspect and prioritize reinforcing between high-value targets, dangerous junctions, and hard-to-defend terrain.
+       NOTE: TerrainAwarenessAspect is causing unintended aversion to taking high-value starter province. Tweak with province_value_coef, or enhance the aspect better"""
+    def __init__(self, *args, closeoff_coef: float=2.0, province_value_coef: float=0.2, gain_tile_factor: float=10.0, merge=False, **kwargs):
+        if not merge:
+            super(SecureFrontlineBot, self).__init__(*args, gain_tile_factor=gain_tile_factor, **kwargs)
+        self.closeoff_coef = closeoff_coef
+        self.province_value_coef = province_value_coef
+
+    def calculate_attacks(self, campaign_map, expected_attack_coef=0.8) -> List[Tuple[int, int, int]]:
+        # attempting a more redundant estimate 
+        return super(SecureFrontlineBot, self).calculate_attacks(campaign_map, expected_attack_coef=expected_attack_coef)
+
+    def _weighing_coef(self, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, expected_attack_coef: float=1.0, merge: bool=False) -> float:
         # count the number of hostile province bordering it
         target_connections = campaign_map[target_id][-1]["connection"]
         hostile_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] != self.player_id and campaign_map[bp][-1]["owner"] is not None)
         # also count the number of province that would be "plugged" if it's captured 
         closeoff_connections = set(bp for bp in target_connections if campaign_map[bp][-1]["owner"] == self.player_id) 
-        # goal of this is to make sure if this is 
+        # goal of this is to make sure if this is the most beneficial province to capture in order to reduce frontline
 
         # count direct distance to current capital 
         capital = self._campaign.capital(self.player_id)
@@ -387,19 +395,108 @@ class SecureFrontlineBot(FrontlineBot):
         capturing_will_unblock = any((len(blks) == 1 and target_id in blks for blks in reinforcement_blocker))
         # calculate 
         # with a bit extra for availability
-        score = self.defensiveness_coef * (len(hostile_connections) - len(closeoff_connections)) + self.distance_coef * distance_to_capital + self.reinforcement_coef * int(capturing_will_unblock)
+        score = self.defensiveness_coef * len(hostile_connections) + self.closeoff_coef * len(closeoff_connections) + self.distance_coef * distance_to_capital + self.reinforcement_coef * int(capturing_will_unblock)
         if self._debug:
-            self._debug_record["attack"][(source_id, target_id, available)].extend([("defensiveness", len(hostile_connections), self.defensiveness_coef), ("capital_distance", distance_to_capital, self.distance_coef), ("reinforcement", int(capturing_will_unblock), self.reinforcement_coef)])
+            self._debug_record["attack"][(source_id, target_id, available)].extend([("defensiveness", len(hostile_connections), self.defensiveness_coef), ("closeoff", len(closeoff_connections), self.closeoff_coef), ("capital_distance", distance_to_capital, self.distance_coef), ("reinforcement", int(capturing_will_unblock), self.reinforcement_coef)])
         if not merge:
             # add extra for force availability & possible load 
-            attack_will_gain = available > campaign_map[target_id][-1]["units"]
+            attack_will_gain = available * expected_attack_coef > campaign_map[target_id][-1]["units"]
             score += self.availability_coef * available 
-            score += 0 if attack_will_gain else self.gain_tile_factor 
+            score += self.gain_tile_factor if attack_will_gain else 0
             if self._debug:
                 self._debug_record["attack"][(source_id, target_id, available)].extend([("available", available, self.availability_coef), ("gain_tile", int(attack_will_gain), self.gain_tile_factor)])
         return score
 
+    def calculate_frontline_weight(self, campaign_map, frontline: Set[int]) -> Dict[int, float]:
+        calculated = dict()
+        for pid in frontline:
+            province = campaign_map[pid][-1]
+            hostile_connections = len({np for np in province["connection"] if campaign_map[np][-1]["owner"] != self.player_id})
+            value = province["score"]
+            weight = hostile_connections + value * self.province_value_coef
+            if self._aspects and len(self._aspects) > 0:
+                weight += sum(a._weighing_frontline_coef(self, campaign_map, pid) for a in self._aspects)
+            calculated[pid] = weight 
+        # due to aspect, the weight might has negative values; scale them into full positive  
+        min_value = min(calculated.values())
+        if min_value < 0:
+            calculated = {k: v - min_value for k, v in calculated.items()}
+        return calculated
 
+    def distribute_to_frontline(self, campaign_map, frontline_request: Dict[int, int], available: Dict[int, int], all_owned: Set[int], allowable_range: int=2, no_switcharound: bool=False, allow_cascade: bool=True):
+        """Attempt to distribute evenly toward the frontline. 
+        If no_switcharound=True, try to keep as many unit stationary as possible.
+        If allow_cascade=True, try to move remaining `available` toward province closest to unreinforced spots."""
+        movements = [] 
+        if no_switcharound:
+            # all unit already at the province stay as-is
+            current_distributed = {i: min(wanted, movable_units.get(i, 0)) for i, wanted in frontline_request.items()}
+            remaining_distributed = {i: wanted - current_distributed[i] for i, wanted in frontline_request.items() if wanted > current_distributed[i]}
+            current_available = {i: av - current_distributed.get(i, 0) for i, av in available.items() if av > current_distributed.get(i, 0)}
+        else:
+            # allow shuffling if it causes 
+            current_distributed, remaining_distributed = {}, frontline_request 
+            current_available = available
+        available_priority = {i: len({di for di in remaining_distributed if self._campaign.check_distance(i, di) <= allowable_range}) for i in current_available} # this to prefer taking from least accessible section first
+        # for each of the remaining_distributed; calculate for one with the least available nearby, and reinforce that first. This should allow distribution to reach far-flung regions better.
+        cascade_targets = set()
+        while len(remaining_distributed):
+            reachable_units_per_province = {i: sum(rv for ri, rv in current_available.items() if self._campaign.check_distance(i, ri) <= allowable_range) for i in remaining_distributed}
+            target_id, reachable = min(reachable_units_per_province.items(), key=lambda t: (t[-1], -remaining_distributed[t[0]])) # prefer least reachable, then biggest target
+            if reachable == 0:
+                # no reachable reinforcement nearby; remove this province from distributed & continue 
+                print("@calculate_movement: province {}({}) cannot receive appropriate reinforcement; further request is ignored.".format(target_id, campaign_map[target_id][-1]["province_name"]))
+                if allow_cascade:
+                    cascade_targets.add(target_id)
+                remaining_distributed.pop(target_id, None)
+                continue  
+            requested = remaining_distributed[target_id]
+            # has some reachable; assign all that can be assigned to the target 
+            for ai, av in sorted(list(current_available.items()), key=lambda a: available_priority[a[0]]):
+                # this should access least-useful first. TODO update available_priority when can 
+                if self._campaign.check_distance(ai, target_id) > allowable_range:
+                    # cannot reinforce, continue 
+                    continue 
+                move_amount = min(av, requested)
+                movements.append( (ai, target_id, move_amount) )
+                if av == move_amount:
+                    # exhausted the available; kick out from function 
+                    current_available.pop(ai)
+                if move_amount == requested:
+                    # exhaust the requested; exit the current loop and continue on
+                    requested = 0
+                    break 
+                else:
+                    requested -= move_amount
+            # if reach here with requested = 0, this is correct logic. If reach here with more, the requested amount cannot be fulfilled and need to be popped anyway 
+            if requested > 0:
+                print("@calculate_movement: remaining request {} for frontline tile {}({}) is unfulfilled. If allow_cascade, will try to move free units toward tile.".format(requested, target_id, campaign_map))
+                if allow_cascade:
+                    cascade_targets.add(target_id)
+            remaining_distributed.pop(target_id)
+        # if allow_cascade is True; attempt to rate all owned provinces by how close they are to cascade_targets; and move to the one collectively closest.
+        cascade_priority = {pid: sum(self._campaign.check_distance(pid, ct) for ct in cascade_targets) for pid in all_owned}
+        for ai, av in current_available.items():
+            best_cascade_target = min((ct for ct in cascade_priority if self._campaign.check_distance(ai, ct) <= allowable_range), key=lambda ct: cascade_priority[ct])
+            print("Cascade mode activated for {} spare units at {}({}); moving to {}({})".format(av, ai, campaign_map[ai][-1]["province_name"], best_cascade_target, campaign_map[best_cascade_target][-1]["province_name"]))
+            movements.append((ai, best_cascade_target, av))
+        return movements
+
+    def calculate_movement(self, campaign_map, allowable_range=2) -> List[Tuple[int, int, int]]:
+        """Rehashed from FrontlineBot; allowing Aspect to affect the weighing mechanism"""
+        # distribute all moveable units across frontline, tile with more outward connections first.
+        all_owned = self._campaign.all_owned_provinces(self.player_id)
+        # all frontline tile, weighted by number of hostile connections. Empty is considered hostile too to allow early expansion
+        frontline = {ip for ip in all_owned if any((campaign_map[np][-1]["owner"] != self.player_id for np in campaign_map[ip][-1]["connection"]))}
+        weighted = self.calculate_frontline_weight(campaign_map, frontline)
+        # all moveable units
+        tiles = {i: campaign_map[i][-1]["units"] - 1 for i in all_owned}
+        movable_units = {i:u for i, u in tiles.items() if u > 0}
+        all_movable = sum(movable_units.values())
+        distribute = self.distribute_by_weight(all_movable, weighted)
+        # Second, find set of all appropriate movements to best put all units to necessary positions 
+        return self.distribute_to_frontline(campaign_map, distribute, movable_units, all_owned, allowable_range=allowable_range)
+            
 """Aspect section."""
 
 class CoalitionAspect(Aspect):
@@ -434,4 +531,23 @@ class IntegrityAspect(Aspect):
 
     def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
         return self.recover_core_factor if campaign_map[target_id][-1]["core"] == bot.player_id else 0
+
+from src.campaign.rules.field import TERRAIN_BONUSES
+
+class TerrainAwarenessAspect(Aspect):
+    """Only compatible with TerrainRule. Will prioritize seizing defensive terrain when they are at low unit counts."""
+    def __init__(self, terrain_factor: float=2.0):
+        self.terrain_factor = terrain_factor
+    
+    def _weighing_coef(self, bot, campaign_map, source_id: int, target_id: int, available: Optional[int]=None, merge: bool=False) -> float:
+        target = campaign_map[target_id][-1]
+        terrain_defensive_coef, terrain_preserve_penalty = TERRAIN_BONUSES[target["terrain"]]
+        enemy_units = target["units"]
+        # if have minimum, the one with more defensiveness_coef become favored. The more unit defending it, the more this slide down to unfavorable
+        return ((5 - enemy_units) * terrain_defensive_coef) * self.terrain_factor 
+
+    def _weighing_frontline_coef(self, bot, campaign_map, tile_id: int):
+        terrain_defensive_coef, terrain_preserve_penalty = TERRAIN_BONUSES[campaign_map[tile_id][-1]["terrain"]]
+        return terrain_defensive_coef * self.terrain_factor
+
 

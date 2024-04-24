@@ -5,11 +5,10 @@ For every turn, each player get to move a number of adjacent units against one e
 Winning condition is achieved by having 75% of total tile points."""
 import random
 
-from src.campaign.bot import Bot, RandomBot, LandGrabBot, FrontlineBot
 from src.campaign.name import NameGenerator, NAME_GENERATOR_BY_CUE
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
 
-from typing import Optional, List, Tuple, Any, Union, Dict 
+from typing import Optional, List, Tuple, Any, Union, Dict, Callable
 
 class CampaignMap:
     """The map on which the game is played. Support:
@@ -17,7 +16,7 @@ class CampaignMap:
         Bot: autonomous unit that take control of the player units. 
         Arrows: Performed actions will receive corresponding arrows, depending on the display mode, these arrows will be shown on the map"""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30, 
-            bot_class: Bot=RandomBot, name_generator: Optional[NameGenerator]=None,
+            bot_class: Callable=None, name_generator: Optional[NameGenerator]=None,
             attack_per_turn: int=1, movement_per_turn: int=2, deployment_province_count: int=2):
         self._player_count = player_count 
         # create random bot that handle the actions done by player
@@ -187,6 +186,8 @@ class CampaignMap:
         return all_arrows
 
     def check_distance(self, source_id: int, target_id: int):
+        if source_id == target_id:
+            return 0
         # check flat distance between two provinces. Value is cached.
         key = (source_id, target_id) if source_id < target_id else (target_id, source_id)
         return self._cached_distance[key]
@@ -195,7 +196,7 @@ class CampaignMap:
         # put all provinces of less than {expected_range} distance from {base} into a set 
         result = set()
         border = [base] # current unit at range, base is range 0
-        for _ in range(expected_range):
+        for _ in range(expected_range+1):
             next_border = []
             for b in border:
                 # check; in mode with owner, only allow province with specific owners to count
@@ -284,7 +285,7 @@ class CampaignMap:
     def perform_action_deploy(self, deploy: int, target_id: int, distance_from_front: int=2, recheck: bool=True):
         # attempt to perform a deployment; province is allowed to deploy if it is more than {distance_from_front} away from nearest hostile border, or is the capital of the player.
         # if recheck set to false, no need to check the deployable status
-        if not recheck or check_deployable(target_id, distance_from_front=distance_from_front):
+        if not recheck or self.check_deployable(target_id, distance_from_front=distance_from_front):
             target = self._map[target_id][-1]
             target["units"] += deploy 
             return (deploy, target)
@@ -357,6 +358,9 @@ class CampaignMap:
                 self._dead.add(plid)
         return alive
 
+    def game_is_active(self) -> bool:
+        return any(i not in self._dead for i in range(self._player_count))
+
     #=====================
     # Phasing function 
     def phase_set_capital(self, player_id: int, player_province: set):
@@ -383,7 +387,7 @@ class CampaignMap:
         # else has new capital; ignore
         assert self.capital(player_id) is not None, "Capital for Player {:d} must have been set after this".format(player_id)
 
-    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25):
+    def phase_deploy_reinforcement(self, player_id: int, player_province: set, reinforcement_coef: float=0.5, disbanding_coef: float=0.25, upper_limit: int=None):
         # Deployment-related (deploying & disbanding)
         owned = [self._map[ip][-1] for ip in player_province]
         max_strength = max( sum((o["score"] for o in owned)), self._setting["minimum_strength"] ) # max_strength is always at least `minimum_strength`; to allow 1pm to recover
@@ -405,7 +409,7 @@ class CampaignMap:
         elif current_strength < max_strength:
             # understrength, find an appropriate deployable region and throw them there
             # default upper limit is 20; limit-by-province owned would cause a death spiral
-            upper_limit = self._setting["maximum_deployment"]  # 
+            upper_limit = upper_limit or self._setting["maximum_deployment"]  # 
             reinforcement = min(max(int( (max_strength - current_strength) * reinforcement_coef ), 1), upper_limit)
             target_id = self._player_bot[player_id].calculate_deployment(self._map, reinforcement)
 #            target_id = random.choice(self.all_deployable_provinces())
