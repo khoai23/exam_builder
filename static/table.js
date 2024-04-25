@@ -357,12 +357,12 @@ function reupdate_questions(data, clear_table = true) {
 			id_cell, question_cell
 		]);
 		if(data[i]["is_single_equation"]) {
-			row.append($("<td colspan='5'>").text(q["answer1"]));
+			row.append($("<tdcolspan='5'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
 		} else if(data[i]["is_single_option"]) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			// console.log(formatted_templates);
-			row.append($("<td>").text(q["answer1"]));
-			row.append($("<td colspan='4' style='white-space: pre-wrap'>").text(formatted_templates));
+			row.append($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
+			row.append($("<td colspan='4' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates));
 		} else {
 			let answers = [];
 			var correct_ids = q["correct_id"];
@@ -377,16 +377,16 @@ function reupdate_questions(data, clear_table = true) {
 				let answer = q["answer" + j.toString()];
 				if(answer === undefined) {
 					console.error("Question", q, "missing answer of index", j);
-					answers.push($("<td>").addClass("bg-danger"));
+					answers.push($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").addClass("bg-danger"));
 				} else if(answer.includes("|||")) {
 					// is image variant; put into img tag and put inside
 					answer = answer.replaceAll("|||", "");
-					answers.push($("<td>").append(
+					answers.push($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").append(
 						$("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", answer)
 					));
 				} else {
 					// is text variant, push in directly
-					answers.push($("<td>").text(answer));
+					answers.push($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(answer));
 				}
 				if(correct_ids.includes(j)) {
 					answers[answers.length-1].addClass(is_multiple_choice ? "table-info" : "table-success");
@@ -396,9 +396,9 @@ function reupdate_questions(data, clear_table = true) {
 			row.append(answers);
 			// correct question will be added in similar format to python tuple (wrapped in bracket, separated by comma)
 			if(is_multiple_choice){
-				row.append($("<td>").text("(" + correct_ids.join(",") + ")"));
+				row.append($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text("(" + correct_ids.join(",") + ")"));
 			} else {
-				row.append($("<td>").text(correct_ids[0]));
+				row.append($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(correct_ids[0]));
 			}
 		}
 		// category, tag, and use checkbox 

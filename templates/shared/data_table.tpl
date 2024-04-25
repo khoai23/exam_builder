@@ -9,17 +9,17 @@
 	</div>
 	<span class="h3 m-2">Category:</span>
 </div>
-<div class="table-responsive card-body w-100 d-md-table">
+<div class="table-responsive card-body w-100 d-md-table" style="display: max-width: 95%">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
 		<thead class="thead-light">
 			<tr>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
+				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
+				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
+				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>
+				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 4</th>
+				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Correct Answer</th>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">
 					<div class="dropdown">
 						<button class="btn btn-secondary dropdown-toggle" type="button" id="tag_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -35,20 +35,20 @@
 			</tr>    
 		</thead>    
 		<tbody>     
-			{% for  q in questions %}
+			{% for q in questions %}
 			<tr>    
 				<td>{{q["id"]}}</td>
 				<td>{{q["question"]}}</td>
 				{% if "is_single_equation" in q or q["is_single_equation"] %}
-					<td colspan='5'> {{ q["answer1"] }}</td>
+					<td class="d-none d-lg-table-cell d-xl-table-cell" colspan='5'> {{ q["answer1"] }}</td>
 				{% else %}
 					{% for i in range(1, 5) %}
 						{% if q["correct_id"] == i %} 
-							<td class="table-success"> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-success"> 
 						{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
-							<td class="table-info"> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-info"> 
 						{% else %}
-							<td> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell"> 
 						{% endif %} 
 						{% if "|||" not in q["answer{}".format(i)] %}
 							{{q["answer{}".format(i)]}}
@@ -57,7 +57,7 @@
 						{% endif %}
 						</td>
 					{% endfor %}
-					<td>{{q["correct_id"]}}</td>
+					<td class="d-none d-lg-table-cell d-xl-table-cell">{{q["correct_id"]}}</td>
 				{% endif %}
 				<td>
 					{% if "tag" in q %}
