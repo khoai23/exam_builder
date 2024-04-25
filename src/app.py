@@ -6,7 +6,7 @@ import traceback
 import shutil
 
 from src.session import current_data, submit_route 
-from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes
+from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes, build_learn_routes
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
@@ -22,7 +22,8 @@ app.config["UPLOAD_FOLDER"] = "test"
 app, login_manager, login_decorator = build_login_routes(app)
 app = build_session_routes(app, login_decorator=login_decorator)
 app = build_data_routes(app, login_decorator=login_decorator)
-_, app = build_game_routes(app, login_decorator=login_decorator)
+app = build_learn_routes(app, login_decorator=login_decorator)
+_, app = build_game_routes(app, login_decorator=login_decorator) 
 ### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
 

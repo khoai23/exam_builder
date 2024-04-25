@@ -1,0 +1,58 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<div id="bpmn_canvas" style="flex: auto">
+	<div id="button_bar" style="position: fixed; bottom: 20px; left: 20px">
+	<button id="save_button" type="button" class="btn btn-success">Save</button>
+	<button id="load_button" type="button" class="btn btn-primary">Load</button>
+</div>
+{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-js.css" />
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/diagram-js.css" />
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-js.css" />
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-font/css/bpmn.css" />
+{% endblock %}
+
+{% block script %}
+<!-- Unusable
+<script src="https://cdn.jsdelivr.net/npm/connect-it/dist/connect-it.js"></script>
+<script src="https://unpkg.com/connect-it/dist/connect-it.js"></script> -->
+
+<script src="https://unpkg.com/bpmn-js@17.0.2/dist/bpmn-viewer.development.js"></script>
+<script src="https://unpkg.com/bpmn-js@17.0.2/dist/bpmn-modeler.development.js"></script>
+<script>
+	var diagramUrl = 'https://cdn.statically.io/gh/bpmn-io/bpmn-js-examples/dfceecba/starter/diagram.bpmn';
+	var bpmnViewer = new BpmnJS({container: "#bpmn_canvas"});
+
+async function openDiagram(bpmnXML) {
+	// import diagram
+	try {
+		await bpmnViewer.importXML(bpmnXML);
+		// access viewer components
+		var canvas = bpmnViewer.get('canvas');
+		var overlays = bpmnViewer.get('overlays');
+		// zoom to fit full viewport
+		canvas.zoom('fit-viewport');
+		// attach an overlay to a node
+		overlays.add('SCAN_OK', 'note', {
+			position: {
+				bottom: 0,
+				right: 0
+			},
+			html: '<div class="diagram-note">Mixed up the labels?</div>'
+		});
+		// add marker
+		canvas.addMarker('SCAN_OK', 'needs-discussion');
+	} catch (err) {
+
+		console.error('could not import BPMN 2.0 diagram', err);
+	}
+}
+
+// load external diagram file via AJAX and open it
+$.get(diagramUrl, openDiagram, 'text');
+
+bpmnViewer.get('overlays').add($("#button_bar"))
+</script>
+{% endblock %}

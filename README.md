@@ -26,5 +26,5 @@ Remaining bugfix/missing features:
 - [ ] Occasional failure when creating a map (invalid polygon)
 - [ ] Mechanism to attack a region with a combined force of neighbor regions
 - [ ] Mechanism for player actions to execute concurrently instead of sequentially. 
-- [ ] Mechanism to do a test for increased coefficient of attacks and/or defense 
-- [ ] Mechanism to show actions done by last phase
+- [x] Mechanism to do a test for increased coefficient of attacks and/or defense 
+- [x] Mechanism to show actions done by last phase

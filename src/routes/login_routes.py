@@ -71,6 +71,7 @@ def build_login_routes(app: Flask) -> Tuple[Flask, LoginManager, callable]:
     @app.route("/create_user", methods=["POST"])
     def create_user():
         # TODO only allow creation by important user 
+        # TODO prevent duplicate username
         form = request.form.to_dict()
         # check appropriate username, generate id, save password 
         user_id = secrets.token_hex(8)
