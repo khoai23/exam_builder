@@ -11,7 +11,8 @@ import threading, _thread
 from contextlib import contextmanager
 
 from src.data.reader import read_file, move_file, copy_file, write_file_xlsx, DEFAULT_FILE_PATH, DEFAULT_BACKUP_PATH, _DEFAULT_FILE_PREFIX, _DEFAULT_BACKUP_PREFIX, _DEFAULT_RECOVER_FILE_PREFIX, _DEFAULT_RECOVER_BACKUP_PREFIX 
-from src.data.split_load import OnRequestData
+from src.data.split_load import OnRequestData 
+from src.data.autotagger import AUTOTAG_MATH
 from src.organizer import assign_ids, shuffle, check_duplication_in_data, convert_text_with_image
 
 import logging
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
-data = current_data = OnRequestData()
+data = current_data = OnRequestData(autotag_dict={"Toán": AUTOTAG_MATH})
 # data["table"] = current_data = read_file(DEFAULT_FILE_PATH)
 #data["id"] = current_data.load_category(session_data["category"]] = assign_ids(current_data)
 data["session"] = session = dict()

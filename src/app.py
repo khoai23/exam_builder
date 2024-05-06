@@ -1,7 +1,7 @@
 import flask
 from flask import Flask, request, url_for
 # from werkzeug.utils import secure_filename
-import os, time, re
+import os, time, re, sys
 import traceback 
 import shutil
 
@@ -135,4 +135,9 @@ def generic_submit():
         return flask.redirect(request.referrer)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    if "log" in sys.argv:
+        loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+        for logger in loggers:
+            logger.setLevel(logging.DEBUG)
     app.run(debug=True)

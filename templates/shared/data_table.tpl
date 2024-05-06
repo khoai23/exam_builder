@@ -38,17 +38,21 @@
 			{% for q in questions %}
 			<tr>    
 				<td>{{q["id"]}}</td>
-				<td>{{q["question"]}}</td>
+				<td {% if editable %}contenteditable="true"{% endif %}>
+					{{q["question"]}}
+				</td>
 				{% if "is_single_equation" in q or q["is_single_equation"] %}
-					<td class="d-none d-lg-table-cell d-xl-table-cell" colspan='5'> {{ q["answer1"] }}</td>
+					<td class="d-none d-lg-table-cell d-xl-table-cell" colspan='5' {% if editable %}contenteditable="true"{% endif %}> 
+						{{ q["answer1"] }}
+					</td>
 				{% else %}
 					{% for i in range(1, 5) %}
 						{% if q["correct_id"] == i %} 
-							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-success"> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-success" {% if editable %}contenteditable="true"{% endif %}> 
 						{% elif q["correct_id"] is iterable and i in q["correct_id"] %} 
-							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-info"> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell" class="table-info" {% if editable %}contenteditable="true"{% endif %}> 
 						{% else %}
-							<td class="d-none d-lg-table-cell d-xl-table-cell"> 
+							<td class="d-none d-lg-table-cell d-xl-table-cell" {% if editable %}contenteditable="true"{% endif %}> 
 						{% endif %} 
 						{% if "|||" not in q["answer{}".format(i)] %}
 							{{q["answer{}".format(i)]}}
@@ -57,7 +61,7 @@
 						{% endif %}
 						</td>
 					{% endfor %}
-					<td class="d-none d-lg-table-cell d-xl-table-cell">{{q["correct_id"]}}</td>
+					<td class="d-none d-lg-table-cell d-xl-table-cell" {% if editable %}contenteditable="true"{% endif %}>{{q["correct_id"]}}</td>
 				{% endif %}
 				<td>
 					{% if "tag" in q %}

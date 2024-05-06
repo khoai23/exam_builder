@@ -1,12 +1,13 @@
 """Code to split data by category and only load each of them upon request.
 When used, app need a significant overhaul.
 Will replace the corresponding item in session.py"""
-import os, io, csv 
+import os, io, csv, sys
 import glob
 from collections import defaultdict
 
-from src.data.reader import read_file_xlsx, write_file_xlsx, move_file, DEFAULT_FILE_PATH, read_file
-from src.organizer import assign_ids
+from src.data.reader import read_file_xlsx, write_file_xlsx, move_file, DEFAULT_FILE_PATH, read_file 
+from src.data.autotagger import autotag_in_category
+from src.organizer import assign_ids 
 
 import logging
 logger = logging.getLogger(__name__)
@@ -14,17 +15,27 @@ logger = logging.getLogger(__name__)
 from typing import Optional, List, Tuple, Any, Union, Dict, Set
 
 import urllib.parse as parselib # use quote/unquote with no safe char by default 
-quote = lambda string, safe="", **kwargs: parselib.quote(string, safe=safe, **kwargs)
-# unquote = lambda string, safe="", **kwargs: parselib.unquote(string, safe=safe, **kwargs)
-unquote = parselib.unquote
+# quote = lambda string, safe="", **kwargs: parselib.quote(string, safe=safe, **kwargs)
+# unquote = lambda string, safe="", **kwargs: parselib.unquote(string, safe=safe, **kwargs) 
+def catname_to_filename(catname: str, safe=""):
+    if sys.platform in ("win32", "cygwin"):
+        return parselib.quote(catname, safe=safe) # use html derivative name (space = %20 etc)
+    else:
+        return fname.replace(" ", "_") # use unicode name as-is (space = underscore)
+
+def filename_to_catname(fname: str):
+    if sys.platform in ("win32", "cygwin"):
+        return parselib.unquote(fname) # use html derivative name (space = %20)
+    else:
+        return fname.replace("_", " ") # use unicode name as-is (space = underscore)
 
 class OnRequestData(dict):
-    def __init__(self, data_path: str="data/data.xlsx", categories: Optional[Set[str]]=None, backup_path: str="data/backup.xlsx", maximum_cached: int=5, _initiate_blank: bool=False):
+    def __init__(self, data_path: str="data/data.xlsx", categories: Optional[Set[str]]=None, backup_path: str="data/backup.xlsx", maximum_cached: int=5, _initiate_blank: bool=False, autotag_dict: Optional[Dict]=None):
         """Construct and check if all files is ready."""
         base, ext = os.path.splitext(data_path)
         valid_files = glob.glob(base + "*")
-        raw_fcats = [os.path.splitext(f.split("_")[-1])[0] for f in valid_files]
-        fcats = set(unquote(cat) for cat in raw_fcats)
+        raw_fcats = [os.path.splitext(f.split("_", 1)[-1])[0] for f in valid_files]
+        fcats = set(filename_to_catname(fcat) for fcat in raw_fcats)
         if(categories is None):
             # automatically infer the category basing on the filenames.
             categories = fcats
@@ -42,12 +53,14 @@ class OnRequestData(dict):
         assert _initiate_blank or len(categories) > 0, "Must have valid categories to continue. File-detected categories: {}".format(fcats)
         # write all values to be used.
         self._data_path = base, ext
-        self._data = {cat: base + "_" + quote(cat) + ext for cat in categories}
+        self._data = {cat: base + "_" + catname_to_filename(cat) + ext for cat in categories}
         self._backup_path = bbase, bext = os.path.splitext(backup_path)
-        self._backups = {cat: bbase + "_" + quote(cat) + ext for cat in categories}
+        self._backups = {cat: bbase + "_" + catname_to_filename(cat) + ext for cat in categories}
         # dict to load with caching 
         self._cache = {}
-        self._maximum_cached = maximum_cached
+        self._maximum_cached = maximum_cached 
+        # dict for autotagging questions.
+        self._autotag_dict = autotag_dict
 
     @property
     def categories(self):
@@ -67,6 +80,9 @@ class OnRequestData(dict):
             logger.debug("Not found in cache, read new from {}".format(self._data[category]))
             # either cache not enabled or not found, get from file 
             data = read_file_xlsx(self._data[category])
+            if self._autotag_dict and category in self._autotag_dict:
+                logger.info("Autotag is enabled for selected category ({}); performing..".format(category))
+                data = autotag_in_category(data, self._autotag_dict[category])
             if with_ids:
                 data = assign_ids(data)
             if use_cache:
@@ -79,9 +95,9 @@ class OnRequestData(dict):
         if(category not in self._data):
             logger.info("Category {} not found; adding new.".format(category))
             base, ext = self._data_path
-            self._data[category] = base + "_" + quote(category) + ext 
+            self._data[category] = base + "_" + catname_to_filename(category) + ext 
             bbase, bext = self._backup_path
-            self._backups[category] = bbase + "_" + quote(category) + ext
+            self._backups[category] = bbase + "_" + catname_to_filename(category) + ext
         elif(keep_backup and os.path.isfile(self._data[category])):
             # if has existing category, update it 
             logger.debug("Keep backup procedure: moving {} -> {}".format(self._data[category], self._backups[category]))
@@ -143,8 +159,16 @@ class OnRequestData(dict):
     
     def delete_data_by_ids(self, list_ids: List[int], category: str, update_cache: bool=True):
         old_data = self.load_category(category)
-        new_data = [d for i, d in enumerate(old_data) if i in list_ids]
+        new_data = [d for i, d in enumerate(old_data) if i not in list_ids]
         self.update_category(category, new_data, update_cache=update_cache)
+
+    def modify_data_by_id(self, qid: int, category: str, field: str, value: str, update_cache: bool=True):
+        data = self.load_category(category)
+        target = data[qid]
+        logger.debug("Perform modification: base question {}; value \"{}\"=\"{}\"".format(target, field, value))
+        target[field] = value 
+        if update_cache:
+            self.update_category(category, data, update_cache=update_cache)
 
     def swap_to_new_category(self, list_ids: List[int], old_category: str, new_category: str, update_id: bool=True, update_cache: bool=True):
         old_data = self.load_category(old_category)

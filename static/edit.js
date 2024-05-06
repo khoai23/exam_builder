@@ -145,6 +145,24 @@ function perform_confirm_modal(event) {
 	}
 }
 
+// send editing signal for specific box. Only send the command.
+// TODO on failure, revert the specific spot with appropriate data somehow; should be queryable from table.
+function edit_question(qid, key, value) {
+	var category = $("#category_dropdown").text();
+	var payload = JSON.stringify({"id": qid, "field": key, "value": value})
+	let success_fn = function(data, textStatus, jqXHR) {
+		if(data["result"]) {
+			$("#io_result").removeClass("text-danger").addClass("text-success").text("Question \"" + qid + "\" updated.");
+		} else {
+			$("#io_result").removeClass("text-success").addClass("text-danger").text("Question update failed. Please manually reset the page.");
+		}
+	};
+	let error_fn = function(jqXHR, textStatus, error){
+			console.log("Received error", error);
+	};
+	perform_post(payload, "modify_question?category=" + encodeURIComponent(category), success_fn=success_fn, error_fn=error_fn, type="POST");
+} 
+
 // delete the selected boxes. Sending the command and reload the data 
 // should be called by perform_confirm_modal 
 // no need to show the modal manually through jquery; 

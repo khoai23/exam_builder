@@ -1,13 +1,14 @@
 var use_local_data = false;
 
-function get_selected_question_ids() {
+function get_selected_question_ids(in_index0 = true) {
 	var valid_id = [];
 	var checklist = $("#question_table").find("[id^=use_question_]");
+	var offset = in_index0 ? 0 : 1;
 	// find all use_question_ item in the table 
 	//console.log(checklist);
 	checklist.each(function(index) {
 //		console.log($(this)); // dunno why each returned an object though
-		if($(this)[0].checked) valid_id.push(index); 
+		if($(this)[0].checked) valid_id.push( parseInt($(this).attr("qid")) - offset ); 
 	});
 	return valid_id;
 }
@@ -17,7 +18,43 @@ var selector_update_function = null; // this value is to be updated upon a selec
 var all_categories = null;
 var current_selected_category = null;
 var all_tags = null;
-var currently_selected_tag = [];
+var currently_selected_tag = []; 
+var editable = false;
+
+var currently_edited_cell_id = null;
+var currently_edited_key = null;
+var currently_edited_content = null;
+function _focus_fn() {
+	let edit_id = $(this).attr("qid");
+	let edit_key = $(this).attr("key");
+	if((edit_id != currently_edited_cell_id || edit_key != currently_edited_key)
+		&& currently_edited_cell_id && currently_edited_key && currently_edited_content) {
+		// change is registered; will attempt to propagate data 
+		//console.log("Sending: ", currently_edited_cell_id, currently_edited_key, currently_edited_content);
+		//alert("Check log for data supposed to be push");
+		edit_question(currently_edited_cell_id, currently_edited_key, currently_edited_content); // using index0 for this.
+		currently_edited_cell_id = edit_id;
+		currently_edited_key = edit_key;
+		currently_edited_content = null;
+	} else {
+		console.log("1st focus at ", edit_id, " recording edit.");
+		currently_edited_cell_id = edit_id;
+		currently_edited_key = edit_key;
+		currently_edited_content = null;
+	}
+}
+function _alias_input_fn() {
+	$(this).trigger("change");
+}
+function _change_fn() {
+	currently_edited_content = $(this).text();
+}
+
+function setup_editable(cell, qid, key) {
+	converted_cell = cell.attr("contenteditable", "true").attr("qid", qid).attr("key", key);
+	converted_cell.on('focus', _focus_fn).on('blur keyup paste', _alias_input_fn).on('change', _change_fn);
+	return converted_cell;
+}
 
 // used when use_local_data is false; data is reloaded on the long web instead 
 function load_data_into_table(start, end, request_tags=false, url="filtered_questions") {
@@ -337,7 +374,7 @@ function reupdate_questions(data, clear_table = true) {
 			// TODO allow click to jump to the target row; or to show only the source & target ala Category
 			id_cell.addClass("table-danger");
 		}
-		let question_cell = $("<td>");
+		let question_cell = $("<td>").attr("display", "white-space: pre-wrap");
 		if(q["question"].includes("|||")) { // image-included; attempt to 
 			const pieces = q["question"].split("|||");
 			pieces.forEach(function (p) {
@@ -345,7 +382,7 @@ function reupdate_questions(data, clear_table = true) {
 				if(p) {
 					if(p.startsWith("http")){ // hack to detect image
 						question_cell.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
-					} else { //
+					} else { // TODO re-add the splitted value if exist (e.g is_single_equation)
 						question_cell.append($("<span>").text(p));
 					}
 				}
@@ -353,11 +390,15 @@ function reupdate_questions(data, clear_table = true) {
 		} else {
 			question_cell.text(q["question"]); // plaintext, just
 		}
+		// additionally; if editable value is active; allow editing & binding
+		if(editable) {
+			question_cell = setup_editable(question_cell, q["id"], "question");
+		}
 		let row = $("<tr>").append([
 			id_cell, question_cell
 		]);
 		if(data[i]["is_single_equation"]) {
-			row.append($("<tdcolspan='5'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
+			row.append($("<td colspan='5'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
 		} else if(data[i]["is_single_option"]) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			// console.log(formatted_templates);
@@ -374,7 +415,8 @@ function reupdate_questions(data, clear_table = true) {
 			// for each answer, create appropriate td cell
 			// console.log("Correct: ", correct_ids);
 			for(let j=1; j<=4; j++) {
-				let answer = q["answer" + j.toString()];
+				let key = "answer" + j.toString();
+				let answer = q[key];
 				if(answer === undefined) {
 					console.error("Question", q, "missing answer of index", j);
 					answers.push($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").addClass("bg-danger"));
@@ -390,6 +432,9 @@ function reupdate_questions(data, clear_table = true) {
 				}
 				if(correct_ids.includes(j)) {
 					answers[answers.length-1].addClass(is_multiple_choice ? "table-info" : "table-success");
+				}
+				if(editable) {
+					answers[answers.length-1] = setup_editable(answers[answers.length-1], q["id"], key);
 				}
 			}
 			// append everything 
@@ -420,7 +465,7 @@ function reupdate_questions(data, clear_table = true) {
 		}
 		row.append(tag_cell);
 		let use_cell = $("<td>").addClass("custom-checkbox").append(
-			$("<input type=\"checkbox\" id=\"use_question_" + q["id"] + "\">").addClass("custom-control").attr("onclick", "selector_update(event)")
+			$("<input type=\"checkbox\" id=\"use_question_" + q["id"] + "\">").addClass("custom-control").attr("onclick", "selector_update(event)").attr("qid", q["id"])
 		);
 		row.append(use_cell);
 		table_body.append(row);

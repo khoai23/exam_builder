@@ -47,7 +47,7 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
         """Enter the edit page where we can submit new data to database; rollback and deleting data (preferably duplicated question)
         TODO restrict access
         """
-        return flask.render_template("edit.html", title="Modify", display_legend=True, questions=[])
+        return flask.render_template("edit.html", title="Modify", display_legend=True, questions=[], editable=True)
     
     @app.route("/delete_questions", methods=["DELETE"])
     @login_decorator
@@ -67,6 +67,21 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
                 wipe_session(for_categories=[category])
             return flask.jsonify(result=True)
     
+    @app.route("/modify_question", methods=["POST"])
+    @login_decorator
+    def modify_question():
+        """Modify a selected question with a specific value. Best to attempt associating rollback once done."""
+        modify_data = request.get_json()
+        category = request.args.get("category", None)
+        if category is None:
+            return flask.jsonify(result=False, error="Must supply a valid category to modify")  
+        if any(key not in modify_data for key in ("id", "field", "value")):
+            return flask.jsonify(result=False, error="Must supply valid modification data to allow changing")
+        current_data.modify_data_by_id(int(modify_data["id"]), category, modify_data["field"], modify_data["value"])
+        if request.args.get("wipe", "false").lower() == "true":
+            wipe_session(for_categories=[category]) # only wipe when asked
+        return flask.jsonify(result=True)
+
     @app.route("/swap_category", methods=["POST"])
     @login_decorator
     def swap_category():
