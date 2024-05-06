@@ -37,12 +37,11 @@
 	<span class="m-2" id="io_result"></span>
 </div>
 {% include 'shared/modal.tpl' %}
+{% include 'shared/edit_modal.tpl' %}
 {% endblock %}
 {% block script %}
 <script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="table.js") }}></script>
 <script src={{ url_for('static', filename="edit.js") }}></script>
-<script>
-	editable = true;
-</script>
+<script> editable = true </script>
 {% endblock %}

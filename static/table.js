@@ -1,4 +1,5 @@
 var use_local_data = false;
+var edit_by_modal = true;
 
 function get_selected_question_ids(in_index0 = true) {
 	var valid_id = [];
@@ -16,11 +17,12 @@ function get_selected_question_ids(in_index0 = true) {
 var category_update_function = null; // this value is to be called upon a category change
 var selector_update_function = null; // this value is to be updated upon a selector load (checkbox)
 var all_categories = null;
-var current_selected_category = null;
+var current_selected_category = localStorage.getItem("8thcircle_category");
 var all_tags = null;
 var currently_selected_tag = []; 
 var editable = false;
 
+var current_data = null;
 var currently_edited_cell_id = null;
 var currently_edited_key = null;
 var currently_edited_content = null;
@@ -50,10 +52,81 @@ function _change_fn() {
 	currently_edited_content = $(this).text();
 }
 
-function setup_editable(cell, qid, key) {
-	converted_cell = cell.attr("contenteditable", "true").attr("qid", qid).attr("key", key);
-	converted_cell.on('focus', _focus_fn).on('blur keyup paste', _alias_input_fn).on('change', _change_fn);
-	return converted_cell;
+var current_edit_item = null;
+var bounded_edit = false;
+function _render_edit() {
+	// retrieve, convert & create appropriate display element if there is MathJax/embedded image in the data. 
+	let content = $("#edit_true_text").val();
+	let display = $("#edit_display");
+	display.empty();
+	// console.log("Current content: ", content);
+	if(content.includes("|||")) {
+		// if has image; render them
+		const pieces = content.split("|||");
+		pieces.forEach(function (p) {
+			p = p.trim();
+			if(p) {
+				if(p.startsWith("http")){ // hack to detect image
+					display.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
+				} else { // TODO re-add the splitted value if exist (e.g is_single_equation)
+					display.append($("<span>").text(p));
+				}
+			}
+		});
+	} else {
+		display.text(content);
+	}
+	if(content.includes("\\(") || content.includes("\\)") || content.includes("$$")) {
+		// if has MathJax; reload them.
+		// MathJax.Hub.Queue(["TypeSet", MathJax.Hub, "edit_display"]);
+		MathJax.typesetClear([display[0]]);
+		MathJax.typesetPromise([display[0]]);
+	}
+}
+
+function _open_edit_modal(index0, key, parent_cell) {
+	// retrieve targetted data; populate the modal with it and then pops.
+	let q = current_data[index0];
+	currently_edited_cell_id = q["id"];
+	currently_edited_key = key;
+	current_edit_item = parent_cell;
+	if(!bounded_edit) {
+		console.log("1st edit modal triggered; binding function.");
+		$("#edit_true_text").on("change input", _render_edit);
+		bounded_edit = true;
+	}
+	// console.log("True content: ", q[key]);
+	$("#edit_true_text").val(q[key]);
+	_render_edit();
+	$("editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
+	$("#editModal").modal("show");
+}
+
+function _submit_edit_modal() {
+	// when submitting; send the necessary data in #edit_true_text away 
+	let content = $("#edit_true_text").val();
+	console.log("Sending: ", currently_edited_cell_id, currently_edited_key, content);
+	// alert("Check log for data supposed to be push");
+	edit_question(currently_edited_cell_id, currently_edited_key, content); // using index0 for this.
+	current_edit_item.text(content);
+	// voiding the rest & hide
+	currently_edited_cell_id = null;
+	currently_edited_key = null;
+	current_edit_item = null;
+	$("#editModal").modal("hide");
+}
+
+function setup_editable(cell, qid, key, index0) {
+	if(edit_by_modal) {
+		edit_button = $("<button>").attr("class", "btn btn-link").append($("<i>").attr("class", "bi bi-pen"));
+		edit_button.on('click', () => _open_edit_modal(index0, key, cell));
+		cell.append(edit_button);
+		return cell;
+	} else {
+		converted_cell = cell.attr("contenteditable", "true").attr("qid", qid).attr("key", key);
+		converted_cell.on('focus', _focus_fn).on('blur keyup paste', _alias_input_fn).on('change', _change_fn);
+		return converted_cell;
+	}
 }
 
 // used when use_local_data is false; data is reloaded on the long web instead 
@@ -129,6 +202,8 @@ function select_category(event) {
 		current_selected_category = null;
 		$("#category_dropdown").text("Category");
 	} else {
+		// save to local storage 
+		localStorage.setItem("8thcircle_category", category);
 		// filter all fields that does not contain this category 
 		current_selected_category = category;
 		$("#category_dropdown").text(category);
@@ -315,7 +390,7 @@ function build_tag_cell(tag_text) {
 }
 
 function external_update_filter(chain_to_reupdate_question=false) {
-	// update the category; if specific flag is enabled, also auto-select the first category and load accordnigly
+	// update the category; if specific flag is enabled, also auto-select the first category and load accordingly
 	$.ajax({
 		type: "GET",
 		url: "all_filter",
@@ -329,10 +404,13 @@ function external_update_filter(chain_to_reupdate_question=false) {
 			all_categories = data["categories"];
 			all_categories.forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
 			if(chain_to_reupdate_question) {
-				current_selected_category = all_categories[0]; // selected first category 
-				$("#category_dropdown").text(all_categories[0]); // also change the display to the appropriate version
+				if(!all_categories.includes(current_selected_category)) {
+					console.log("Did not found current category; setting to default (0)");
+					current_selected_category = all_categories[0]; // selected first category 
+				}
+				$("#category_dropdown").text(current_selected_category); // also change the display to the appropriate version
 				if(category_update_function !== null) {
-					category_update_function(all_categories, all_categories[0])
+					category_update_function(all_categories, current_selected_category)
 				}
 				load_data_into_table(undefined, undefined, request_tags=true)
 			}
@@ -358,9 +436,14 @@ function reupdate_questions(data, clear_table = true) {
 		$("tbody").empty();
 	} else {
 		// if not, only update the ones that aren't at the table 
+		// Never open this again; what if I want append mode?
 		i = $("tbody").find("tr").length;
 	}
 	let categories = []; let tags = [];
+	if(editable && edit_by_modal) {
+		// if edit by modal; requires the data to be kept 
+		current_data = data;
+	}
 	// regardless of mode; inserting from start-index to end of data 
 	table_body = $("tbody");
 	for(; i < data.length; i++) {
@@ -392,7 +475,7 @@ function reupdate_questions(data, clear_table = true) {
 		}
 		// additionally; if editable value is active; allow editing & binding
 		if(editable) {
-			question_cell = setup_editable(question_cell, q["id"], "question");
+			question_cell = setup_editable(question_cell, q["id"], "question", i);
 		}
 		let row = $("<tr>").append([
 			id_cell, question_cell
@@ -434,7 +517,7 @@ function reupdate_questions(data, clear_table = true) {
 					answers[answers.length-1].addClass(is_multiple_choice ? "table-info" : "table-success");
 				}
 				if(editable) {
-					answers[answers.length-1] = setup_editable(answers[answers.length-1], q["id"], key);
+					answers[answers.length-1] = setup_editable(answers[answers.length-1], q["id"], key, i);
 				}
 			}
 			// append everything 
