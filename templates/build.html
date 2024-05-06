@@ -1,6 +1,6 @@
 {% extends 'shared/base.html' %}
 {% block content %}
-<div class="accordion d-flex flex-column" id="accordion_main">
+<div class="accordion d-flex flex-column" id="accordion_main" style="height: 100%">
 	<div class="card flex-grow-2">
 		<div class="card-header" id="accordion_data_header"> 
 			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#data_table" aria-expanded="true" aria-controls="data_table">
@@ -41,25 +41,27 @@
 		</div>
 		<div class="collapse" aria-labelledby="accordion_category_header" data-bs-parent="#accordion_main" id="category_selector">
 			<div id="classifier_wrapper">
-				<label id="questionnaire_items"> Waiting for button click...</label>
-				<br />
-				<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
-				<div class="d-flex flex-wrap border border-dark" id="barebone_classifier"></div>
+				<div id="click_classifier" style="display: none">
+					<label id="questionnaire_items"> Waiting for button click...</label>
+					<br />
+					<label class="mt-3"> Click box to reassign category (upto 4 categories allowed): </label>
+					<div class="d-flex flex-wrap border border-dark" id="barebone_classifier"></div>
+					<br />
+				</div>
+				<div id="dragdrop_classifier">
+					<label class="mt-3"> Drag boxes around to assign questions to appropriate categories: </label>
+					{% for color in ["primary", "success", "danger", "warning"] %}
+					<div class="m-2 p-2 border border-{{color}} d-flex flex-wrap" id="classifier_section_{{loop.index0}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
+						<!-- label class="m-2 p-2 border border-secondary" draggable="true" ondragstart="drag(event)" id="q_{{loop.index0*2}}" >Test No.{{loop.index0}} </label -->
+					</div>
+					{% endfor %}
+				</div>
+				
 				<label class="mt-3"> Questionnaire setting: </label>
-				<br />
 				{% include 'shared/session_option.tpl' %}
 				<button class="my-2 btn btn-success" onclick="submit_questionnaire(event)">Build Questionnaire</button>
 			</div>
 		</div>
-	</div>
-
-	<div id="classifier" hidden> 
-		<p>WIP, delay for now.</p>
-		{% for i in range(5) %}
-		<div class="m-2 p-2 border border-3" id="section{{i}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
-			<div class="bg-secondary" draggable="true" ondragstart="drag(event)" id="{{i*2}}" width="336">Test No.{{i}} </div>
-		</div>
-		{% endfor %}
 	</div>
 
 	<div class="card" id="result_panel" style="display: none;">

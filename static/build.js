@@ -4,13 +4,19 @@ function allowDrop(event) {
 }
 
 function drag(event) {
-	event.dataTransfer.setData("text", ev.target.id)
+	//console.log(event.target);
+	event.dataTransfer.setData("qidx", $(event.target).attr("qidx"))
 }
 
 function drop(event) {
 	event.preventDefault();
-	var item_id = ev.dataTransfer.getData("text")
-	event.target.appendChild(document.getElementById(item_id))
+	let item_qid = parseInt( event.dataTransfer.getData("qidx") ); 
+	let item = $(".question_box").filter(function(index) {
+		return parseInt( $(this).attr("qidx") ) == item_qid;
+	})[0];
+	// console.log(item, item_qid);
+	event.target.appendChild(item);
+	update_group_count(event);
 }
 
 // test function to plug wherever
@@ -19,12 +25,12 @@ function test(event) {
 }
 
 // create a new questionnaire with all the selected questions at 1st category
-function create_questionnaire(event) {
+function create_questionnaire_old(event) {
 	// get all the question id available
 	var valid_id = get_selected_question_ids();
 	// TODO put them into the droppable containers.
 	// for now just write them into a label
-	document.getElementById("questionnaire_items").innerText = "Selectable IDs: " + valid_id.toString();
+	//document.getElementById("questionnaire_items").innerText = "Selectable IDs: " + valid_id.toString();
 	// alert("Made list; item is " +  valid_id.toString());
 	// create changeable categorizer
 	var classifier = $("#barebone_classifier");
@@ -45,6 +51,15 @@ function create_questionnaire(event) {
 	} else {
 		$("#classifier_wrapper").hide(); // bootstrap cannot use hide/show apparently
 	}
+}
+
+function create_questionnaire(event, dragdrop_mode=true) {
+	// just be add_to_group with extra action 
+	add_to_group(event, true, 0);
+	$("#data_table").collapse('hide'); $("#result_frame").collapse('hide');
+	$("#category_selector").collapse('show'); // automatically hide the table 
+	// also enable the category_selector's button from this point onward 
+	$("#category_selector_btn").prop('disabled', false);
 }
 
 // return id of each group (0-4 for primary-success-danger-warning)
@@ -77,20 +92,26 @@ function swap_group(event) {
 	update_group_count(event);
 }
 
-function update_group_count(event) {
+function update_group_count(event, dragdrop_mode=true) {
 	// upon trigger, simply re-calculate category count 
-	var cats = [0, 0, 0, 0];
-	var questions = $("#barebone_classifier").find("label").each(function(index) {
-		let class_list = $(this)[0].className.split(/\s+/);
-		let group_index = check_group(class_list);
-		if(group_index >= 0) {
-			cats[group_index]++;
-		} else {
-			console.log("Cannot perform find category on ", $(this));
-		}
-	});
+	var cats;
+	if(dragdrop_mode) {
+		cats = [...Array(4).keys()].map( si => $("#classifier_section_" + si.toString()))
+			.map( section => section.find(".question_box").length );
+	} else {
+		cats = [0, 0, 0, 0]
+		var questions = $("#barebone_classifier").find("label").each(function(index) {
+			let class_list = $(this)[0].className.split(/\s+/);
+			let group_index = check_group(class_list);
+			if(group_index >= 0) {
+				cats[group_index]++;
+			} else {
+				console.log("Cannot perform find category on ", $(this));
+			}
+		});
+	}
 	// log for now 
-//	console.log(cats);
+	console.log(cats);
 	for(let i=0;i<4;i++){
 		$("#group_count_" + i.toString()).text(cats[i]);
 		$("#group_" + i.toString()).prop("disabled", cats[i] == 0);
@@ -171,35 +192,68 @@ function submit_questionnaire(event) {
 
 // add the selected to corresponding category; any current values is overriden
 GROUP_CLASS_NAME = ["border-primary", "border-success", "border-danger", "border-warning"]
-function add_to_group(event) {
+function add_to_group(event, dragdrop_mode=true, group_index=-1) {
 	// get the checked
 	var checked_ids = get_selected_question_ids();
 	// get group; convert to qidx attributes
-	var group_index = parseInt($("#add_to_group_btn").html().slice(-1)[0]) - 1; // take last and convert to int; then minus 1 to move [1, 5) to [0, 4)
+	if(group_index < 0) {
+		group_index = parseInt($("#add_to_group_btn").html().slice(-1)[0]) - 1; // take last and convert to int; then minus 1 to move [1, 4] to [0, 4)
+	}
 	let add_field = GROUP_CLASS_NAME[group_index];
 	let remove_field = GROUP_CLASS_NAME.slice(0, group_index).join(" ") + " " + GROUP_CLASS_NAME.slice(group_index+1).join(" ");
 	var q_indices = $.map(checked_ids, i => i.toString());
-	// go through the item in the classifier; 
-	// if id already exist, swap it with new class; if it not, add it
-	var classifier = $("#barebone_classifier");
-//	console.log(checked_ids, group_index);
-	classifier.find("label").each(function (index) {
-		let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
-//		console.log($(this).attr("qidx"), i);
-		if(i >= 0) {
-			// is already in the classifier, switch the class over 
-			$(this).removeClass(remove_field).addClass(add_field);
-			// also deduce from checked_ids
-			checked_ids.splice(i, 1);
+	if(dragdrop_mode) {
+		// var sections = [...Array(10).keys()].map(i => $("#classifier_section_" + i.toString()));
+		var current_section_ids, section;
+		for(let si=0;si<4;si++){
+			section = $("#classifier_section_" + si.toString());
+			if(si == group_index) {
+				current_section_ids = [...checked_ids];
+				section.find("label").each(function (index) {
+					let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
+					if(i >= 0) {
+						current_section_ids.splice(i, 1); // item is already here; just ignore.
+					}
+				});
+				for(qidx in current_section_ids) {
+					// item here means it's not in existence yet; add new object in.
+					$('<label>').attr("class", "border m-2 p-2 question_box").attr("qidx", qidx.toString())
+						.attr("draggable", true).attr("ondragstart", "drag(event)")
+						.text("Q" + qidx.toString()).appendTo(section);
+				}
+			} else {
+				section.find("label").each(function (index) {
+					let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
+					if(i >= 0) {
+						// label should be removed from this section itself.
+						$(this).remove();
+					}
+				});
+			}
 		}
-	});
-//	console.log(checked_ids)
-	// for each item remaining in the checked_ids; add them new into the classifiers
-	checked_ids.forEach( function(id) {
-		$('<label class="border ' + add_field + ' m-2 p-2" onclick="swap_group(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
-	});
+	} else {
+		// go through the item in the classifier; 
+		// if id already exist, swap it with new class; if it not, add it
+		var classifier = $("#barebone_classifier");
+	//	console.log(checked_ids, group_index);
+		classifier.find("label").each(function (index) {
+			let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
+	//		console.log($(this).attr("qidx"), i);
+			if(i >= 0) {
+				// is already in the classifier, switch the class over 
+				$(this).removeClass(remove_field).addClass(add_field);
+				// also deduce from checked_ids
+				checked_ids.splice(i, 1);
+			}
+		});
+	//	console.log(checked_ids)
+		// for each item remaining in the checked_ids; add them new into the classifiers
+		checked_ids.forEach( function(id) {
+			$('<label class="border ' + add_field + ' m-2 p-2" onclick="swap_group(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
+		});
+	}
 	// recheck the group availability
-	update_group_count(classifier);
+	update_group_count(classifier, dragdrop_mode);
 }
 
 function switch_add_group(group_index) {
