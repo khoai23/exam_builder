@@ -1,0 +1,87 @@
+.hardness_undefined {
+	background-color: color-mix(in srgb, var(--yellow) 40%, white);
+}
+
+.hardness_1 {
+	background-color: color-mix(in srgb, var(--green) 50%, white);
+}
+
+.hardness_2 {
+	background-color: color-mix(in srgb, var(--green) 40%, white);
+}
+
+.hardness_3 {
+	background-color: color-mix(in srgb, var(--green) 30%, white);
+}
+
+.hardness_4 {
+	background-color: color-mix(in srgb, var(--green) 20%, white);
+}
+
+.hardness_5 {
+	background-color: color-mix(in srgb, var(--green) 10%, white);
+}
+
+.hardness_6 {
+	background-color: color-mix(in srgb, var(--red) 10%, white);
+}
+
+.hardness_7 {
+	background-color: color-mix(in srgb, var(--red) 20%, white);
+}
+
+.hardness_8 {
+	background-color: color-mix(in srgb, var(--red) 30%, white);
+}
+
+.hardness_9 {
+	background-color: color-mix(in srgb, var(--red) 40%, white);
+}
+
+.hardness_10 {
+	background-color: color-mix(in srgb, var(--red) 50%, white);
+}
+
+.hardness_undefined_border {
+	border-color: color-mix(in srgb, var(--yellow) 40%, white) !important;
+}
+
+.hardness_1_border {
+	border-color: color-mix(in srgb, var(--green) 50%, white) !important;
+}
+
+.hardness_2_border {
+	border-color: color-mix(in srgb, var(--green) 40%, white) !important;
+}
+
+.hardness_3_border {
+	border-color: color-mix(in srgb, var(--green) 30%, white) !important;
+}
+
+.hardness_4_border {
+	border-color: color-mix(in srgb, var(--green) 20%, white) !important;
+}
+
+.hardness_5_border {
+	border-color: color-mix(in srgb, var(--green) 10%, white) !important;
+}
+
+.hardness_6_border {
+	border-color: color-mix(in srgb, var(--red) 10%, white) !important;
+}
+
+.hardness_7_border {
+	border-color: color-mix(in srgb, var(--red) 20%, white) !important;
+}
+
+.hardness_8_border {
+	border-color: color-mix(in srgb, var(--red) 30%, white) !important;
+}
+
+.hardness_9_border {
+	border-color: color-mix(in srgb, var(--red) 40%, white) !important;
+}
+
+.hardness_10_border {
+	border-color: color-mix(in srgb, var(--red) 50%, white) !important;
+}

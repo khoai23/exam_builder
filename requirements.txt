@@ -1,5 +1,6 @@
 flask
-flask-login
+flask-login 
+libsass
 
 openpyxl 
 openpyxl-image-loader

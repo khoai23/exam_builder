@@ -1,4 +1,8 @@
 {% extends 'shared/base.html' %}
+{% block stylesheet %}
+	<link rel="stylesheet" href={{ url_for('static', filename="styles/table.css") }}>
+{% endblock %}
+
 {% block content %}
 {% include 'shared/data_table.tpl' %}
 <div class="container-fluid d-flex p-1" id="modify_bar" hidden>
@@ -39,6 +43,7 @@
 {% include 'shared/modal.tpl' %}
 {% include 'shared/edit_modal.tpl' %}
 {% endblock %}
+
 {% block script %}
 <script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="table.js") }}></script>

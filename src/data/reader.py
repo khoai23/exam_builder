@@ -67,7 +67,15 @@ def copy_file(source: str, target: str, is_target_prefix: Optional[bool]=True, a
     return target
 
 HEADERS = ["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation"]
-SPECIAL_TAGS = ["is_multiple_choice", "is_dynamic_key", "is_fixed_equation", "is_single_equation", "is_single_option"]
+HARDNESS_TAGS = ["hardness_{:d}".format(i) for i in range(1, 11)] # hardness 1-10
+SPECIAL_TAGS = [
+        "is_multiple_choice", # signify multiple-choice question, must select all correct answer to proceed.
+        # see src.generator.dynamic_problem for algorithm & example at __main__
+        "is_dynamic_key",     # signify question where it can replace specific keyword in question with alphabet character; this should have no real bearing on logic itself.
+        "is_fixed_equation",  # signify question where 4 choices are fixed & can be calculated; this would be stronger in countering trick guessing. 
+        "is_single_equation", # signify question where a single correct equation is provided & can be calculated; this would cause shuffling source & fk with asking.
+        "is_single_option",   # signify question with replacable keyword for correct answer; in practice, this would be a more manual version of is_single_equation as you can't autocalculate; but also more flexible as you can have specified strings.
+]
 
 def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
     if(".csv" in filepath):
@@ -200,8 +208,12 @@ def reconvert_field(row: Dict):
     special = [s for s in SPECIAL_TAGS if row.pop(s, None)]
     row["special"] = ", ".join(special)
     # reconvert tag & correct_id to corresponding format if necessary
-    if("tag" in row):
+    if "tag" in row:
         row["tag"] = ", ".join(row["tag"])
+    if "hardness" in row and row["hardness"]:
+        # append hardness back in as an option
+        hardness_tag = HARDNESS_TAGS[int(row["hardness"])-1]
+        row["tag"] = (row["tag"] + ", " + hardness_tag) if "tag" in row else hardness_tag
     if(isinstance(row["correct_id"], tuple)):
         row["correct_id"] = ", ".join([str(i) for i in row["correct_id"]])
     return row
@@ -226,9 +238,15 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
 #            logger.debug("Tag: ", v)
             # backward compatibility
             for st in SPECIAL_TAGS:
-                if(st in v):
+                if st in v:
                     v.remove(st)
-                    new_data[st] = True
+                    new_data[st] = True 
+            # additionally; if v has a hardness_{v} tag, convert it to "hardness" property 
+            new_data["hardness"] = None
+            for i, ht in enumerate(HARDNESS_TAGS):
+                if ht in v:
+                    v.remove(ht)
+                    new_data["hardness"] = i+1
         if(k == "special"):
             # if has tag for multiple choice, swap it to is_multiple_choice
             # TODO enforce mutual exclusivity

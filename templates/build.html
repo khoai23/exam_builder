@@ -1,4 +1,8 @@
 {% extends 'shared/base.html' %}
+{% block stylesheet %}
+	<link rel="stylesheet" href={{ url_for('static', filename="styles/table.css") }}>
+{% endblock %}
+
 {% block content %}
 <div class="accordion d-flex flex-column" id="accordion_main" style="height: 100%">
 	<div class="card flex-grow-2">
@@ -18,7 +22,8 @@
 				<a class="mx-2 btn btn-info" href="export" target="_blank" download>Export</a>
 				<button class="mx-2 btn btn-warning" onclick="rollback(event)">Rollback</button>
 				<span class="m-2" id="io_result"></span> -->
-				<div class="input-prepend mx-2 ml-auto"> <!-- Push the rest to the left -->
+				<!-- The 1st of below will have ml-auto to push the rest to the left -->
+				<!-- <div class="input-prepend mx-2 ml-auto"> 
 					<button type="button" id="add_to_group_btn" class="btn btn-info" onclick="add_to_group(event)">Add to Group 1</button>
 					<button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
 					<ul class="dropdown-menu">
@@ -27,8 +32,8 @@
 						<li><button type="button" class="btn btn-link" onclick="switch_add_group(3)">To Group 3 (Red)</button></li>
 						<li><button type="button" class="btn btn-link" onclick="switch_add_group(4)">To Group 4 (Yellow)</button></li>
 					</ul>
-				</div>
-				<button class="mx-2 btn btn-success" onclick="create_questionnaire(event)">Use Selected</button>
+				</div> -->
+				<button class="btn btn-success mx-2 ml-auto" onclick="create_questionnaire(event)">Use Selected</button>
 		</div>
 		</div>
 	</div>
@@ -50,9 +55,10 @@
 				</div>
 				<div id="dragdrop_classifier">
 					<label class="mt-3"> Drag boxes around to assign questions to appropriate categories: </label>
-					{% for color in ["primary", "success", "danger", "warning"] %}
-					<div class="m-2 p-2 border border-{{color}} d-flex flex-wrap" id="classifier_section_{{loop.index0}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
-						<!-- label class="m-2 p-2 border border-secondary" draggable="true" ondragstart="drag(event)" id="q_{{loop.index0*2}}" >Test No.{{loop.index0}} </label -->
+					<!-- undefined gets its own section -->
+					<!-- rest of the rated values -->
+					{% for hardness in ["undefined"] + (range(1, 11) | list) %}
+					<div class="m-2 p-2 border hardness_{{hardness}}_border d-flex flex-wrap" id="classifier_section_{{hardness}}" ondrop="drop(event)" ondragover="allowDrop(event)"> 
 					</div>
 					{% endfor %}
 				</div>

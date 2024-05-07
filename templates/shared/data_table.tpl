@@ -8,13 +8,28 @@
 		</div>
 	</div>
 	<span class="h3 m-2">Category:</span>
+	<div class="dropleft">
+		<button class="btn btn-secondary dropdown-toggle" type="button" id="hardness_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			Hardness
+		</button>
+		<div class="dropdown-menu" aria-labelledby="hardness_dropdown" id="hardness_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
+			<button class="btn btn-link dropdown-item" onclick=select_hardness(0)>All</button>
+			<button class="btn btn-link dropdown-item" onclick=select_hardness(-1)>Unrated</button>
+			<button class="btn btn-link dropdown-item" onclick=select_hardness(-2)>Rated</button>
+			{% for i in range(1, 11) %}
+				<button class="btn btn-link dropdown-item" onclick=select_hardness({{i}})>{{i}}</button>
+			{% endfor %}
+		</div>
+	</div>
+	<span class="h3 m-2">Hardness:</span>
 </div>
 <div class="table-responsive card-body w-100 d-md-table">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
 		<thead class="thead-light">
 			<tr>
 				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">ID</th>
-				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
+				<th class="align-top" style="position: sticky; top: 0; z-index: 5;">Hardness</th>
+				<th colspan='2' class="align-top" style="position: sticky; top: 0; z-index: 5;">Question</th>
 				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 1</th>
 				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 2</th>
 				<th class="align-top d-none d-lg-table-cell d-xl-table-cell" style="position: sticky; top: 0; z-index: 5;">Answer 3</th>

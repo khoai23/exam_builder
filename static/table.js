@@ -18,6 +18,7 @@ var category_update_function = null; // this value is to be called upon a catego
 var selector_update_function = null; // this value is to be updated upon a selector load (checkbox)
 var all_categories = null;
 var current_selected_category = localStorage.getItem("8thcircle_category");
+var current_selected_hardness = localStorage.getItem("8thcircle_hardness") || 0; 
 var all_tags = null;
 var currently_selected_tag = []; 
 var editable = false;
@@ -130,7 +131,7 @@ function setup_editable(cell, qid, key, index0) {
 }
 
 // used when use_local_data is false; data is reloaded on the long web instead 
-function load_data_into_table(start, end, request_tags=false, url="filtered_questions") {
+function load_data_into_table(start, end, request_tags=false, hardness=undefined, url="filtered_questions") {
 	let catstr = "category=" + encodeURI(current_selected_category);
 	let tagstr = currently_selected_tag.length === 0 ? "" : "tag=" + encodeURI(currently_selected_tag.join(","));
 	if(tagstr == "") {
@@ -147,6 +148,11 @@ function load_data_into_table(start, end, request_tags=false, url="filtered_ques
 	if(end !== undefined) {
 		url = url + "&end=" + end.toString();
 	}
+	if(hardness === undefined) {
+		hardness = current_selected_hardness;
+	}
+	url = url + "&hardness=" + hardness.toString();
+
 	if(request_tags) {
 		if(currently_selected_tag.length > 0) {
 			console.log("Trying to request tags with already selected tag; this will still work, but will returning same value as selected");
@@ -159,6 +165,7 @@ function load_data_into_table(start, end, request_tags=false, url="filtered_ques
 		type: "GET",
 		url: url,
 		success: function(data, textStatus, jqXHR) {
+			current_data = data["questions"];
 			// update the questions 
 			reupdate_questions(data["questions"]);
 			// show all necessary tags if specifically requested
@@ -217,6 +224,14 @@ function select_category(event) {
 	// update the clear filter and show it 
 	// $("#filter_category_clear").text(category + "(X)");
 	// $("#filter_category_clear").show();
+}
+
+function select_hardness(hardness_value) {
+	console.log("Switching to hardness value", hardness_value);
+	current_selected_hardness = hardness_value;
+	// TODO make this less annoying
+	$("#hardness_dropdown").text(current_selected_hardness == 0 ? "All" : current_selected_hardness == -1 ? "Unrated" : current_selected_hardness == -2 ? "Rated" : current_selected_hardness.toString());
+	show_by_category_and_tag(request_tags=true)
 }
 
 function selector_update(event) {
@@ -396,7 +411,7 @@ function external_update_filter(chain_to_reupdate_question=false) {
 		url: "all_filter",
 		success: function(data, textStatus, jqXHR) {
 			//console.log(data)
-			console.log("Loading category:", data["categories"]);
+			console.log("Loaded category:", data["categories"]);
 			let catmenu = $("#category_dropdown_menu");
 			catmenu.empty();
 			// catmenu.append(build_category_cell("All"));
@@ -405,10 +420,12 @@ function external_update_filter(chain_to_reupdate_question=false) {
 			all_categories.forEach( function(cat) { catmenu.append(build_category_cell(cat)); });
 			if(chain_to_reupdate_question) {
 				if(!all_categories.includes(current_selected_category)) {
-					console.log("Did not found current category; setting to default (0)");
 					current_selected_category = all_categories[0]; // selected first category 
+					console.log("Did not found current category; setting to default (1st, ", current_selected_category, ")");
 				}
 				$("#category_dropdown").text(current_selected_category); // also change the display to the appropriate version
+				// hardness value is always correct per session.
+				$("#hardness_dropdown").text(current_selected_hardness == 0 ? "All" : current_selected_hardness == -1 ? "Unrated" : current_selected_hardness == -2 ? "Rated" : current_selected_hardness.toString());
 				if(category_update_function !== null) {
 					category_update_function(all_categories, current_selected_category)
 				}
@@ -457,7 +474,13 @@ function reupdate_questions(data, clear_table = true) {
 			// TODO allow click to jump to the target row; or to show only the source & target ala Category
 			id_cell.addClass("table-danger");
 		}
-		let question_cell = $("<td>").attr("display", "white-space: pre-wrap");
+		let hardness_cell = $("<td>").text(q["hardness"] || "?");
+		if(q["hardness"]) {
+			hardness_cell = hardness_cell.attr("class", "hardness_" + q["hardness"].toString());
+		} else {
+			hardness_cell = hardness_cell.attr("class", "hardness_undefined");
+		}
+		let question_cell = $("<td colspan='2'>").attr("display", "white-space: pre-wrap");
 		if(q["question"].includes("|||")) { // image-included; attempt to 
 			const pieces = q["question"].split("|||");
 			pieces.forEach(function (p) {
@@ -475,18 +498,29 @@ function reupdate_questions(data, clear_table = true) {
 		}
 		// additionally; if editable value is active; allow editing & binding
 		if(editable) {
+			hardness_cell = setup_editable(hardness_cell, q["id"], "hardness", i);
 			question_cell = setup_editable(question_cell, q["id"], "question", i);
 		}
-		let row = $("<tr>").append([
-			id_cell, question_cell
-		]);
+		let row = $("<tr>").append([id_cell, hardness_cell, question_cell]);
 		if(data[i]["is_single_equation"]) {
-			row.append($("<td colspan='5'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
+			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
+			let answer_cell = $("<td colspan='3' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);
+			let template_cell = $("<td colspan='2' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates);
+			if(editable) {
+				answer_cell = setup_editable(answer_cell, q["id"], "answer1", i);
+				template_cell = setup_editable(template_cell, q["id"], "variable_limitation", i);
+			}
+			row.append([answer_cell, template_cell]);
 		} else if(data[i]["is_single_option"]) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			// console.log(formatted_templates);
-			row.append($("<td>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]));
-			row.append($("<td colspan='4' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates));
+			let answer_cell = $("<td colspan='2'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);
+			let template_cell = $("<td colspan='3' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates);
+			if(editable) {
+				answer_cell = setup_editable(answer_cell, q["id"], "answer1", i);
+				template_cell = setup_editable(template_cell, q["id"], "variable_limitation", i);
+			}
+			row.append([answer_cell, template_cell]);
 		} else {
 			let answers = [];
 			var correct_ids = q["correct_id"];

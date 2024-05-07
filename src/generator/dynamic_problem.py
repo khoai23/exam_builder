@@ -224,6 +224,7 @@ if __name__ == "__main__":
         "answer4": "{alpha_0}{alpha_2}"
     }
     print(convert_dynamic_key_problem(test_question_dynamic))
+    # deprecated variant btw
     test_question_variable = {
         "question": r"{x}{y}|||Test question variable: {x}*{y} = {x*y}, hence {x}/{y}=?",
         "answer1": "{x}",

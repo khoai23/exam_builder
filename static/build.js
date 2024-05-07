@@ -55,7 +55,7 @@ function create_questionnaire_old(event) {
 
 function create_questionnaire(event, dragdrop_mode=true) {
 	// just be add_to_group with extra action 
-	add_to_group(event, true, 0);
+	mass_add_to_group(event, true);
 	$("#data_table").collapse('hide'); $("#result_frame").collapse('hide');
 	$("#category_selector").collapse('show'); // automatically hide the table 
 	// also enable the category_selector's button from this point onward 
@@ -92,11 +92,12 @@ function swap_group(event) {
 	update_group_count(event);
 }
 
-function update_group_count(event, dragdrop_mode=true) {
+function update_group_count(event, dragdrop_mode=true, hide_unused_sections=false) {
 	// upon trigger, simply re-calculate category count 
 	var cats;
 	if(dragdrop_mode) {
-		cats = [...Array(4).keys()].map( si => $("#classifier_section_" + si.toString()))
+		cats = ["undefined"].concat( [...Array(10).keys()].map(si => si+1) )
+			.map( si => $("#classifier_section_" + si.toString()) ) 
 			.map( section => section.find(".question_box").length );
 	} else {
 		cats = [0, 0, 0, 0]
@@ -112,10 +113,23 @@ function update_group_count(event, dragdrop_mode=true) {
 	}
 	// log for now 
 	console.log(cats);
-	for(let i=0;i<4;i++){
-		$("#group_count_" + i.toString()).text(cats[i]);
-		$("#group_" + i.toString()).prop("disabled", cats[i] == 0);
-		$("#score_" + i.toString()).prop("disabled", cats[i] == 0);
+	for(let i=0;i<11;i++){
+		let cue = ((i == 0) ? "undefined" : i.toString());
+		$("#group_count_" + cue).text(cats[i]);
+		$("#group_" + cue).prop("disabled", cats[i] == 0);
+		$("#score_" + cue).prop("disabled", cats[i] == 0);
+		if(hide_unused_sections) {
+			// outright hide items away if item is not available. Need to do removeClass due to it override display=None
+			if(cats[i] == 0) {
+				$("#classifier_section_" + cue).hide();
+				$("#classifier_section_" + cue).removeClass("d-flex");
+				$("#score_section_" + cue).hide();
+			} else {
+				$("#classifier_section_" + cue).show();
+				$("#classifier_section_" + cue).addClass("d-flex");
+				$("#score_section_" + cue).show();
+			}
+		}
 //		console.log($("#group_count_" + i.toString()), "->", cats[i])
 	}
 }
@@ -192,35 +206,68 @@ function submit_questionnaire(event) {
 
 // add the selected to corresponding category; any current values is overriden
 GROUP_CLASS_NAME = ["border-primary", "border-success", "border-danger", "border-warning"]
-function add_to_group(event, dragdrop_mode=true, group_index=-1) {
-	// get the checked
+function mass_add_to_group(event, dragdrop_mode=true, hide_unused_sections=true) {
+	// perform multiple add-to-group by assorted hardness. Only available along dragdrop_mode
 	var checked_ids = get_selected_question_ids();
+	var hardness_group = {};
+	checked_ids.forEach(function(id) {
+		let q = current_data.find(x => x["id"] == id);
+		if(q === undefined) {
+			console.error("Cannot find question base for qid ", id);
+			return;
+		}
+		let cue = q["hardness"] ? q["hardness"] : 0;
+		if(cue in hardness_group) {
+			hardness_group[cue].push(id);
+		} else {
+			hardness_group[cue] = [id];
+		}
+	});
+	//console.log("Mass add to group output:", hardness_group);
+	for(const [h, ids] of Object.entries(hardness_group)) {
+		// console.log("Adding: ", h, ids);
+		add_to_group(event, true, h, ids, false);
+	}
+	// update; propagate the hide_unused_sections to make the ui less cluttered
+	update_group_count(event, true, hide_unused_sections);
+}
+
+function add_to_group(event, dragdrop_mode=true, group_index=-1, checked_ids=undefined, gc_update=true) {
+	// get the checked if used as standalone
+	var checked_ids = checked_ids || get_selected_question_ids();
+	console.log("Received update ids: ", checked_ids, "for group ", group_index);
 	// get group; convert to qidx attributes
 	if(group_index < 0) {
+		console.error("@add_to_group: invalid group_index, do not proceed.");
+		return;
 		group_index = parseInt($("#add_to_group_btn").html().slice(-1)[0]) - 1; // take last and convert to int; then minus 1 to move [1, 4] to [0, 4)
 	}
-	let add_field = GROUP_CLASS_NAME[group_index];
-	let remove_field = GROUP_CLASS_NAME.slice(0, group_index).join(" ") + " " + GROUP_CLASS_NAME.slice(group_index+1).join(" ");
 	var q_indices = $.map(checked_ids, i => i.toString());
 	if(dragdrop_mode) {
 		// var sections = [...Array(10).keys()].map(i => $("#classifier_section_" + i.toString()));
-		var current_section_ids, section;
-		for(let si=0;si<4;si++){
-			section = $("#classifier_section_" + si.toString());
+		let current_section_ids, section;
+		for(let si=0;si<11;si++){
+			section = $("#classifier_section_" + (si == 0 ? "undefined": si.toString()));
 			if(si == group_index) {
 				current_section_ids = [...checked_ids];
 				section.find("label").each(function (index) {
-					let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
+					let i = current_section_ids.indexOf( parseInt($(this).attr("qidx")) )
 					if(i >= 0) {
 						current_section_ids.splice(i, 1); // item is already here; just ignore.
 					}
 				});
-				for(qidx in current_section_ids) {
-					// item here means it's not in existence yet; add new object in.
-					$('<label>').attr("class", "border m-2 p-2 question_box").attr("qidx", qidx.toString())
+				//console.log("Non-existent items (require adding new): ", current_section_ids);
+				current_section_ids.forEach(function(qidx) {
+					// item here means it's not in existence yet; add new object in. 
+					let q = current_data.find(x => x["id"] == qidx);
+					let hardness = q["hardness"] ? q["hardness"].toString() : "undefined"
+					let new_item = $('<label>').attr("class", "border m-2 p-2 question_box hardness_" + hardness + "_border").attr("qidx", qidx.toString())
 						.attr("draggable", true).attr("ondragstart", "drag(event)")
-						.text("Q" + qidx.toString()).appendTo(section);
-				}
+						.attr("title", ["question", "answer1"].map(k => q[k].slice(0, 100) + "...").join("\n"))
+						.text("Q" + qidx.toString());
+					//console.log("Create new item: ", new_item, " for qidx ", qidx, " targetting section ", section);
+					section.append(new_item);
+				});
 			} else {
 				section.find("label").each(function (index) {
 					let i = checked_ids.indexOf( parseInt($(this).attr("qidx")) )
@@ -232,6 +279,8 @@ function add_to_group(event, dragdrop_mode=true, group_index=-1) {
 			}
 		}
 	} else {
+		let add_field = GROUP_CLASS_NAME[group_index];
+		let remove_field = GROUP_CLASS_NAME.slice(0, group_index).join(" ") + " " + GROUP_CLASS_NAME.slice(group_index+1).join(" ");
 		// go through the item in the classifier; 
 		// if id already exist, swap it with new class; if it not, add it
 		var classifier = $("#barebone_classifier");
@@ -252,8 +301,10 @@ function add_to_group(event, dragdrop_mode=true, group_index=-1) {
 			$('<label class="border ' + add_field + ' m-2 p-2" onclick="swap_group(event)" qidx="' + id + '"> <b>Q' + id + '</b></label>').appendTo(classifier);
 		});
 	}
-	// recheck the group availability
-	update_group_count(classifier, dragdrop_mode);
+	if(gc_update) {
+		// recheck the group availability when in standalone (=true)
+		update_group_count(classifier, dragdrop_mode);
+	}
 }
 
 function switch_add_group(group_index) {

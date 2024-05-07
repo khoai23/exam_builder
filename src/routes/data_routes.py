@@ -1,6 +1,7 @@
 """Routes strictly for the management & showing of exam data on a tabled format."""
 import flask
 from flask import Flask, request, url_for
+import sass
 import os, time
 import traceback 
 
@@ -11,6 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
+    # prerequisite sass; TODO later when I'm less lazy
     ### For generic data table ###
     @app.route("/filtered_questions", methods=["GET"])
     @login_decorator
@@ -24,6 +26,21 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
         filtered_data = current_data.load_category(category)
         if(tag_filter):
             filtered_data = (q for q in filtered_data if any((t in q.get("tag", []) for t in tag_filter)))
+        # if supply hardness = -1 or specific; 
+        hardness = int(request.args.get("hardness", 0))
+        if hardness == 0:
+            # accept all hardness
+            pass
+        elif 1 <= hardness <= 10:
+            # filter only the ones that match 
+            filtered_data = (q for q in filtered_data if int(q.get("hardness", 0) or 0) == hardness)
+        elif hardness == -2:
+            # filter only the "rated one"
+            filtered_data = (q for q in filtered_data if 1 <= int(q.get("hardness", 0) or 0) <= 10)
+        else:
+            # filter all "unrated" (None or outside boundary)
+            filtered_data = (q for q in filtered_data if not 1 <= int(q.get("hardness", 0) or 0) <= 10 )
+
         filtered_data = list(filtered_data)
         start_index = int(request.args.get("start", 0))
         end_index = int(request.args.get("end", int(request.args.get("length", 1000)) + start_index ))

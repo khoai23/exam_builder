@@ -1,12 +1,10 @@
 <div class="container-fluid" id="disposition"> 
 	<div class="row align-middle col-sm-12 m-1">Composition (score &amp; count):</div>
-	{% for border_type in ["border-primary", "border-success", "border-danger", "border-warning"] %}
-		{% if loop.index0 % 2 == 0 %}
-			<div class="row">
-		{% endif %}
-		<div class="col-sm-12 col-md-6 p-1">
-			<div class="border {{border_type}} p-1">
-			<div class="input-group">
+	<div class="row">
+	{% for i in ["undefined"] + (range(1, 11) | list) %}
+		<div id="score_section_{{i}}" class="col-sm-4 col-2 p-1">
+			<div class="border hardness_{{i}}_border p-1 input-group">
+				<span class="p-2">Hardness {{i}}:</span>
 				<input type="number" class="form-control" id="group_{{loop.index0}}" maxlength="2" /> 
 				<div class="input-group-append">
 					<div class="input-group-text"> 
@@ -20,12 +18,9 @@
 					</div>
 				</div>
 			</div>
-			</div>
 		</div>
-		{% if loop.index0 % 2 != 0 %}
-			</div>
-		{% endif %}
 	{% endfor %}
+	</div>
 	<div class="row align-middle col-sm-12 m-1"><i>*PPC: Point per Correct answer in category</i></div>
 </div>
 <div class="container-fluid" id="setting">
