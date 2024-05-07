@@ -5,13 +5,13 @@
 		<div id="score_section_{{i}}" class="col-sm-4 col-2 p-1">
 			<div class="border hardness_{{i}}_border p-1 input-group">
 				<span class="p-2">Hardness {{i}}:</span>
-				<input type="number" class="form-control" id="group_{{loop.index0}}" maxlength="2" /> 
+				<input type="number" class="form-control" id="group_{{i}}" maxlength="2" /> 
 				<div class="input-group-append">
 					<div class="input-group-text"> 
-						<span>question /</span> <b><span id="group_count_{loop.index0}">0</span></b> <span>&nbsp;total with&nbsp;</span>
+						<span>question /</span> <b><span id="group_count_{{i}}">0</span></b> <span>&nbsp;total with&nbsp;</span>
 					</div>
 				</div>
-				<input type="number" class="form-control" id="score_{{loop.index0}}" maxlength="5" />
+				<input type="number" class="form-control" id="score_{{i}}" maxlength="5" />
 				<div class="input-group-append">
 					<div class="input-group-text"> 
 						 <span>PPC</span>

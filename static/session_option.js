@@ -60,9 +60,9 @@ function updateQuestionnaireSetting(setting) {
 
 function check_group_score(current_group) {
 	// for each possible group; check and build for corresponding values
-	// group is 4-list of each question id
-	var data = [0, 1, 2, 3].map(i => [parseInt($("#group_" + i).val()), parseFloat($("#score_" + i).val()), current_group[i]]);
-	console.log("Raw result", data, current_group);
+	// group is 4-list of each question id 
+	var data = Object.keys(current_group).map(k => [parseInt($("#group_" + k).val()), parseFloat($("#score_" + k).val()), current_group[k]]);
+	console.log("Raw result", data, current_group, Object.entries(current_group));
 	// Check phase.
 	var err_type = data.map(function(item, index) {
 		// console.log(item[2]);

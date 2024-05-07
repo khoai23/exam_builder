@@ -134,26 +134,44 @@ function update_group_count(event, dragdrop_mode=true, hide_unused_sections=fals
 	}
 }
 
-function submit_questionnaire(event) {
+function submit_questionnaire(event, dragdrop_mode=true) {
 	// check for validity; then submit the data to the server; receiving an entry link
 //	var data = [[$("#group_0").val(), []], [$("#group_1").val(), []], 
 //		[$("#group_2").val(), []], [$("#group_3").val(), []]];
-	groups = [0, 1, 2, 3].map(i => []);
-	$("#barebone_classifier").find("label").each(function(index) {
-		let question_index = parseInt($(this).attr("qidx"));
-		// console.log($(this), question_index)
-		let qcl =  $(this)[0].className.split(/\s+/);
-		let question_category = check_group(qcl);
-		if(question_category < 0) {
-			console.log("Cannot find category on ", $(this), "index ",  question_index, "will be ignored.");
-			return;
-		}
-		// append the index to the list of choices
-		groups[question_category].push(question_index);
-	});
+	let groups = {};
+	if(dragdrop_mode) {
+		let sections = ["undefined"].concat( [...Array(10).keys()].map(i => i+1) ).map(cue => [cue, $("#classifier_section_" + cue.toString())]);
+		sections.forEach(function(indexed_section) {
+			const [cue, section] = indexed_section;
+			section.find("label").each(function(index) {
+				let question_index = parseInt($(this).attr("qidx"));
+				if(cue in groups) {
+					groups[cue].push(question_index);
+				} else {
+					groups[cue] = [question_index];
+				}
+			});
+		});
+	} else {
+		$("#barebone_classifier").find("label").each(function(index) {
+			let question_index = parseInt($(this).attr("qidx"));
+			// console.log($(this), question_index)
+			let qcl =  $(this)[0].className.split(/\s+/);
+			let question_category = check_group(qcl);
+			if(question_category < 0) {
+				console.log("Cannot find category on ", $(this), "index ",  question_index, "will be ignored.");
+				return;
+			}
+			// append the index to the list of choices 
+			if(question_category in groups) {
+				groups[question_category].push(question_index);
+			} else {
+				groups[question_category] = [question_index];
+			}
+		});
+	}
 	// check and convert the group data to appropriate formats ()
-	var data, err_type;
-	[data, err_type] = check_group_score(groups);
+	var [data, err_type] = check_group_score(groups);
 	if(err_type.every(v => v === null) && err_type.length > 0) {
 		// everything is ok, clear and push to an event 
 		data = data.filter(v => v[2].length > 0);
@@ -216,7 +234,7 @@ function mass_add_to_group(event, dragdrop_mode=true, hide_unused_sections=true)
 			console.error("Cannot find question base for qid ", id);
 			return;
 		}
-		let cue = q["hardness"] ? q["hardness"] : 0;
+		let cue = q["hardness"] ? q["hardness"] : 0; // use 0 as undefined so it can be compared with matching forEach
 		if(cue in hardness_group) {
 			hardness_group[cue].push(id);
 		} else {

@@ -229,6 +229,7 @@ function select_category(event) {
 function select_hardness(hardness_value) {
 	console.log("Switching to hardness value", hardness_value);
 	current_selected_hardness = hardness_value;
+	localStorage.setItem("8thcircle_hardness", current_selected_hardness);
 	// TODO make this less annoying
 	$("#hardness_dropdown").text(current_selected_hardness == 0 ? "All" : current_selected_hardness == -1 ? "Unrated" : current_selected_hardness == -2 ? "Rated" : current_selected_hardness.toString());
 	show_by_category_and_tag(request_tags=true)
