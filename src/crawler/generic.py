@@ -4,6 +4,8 @@ import traceback
 import requests
 from bs4 import BeautifulSoup
 
+from typing import Union, Optional, Iterable
+
 import logging 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,18 @@ def get_neighbor_links(soup_or_url, include_key=None, filter_key=None, append_do
             filtered_links = (l for l in filtered_links if l.startswith(append_domain))
     return list(filtered_links)
 
-def perform_crawl(start_url: str, crawl_result_location: str, process_data_fn: callable=None, neighbor_link_fn: callable=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: str=None, retrieve_interval: tuple=(0.5, 1.5), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0, override_crawl_result: bool=False, prefer_cue: str=None):
+def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: str, process_data_fn: Optional[callable]=None, neighbor_link_fn: Optional[callable]=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: str=None, retrieve_interval: tuple=(0.75, 0.25), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0, prefer_cue: str=Optional[None]):
+    """The main crawling mechanism. Will start with start_url, and attempt to scan all of them until all links are exhausted.
+    crawl_result_location: when process completes, this will output all the pages that had been crawled to this.
+    process_data_fn: if supplied, take and parse the "soup". Since data is already downloaded, this will save additional bandwidth.
+    neighbor_link_fn: if supplied, can provide a different crawling mechanism when visit a link. The default is `get_neighbor_links` from here 
+    allow_keyboard_interrupt: ignored for now, default to True.
+    recovery_dump_path: if KeyboardInterrupt a process, the current data is dumped to this location to allow resuming whenever feels fit.
+    retrieve_interval: base + variance; the process will wait [base-var; base+var] second before attempting the next link.
+    delete_dump_after_done: if true, the recovery_dump_path will be cleared upon finishing everything.
+    failed_get_incremental: with every nth failed access to a link, process will wait for n*inc second then try again.
+    prefer_cue: if specified; crawled neighbors matching this will get prioritized to go first. Base with each question on page (e.g tracnghiem_net) can use this to minimize size of the queue
+    """
     # get_neighbor_links(start_url)
     if(os.path.isfile(recovery_dump_path)):
         with io.open(recovery_dump_path, "rb") as df:
@@ -48,8 +61,8 @@ def perform_crawl(start_url: str, crawl_result_location: str, process_data_fn: c
             else:
                 queue = list(queue)
     else:
-        passed = {start_url}
-        queue = [start_url]
+        passed = {start_url} if isinstance(start_url, str) else set(start_url)
+        queue = [start_url] if isinstance(start_url, str) else list(start_url)
     # usable_links = []
     incremental_wait_on_failed_resolve = 0
     retrieve_base, retrieve_variance = retrieve_interval if retrieve_interval else (0.0, 0.0)
@@ -119,7 +132,7 @@ def perform_crawl(start_url: str, crawl_result_location: str, process_data_fn: c
         # exit immediately
         return 1 # use for sys exit 
     logger.info("Finished crawling.")
-    if(not override_crawl_result and os.path.isfile(crawl_result_location)):
+    if(crawl_result_location and os.path.isfile(crawl_result_location)):
         base, extension = os.path.splitext(crawl_result_location)
         for i in range(1, 1000 + 1):
             crawl_result_location = base + "_{:d}".format(i) + extension

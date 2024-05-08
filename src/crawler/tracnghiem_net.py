@@ -1,10 +1,13 @@
 import io, os, csv, re 
 import traceback
-from functools import partial
+from functools import partial 
+import unicodedata
 
 from src.crawler import generic
 
-INCLUDE_KEY = {"bai-hoc", "trac-nghiem", "de-kiem-tra"}
+from typing import Tuple
+
+INCLUDE_KEY = {"bai-hoc", "trac-nghiem", "de-kiem-tra", "de-thi"}
 FILTER_KEY = {"..", ".jsp", "dang-nhap", "void"}
 APPEND_DOMAIN = "https://tracnghiem.net"
 
@@ -14,28 +17,59 @@ def get_neighbor_links(soup_or_url, include_key=INCLUDE_KEY, filter_key=FILTER_K
 def perform_crawl(*args, neighbor_link_fn=get_neighbor_links, **kwargs):
     return generic.perform_crawl(*args, neighbor_link_fn=neighbor_link_fn, **kwargs)
 
+def per_category_writer(basepath: str) -> Tuple[dict, callable]:
+    # write associating file per-category on a per-demand basis 
+    all_category = {}
+    base_prefix, extension = os.path.splitext(basepath)
+    def write_with_category(category, row):
+        if category in all_category:
+            # existing file; just write into it 
+            all_category[category][-1].writerow(row)
+        else:
+            # new file; instantiate, put into all_category, and put that row in.
+            category_cue_raw = unicodedata.normalize("NFKD", category).encode("ascii", "ignore").decode("utf-8")
+            category_cue_alnum = "".join((c for c in category_cue_raw if c.isalnum()))
+            csv_path = base_prefix + category_cue_alnum + extension
+            file_existed = os.path.isfile(csv_path)
+            # check file & append/continue as needed
+            cf = io.open(csv_path, "a" if file_existed else "w", encoding="utf-8")
+            writer = csv.DictWriter(cf, fieldnames=["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation", "explanation", "url"], dialect="unix")
+            if(not file_existed):
+                writer.writeheader()
+            # put into the category box
+            all_category[category] = (cf, writer)
+            # write anyway
+            writer.writerow(row)
+    return all_category, write_with_category
+
 _CORRECT_NAME = {"A": 1, "B": 2, "C": 3, "D": 4}
 EXPLANATION_TRIM_CUE = "Chọn đáp án"
 COUNTER = {None: 0}
-def process_data(soup, url=None, writer=None, keep_partial_question=True):
+
+def parse_data_from_frame(soup) -> Tuple[list, str, str]:
+    # parsing necessary from sub-frame section
+    answers = (a.text.replace("\xa0", "").strip() for a in soup.find_all("div", class_="radio-control"))
+    answers = [a[2:].strip() if a[1] == "." else a for a in answers]
+    right = _CORRECT_NAME.get( soup.find("span", class_="right-answer").find("b").text, -1 )
+    explanation = soup.find("div", class_="answer-result").text.strip()
+    if(EXPLANATION_TRIM_CUE in explanation):
+        # special case: if has this cue; throw the last part away
+        explanation = explanation.split(EXPLANATION_TRIM_CUE)[0]
+    return answers, right, explanation
+
+
+def process_data(soup, url=None, writer_fn=None, keep_partial_question=True):
     """Receive the necessary data and write it to a csv."""
     # print(soup)
     try:
+        frame = soup.find("div", class_="d9Box")
         question = soup.find("h1", class_="title28Bold")
-        if(question is not None):
-            # check if exist any image in question; if yes, append it in the question itself
-            if(question.find("img")):
-                generic.logger.debug("Question has image, currently append to the end of text. TODO better positioning")
-                question = question.text.strip() + "\n" + " ".join(["|||{}|||".format(img["src"]) for img in question.find_all("img", src=True)])
-            else:
-                question = question.text.strip()
-            answers = (a.text.replace("\xa0", "").strip() for a in soup.find_all("div", class_="radio-control"))
-            answers = [a[2:].strip() if a[1] == "." else a for a in answers]
-            right = _CORRECT_NAME.get( soup.find("span", class_="right-answer").find("b").text, -1 )
-            explanation = soup.find("div", class_="answer-result").text.strip()
-            if(EXPLANATION_TRIM_CUE in explanation):
-                # special case: if has this cue; throw the last part away
-                explanation = explanation.split(EXPLANATION_TRIM_CUE)[0]
+        if frame is None:
+            generic.logger.debug("Link {} is not a valid quiz (no frame); exiting.".format(url))
+        elif question is None:
+            generic.logger.debug("Link {} is not a valid quiz (no title); exiting.".format(url))
+        else:
+            # topic & tags first. If can find in appropriate slot, use that; if not, try to get a pseudo equivalent with the navigator breadcrumb
             topics = soup.find_all("div", class_="topic-col")
             if(len(topics) >= 2):
                 # tag_wrapper, subject_wrapper = topics[:2]
@@ -45,27 +79,51 @@ def process_data(soup, url=None, writer=None, keep_partial_question=True):
                 else:
                     category = ""
                 tags = [tag_field.text.strip() for t in topics for tag_field in t.find_all("a") if t is not subject_wrapper]
-            elif("huong-nghiep" in url):
-                category, tags = "Khác", ""
-            elif("tieng-anh" in url):
-                category, tags = "English", ""
-            elif("dai-hoc" in url):
-                category, tags = "Đại học", ""
             else:
-                category = tags = ""
-    #        print(question, answers, right, explanation)
-            data = dict(question=question, correct_id=right, explanation=explanation, tag=", ".join(tags), category=category, url=url)
-            if(keep_partial_question):
-                data.update({"answer{:d}".format(i+1):a for i, a in enumerate(answers)})   
+                # category are inferred from the breadcrumb object; tag is empty 
+                category = soup.find("div", class_="breadcrumb").text.strip().split("\n")[-1].strip()
+                tags = ""
+
+            # check if exist any image in question; if yes, append it in the question itself
+            if(question.find("img")):
+                generic.logger.debug("Question has image, currently append to the end of text. TODO better positioning")
+                question = question.text.strip() + "\n" + " ".join(["|||{}|||".format(img["src"]) for img in question.find_all("img", src=True)])
             else:
-                a1, a2, a3, a4 = answers
-                data.update(answer1=a1, answer2=a2, answer3=a3, answer4=a4)
-#            logger.debug("Queston correctly parsed: {}".format(data))
-            writer.writerow(data)
-            COUNTER[None] += 1
+                question = question.text.strip()
+            
+            shared_content_box = frame.find("div", class_="question-detail")
+            if shared_content_box:
+                # multiple question mode, mostly in the english variant. This means the questions will have a "shared" part 
+                additional_question_content = shared_content_box.text.replace("\xa0", "").strip()
+                if additional_question_content:
+                    question_prefix = question + "\n\n" + additional_question_content + "\n\n"
+                else:
+                    question_prefix = question + "\n\n"
+                for subquestion_frame in frame.find_all("div", class_="part-item"):
+                    subsuffix = subquestion_frame.find("h4", class_="title16Bold").text.strip()
+                    answers, right, explanation = parse_data_from_frame(subquestion_frame)
+                    data = dict(question=question_prefix+subsuffix, correct_id=right, explanation=explanation, tag=", ".join(tags), category=category, url=url)
+                    if(keep_partial_question):
+                        data.update({"answer{:d}".format(i+1):a for i, a in enumerate(answers)})   
+                    else:
+                        a1, a2, a3, a4 = answers
+                        data.update(answer1=a1, answer2=a2, answer3=a3, answer4=a4)
+                    writer_fn(category, data)
+                    COUNTER[None] += 1
+            else:
+                # single question mode, vast majority of cases.
+                answers, right, explanation = parse_data_from_frame(frame)
+    #            print(question, answers, right, explanation)
+                data = dict(question=question, correct_id=right, explanation=explanation, tag=", ".join(tags), category=category, url=url)
+                if(keep_partial_question):
+                    data.update({"answer{:d}".format(i+1):a for i, a in enumerate(answers)})   
+                else:
+                    a1, a2, a3, a4 = answers
+                    data.update(answer1=a1, answer2=a2, answer3=a3, answer4=a4)
+#                logger.debug("Single question correctly parsed: {}".format(data))
+                writer_fn(category, data)
+                COUNTER[None] += 1
             generic.logger.info("Link {} has a valid quiz; appending to {:d}.".format(url, COUNTER[None]))
-        else:
-            generic.logger.debug("Link {} is not a valid quiz; exiting.".format(url))
     except Exception as e:
         generic.logger.error("Parsing link {} has error: {}\n, quiz skipped.".format(url, traceback.format_exc()))
 
@@ -95,22 +153,24 @@ def convert_question_to_multiple(data, special_tag="is_multiple_choice"):
 if __name__ == "__main__":
     import sys, logging
     logging.basicConfig(level=logging.INFO)
-    start_url = "https://tracnghiem.net/de-thi/cau-hoi-co-su-khac-nhau-ve-mau-da-giua-cac-chung-toc-la-do-dau-149980.html" 
+    start_url = [
+            "https://tracnghiem.net/de-kiem-tra/{:s}-lop-{:d}/?type=2".format(subject, tier)
+            for tier in range(6, 13) 
+            for subject in ["toan-hoc", "vat-ly", "sinh-hoc", "tieng-anh", "lich-su", "dia-ly", "gdcd", "cong-nghe", "tin-hoc", "lich-su-va-dia-li", "khoa-hoc-tu-nhien"]
+    ]
     DUMP_PATH = "test/tracnghiem_net.pkl"
     if(len(sys.argv) > 2):
-        target_location = sys.argv[1]
+        link_location = sys.argv[1]
+        assert not link_location.endswith(".csv"), "Must input link_location as not-csv (best as plaintext)"
+        data_location = os.path.splitext(link_location)[0] + ".csv"
     else:
-        print("Using default: test/tracnghiem_net.txt")
-        target_location = "test/tracnghiem_net.txt"
-    csv_path = "test/tracnghiem_net.csv"
-    file_existed = os.path.isfile(csv_path)
-    with io.open(csv_path, "a" if file_existed else "w", encoding="utf-8") as cf:
-        writer = csv.DictWriter(cf, fieldnames=["question", "answer1", "answer2", "answer3", "answer4", "correct_id", "category", "tag", "special", "variable_limitation", "explanation", "url"], dialect="unix")
-        if(not file_existed):
-            writer.writeheader()
-#        soup = generic.get_parsed(start_url)
-#        process_data(soup, start_url, writer=writer)
-        process_data_fn = partial(process_data, writer=writer)
-        return_code = perform_crawl(start_url, target_location, process_data_fn=process_data_fn, recovery_dump_path=DUMP_PATH, prefer_cue="cau-hoi-", retrieve_interval=(0.1, 0.3))
+        print("Using default: test/tracnghiem_net.txt|.csv")
+        link_location = "test/tracnghiem_net.txt"
+        data_location = "test/tracnghiem_net.csv"
+    all_category, write_by_category_fn = per_category_writer(data_location)
+    process_data_fn = partial(process_data, writer_fn=write_by_category_fn)
+    return_code = perform_crawl(start_url, link_location, process_data_fn=process_data_fn, recovery_dump_path=DUMP_PATH, prefer_cue="cau-hoi-", retrieve_interval=(0.1, 0.3))
+    for file, _ in all_category.values():
+        file.close()
     sys.exit(return_code)
 

@@ -54,7 +54,12 @@
 					<br />
 				</div>
 				<div id="dragdrop_classifier">
-					<label class="mt-3"> Drag boxes around to assign questions to appropriate categories: </label>
+					<div class="row container-fluid">
+						<label class="m-2"> Drag boxes around to assign questions to appropriate categories. Move to the trash icon to discard.</label>
+							<div class="m-2 border border-danger ml-auto" ondrop="discard(event)" ondragover="allowDrop(event)">
+								<i class="bi bi-trash text-danger"></i>
+							</div> 
+					</div>
 					<!-- undefined gets its own section -->
 					<!-- rest of the rated values -->
 					{% for hardness in ["undefined"] + (range(1, 11) | list) %}

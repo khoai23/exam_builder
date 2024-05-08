@@ -19,6 +19,15 @@ function drop(event) {
 	update_group_count(event);
 }
 
+function discard(event) {
+	let item_qid = parseInt( event.dataTransfer.getData("qidx") ); 
+	let item = $(".question_box").filter(function(index) {
+		return parseInt( $(this).attr("qidx") ) == item_qid;
+	})[0];
+	item.remove();
+	update_group_count(event);
+}
+
 // test function to plug wherever
 function test(event) {
 	alert("Button working: \"" + event.target.innerText + "\"");

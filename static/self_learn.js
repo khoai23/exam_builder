@@ -1,8 +1,12 @@
 var bpmnViewer = new BpmnJS({container: "#bpmn_canvas"});
 
-async function load_graph_fron_xml(xml_content_or_json) {
+async function load_graph_fron_xml(xml_content_or_json, clear_mode=false) {
 	let xml_content = (typeof xml_content_or_json === 'string' || xml_content_or_json instanceof String) ? xml_content_or_json : xml_content_or_json.data;
 	// console.log(xml_content);
+	if(xml_content === undefined) {
+		// if data is not available on disk; hack by getting from online link & then clear it 
+		return open_graph_from_online_link(null, link=test_graph, mode="text", clear_mode=true);
+	}
 	try {
 		await bpmnViewer.importXML(xml_content);
 		// access viewer components
@@ -10,6 +14,10 @@ async function load_graph_fron_xml(xml_content_or_json) {
 		var overlays = bpmnViewer.get('overlays');
 		// zoom to fit full viewport
 		canvas.zoom('fit-viewport');
+		if(clear_mode) {
+			bpmnViewer.clear();
+			console.log("Clear executed.");
+		}
 	} catch (err) {
 		console.error('could not import BPMN 2.0 diagram', err);
 	}
@@ -17,8 +25,8 @@ async function load_graph_fron_xml(xml_content_or_json) {
 
 
 var test_graph = 'https://cdn.statically.io/gh/bpmn-io/bpmn-js-examples/dfceecba/starter/diagram.bpmn';
-function open_graph_from_online_link(event, link=test_graph, mode="text") {
-	$.get(link, load_graph_fron_xml, mode);
+function open_graph_from_online_link(event, link=test_graph, mode="text", clear_mode=false) {
+	$.get(link, result => load_graph_fron_xml(result, clear_mode=clear_mode), mode);
 }
 
 function open_graph_from_server(event) {
