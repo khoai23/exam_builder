@@ -1,7 +1,6 @@
 """Routes strictly for the management & showing of exam data on a tabled format."""
 import flask
 from flask import Flask, request, url_for
-import sass
 import os, time
 import traceback 
 
