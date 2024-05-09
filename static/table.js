@@ -481,13 +481,14 @@ function reupdate_questions(data, clear_table = true) {
 		} else {
 			hardness_cell = hardness_cell.attr("class", "hardness_undefined");
 		}
-		let question_cell = $("<td colspan='2'>").attr("display", "white-space: pre-wrap");
+		let question_cell = $("<td>").attr("display", "white-space: pre-wrap");
 		if(q["question"].includes("|||")) { // image-included; attempt to 
 			const pieces = q["question"].split("|||");
 			pieces.forEach(function (p) {
 				p = p.trim();
 				if(p) {
 					if(p.startsWith("http")){ // hack to detect image
+						question_cell.append($("<br>"))
 						question_cell.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
 					} else { // TODO re-add the splitted value if exist (e.g is_single_equation)
 						question_cell.append($("<span>").text(p));
@@ -502,8 +503,18 @@ function reupdate_questions(data, clear_table = true) {
 			hardness_cell = setup_editable(hardness_cell, q["id"], "hardness", i);
 			question_cell = setup_editable(question_cell, q["id"], "question", i);
 		}
-		let row = $("<tr>").append([id_cell, hardness_cell, question_cell]);
-		if(data[i]["is_single_equation"]) {
+		let row = $("<tr>")
+		if(q["is_fixed_equation"] && q["variable_limitation"]) {
+			// only this will require the question_cell to be kept at col 1 so it can squeeze variable_limitation in.
+			// it will behave like a normal 4-choice otherwise.
+			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
+			let template_cell = $("<td style='white-space: pre-wrap'>").text(formatted_templates);
+			row.append([id_cell, hardness_cell, question_cell, template_cell]);
+		} else {
+			question_cell = question_cell.attr("colspan", 2);
+			row.append([id_cell, hardness_cell, question_cell]);
+		}
+		if(q["is_single_equation"]) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			let answer_cell = $("<td colspan='3' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);
 			let template_cell = $("<td colspan='2' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates);
@@ -512,7 +523,7 @@ function reupdate_questions(data, clear_table = true) {
 				template_cell = setup_editable(template_cell, q["id"], "variable_limitation", i);
 			}
 			row.append([answer_cell, template_cell]);
-		} else if(data[i]["is_single_option"]) {
+		} else if(q["is_single_option"]) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			// console.log(formatted_templates);
 			let answer_cell = $("<td colspan='2'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);

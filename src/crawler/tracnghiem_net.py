@@ -7,7 +7,7 @@ from src.crawler import generic
 
 from typing import Tuple
 
-INCLUDE_KEY = {"bai-hoc", "trac-nghiem", "de-kiem-tra", "de-thi"}
+INCLUDE_KEY = {"bai-hoc", "trac-nghiem", "de-kiem-tra", "de-thi", "tieng-anh", "cntt", "dai-hoc", "huong-nghiep"} # not used atm
 FILTER_KEY = {"..", ".jsp", "dang-nhap", "void"}
 APPEND_DOMAIN = "https://tracnghiem.net"
 
@@ -17,7 +17,8 @@ def get_neighbor_links(soup_or_url, include_key=INCLUDE_KEY, filter_key=FILTER_K
 def perform_crawl(*args, neighbor_link_fn=get_neighbor_links, **kwargs):
     return generic.perform_crawl(*args, neighbor_link_fn=neighbor_link_fn, **kwargs)
 
-def per_category_writer(basepath: str) -> Tuple[dict, callable]:
+COUNTER = {None: 0}
+def per_category_writer(basepath: str, flush_interval: int=1000) -> Tuple[dict, callable]:
     # write associating file per-category on a per-demand basis 
     all_category = {}
     base_prefix, extension = os.path.splitext(basepath)
@@ -40,11 +41,15 @@ def per_category_writer(basepath: str) -> Tuple[dict, callable]:
             all_category[category] = (cf, writer)
             # write anyway
             writer.writerow(row)
+        COUNTER[None] += 1
+        if flush_interval and (COUNTER[None] + 1) % flush_interval == 0:
+            # also periodically flush every file if option is supplied
+            for f, _ in all_category.values():
+                f.flush()
     return all_category, write_with_category
 
 _CORRECT_NAME = {"A": 1, "B": 2, "C": 3, "D": 4}
 EXPLANATION_TRIM_CUE = "Chọn đáp án"
-COUNTER = {None: 0}
 
 def parse_data_from_frame(soup) -> Tuple[list, str, str]:
     # parsing necessary from sub-frame section
@@ -109,7 +114,6 @@ def process_data(soup, url=None, writer_fn=None, keep_partial_question=True):
                         a1, a2, a3, a4 = answers
                         data.update(answer1=a1, answer2=a2, answer3=a3, answer4=a4)
                     writer_fn(category, data)
-                    COUNTER[None] += 1
             else:
                 # single question mode, vast majority of cases.
                 answers, right, explanation = parse_data_from_frame(frame)
@@ -122,8 +126,7 @@ def process_data(soup, url=None, writer_fn=None, keep_partial_question=True):
                     data.update(answer1=a1, answer2=a2, answer3=a3, answer4=a4)
 #                logger.debug("Single question correctly parsed: {}".format(data))
                 writer_fn(category, data)
-                COUNTER[None] += 1
-            generic.logger.info("Link {} has a valid quiz; appending to {:d}.".format(url, COUNTER[None]))
+            generic.logger.info("Link {} has valid quiz(es); appending to \"{}\".".format(url, category))
     except Exception as e:
         generic.logger.error("Parsing link {} has error: {}\n, quiz skipped.".format(url, traceback.format_exc()))
 

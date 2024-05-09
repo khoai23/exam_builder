@@ -117,7 +117,7 @@ def create_variable_set(variable_and_limitation: str, duplicate_set: Optional[in
             result[name.strip()] = random.choice(choices)
     return result
 
-var_exp_regex = re.compile(r"{(.+?)}")
+var_exp_regex = re.compile(r"({{1, 2}(.+?){{1,2})") # catch both {...} and {{...}} for now. TODO will attempt to enforce {{}}
 def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mode=False):
     """Designated fixed-equation format (e.g algebraic) will be `{variable}` and `{expression}` with the same 4 answers format, expression can only uses the designated variables.
         generator_mode: see above"""
@@ -139,12 +139,12 @@ def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mod
         raise ValueError("Problem using variable but specifying neither variable section (||| in question) nor `variable_limitation` field; question build aborted.")
     # TODO enforce expression type
     try:
-        assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+        assigned_expressions = {base: str(eval(exp, None, assigned_variables)) for base, exp in expressions}
     except Exception as e:
         print("Failed expression with variable set: {}".format(assigned_variables))
         raise e
     if re.search(MathJaxSymbols, problem["question"]):
-        # keep symbols curly brackets 
+        # recreate matching brackets 
         assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}
     # replace all the assigned expression with transfered values 
     new_problem = dict(problem)
@@ -182,12 +182,12 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
         # print(assigned_variables)
 #        assigned_variables = {k: random.randint(1, 100) for k in variables}
         try:
-            assigned_expressions = {("{" + exp + "}"): str(eval(exp, None, assigned_variables)) for exp in expressions}
+            assigned_expressions = {base: str(eval(exp, None, assigned_variables)) for base, exp in expressions}
         except Exception as e:
             print("Failed expression with variable set: {}".format(assigned_variables))
             raise e
         if re.search(MathJaxSymbols, problem["question"]):
-            # keep symbols curly brackets 
+            # keep symbols curly brackets. TODO only keep these inside the LaTeX section
             assigned_expressions = {k: "{" + v + "}" for k, v in assigned_expressions.items()}
         # format for corresponding problem and id 
         asw_i = answer_section

@@ -23,9 +23,11 @@
 	<button class="mx-2 btn btn-danger ml-auto" data-toggle="modal" data-target="#confirmation_modal" onclick="update_modal_delete(event)"><span class="bi-trash3" /> Delete Selected</button>
 </div>
 <div class="container-fluid d-flex p-1" id="button_bar">
+	<!-- <button class="mx-2 btn btn-info" onclick="choose_file_to_convert(event)"><span class="bi-arrows-collapse" /> Import Raw</button> -->
 	<button class="mx-2 btn btn-info" onclick="choose_file(event, false)"><span class="bi-arrow-up" /> Import</button>
 	<button class="mx-2 btn btn-warning" onclick="choose_file(event, true)"><span class="bi-arrow-bar-up" /> Import &amp; Replace</button>
-	<button class="mx-2 btn btn-info" onclick="export_file(event)"><span class="bi-arrow-bar-down" /> Export</button>
+	<!-- <button class="mx-2 btn btn-info" onclick="export_file(event)"><span class="bi-arrow-bar-down" /> Export</button> -->
+	<a class="mx-2 btn btn-info" href="export" target="_blank" id="export_link" download><span class="bi-arrow-bar-down" /> Export</a>
 	<button class="mx-2 btn btn-warning ml-auto" onclick="rollback(event)"><span class="bi-arrow-left" /> Rollback</button>
 </div>
 <div hidden>

@@ -2,24 +2,27 @@ import os, io, csv
 from collections import defaultdict
 
 from src.data.reader import HEADERS, process_field 
-from src.data.split_load import quote, unquote
+from src.data.split_load import quote, unquote 
+
+from src.parser.filter_rule import parse_by_rules, FilterRule, EmptyQuestionRule, DuplicateAnswerRule, FullAnswerRule
 
 from typing import Optional, List, Tuple, Any, Union, Dict
 
-def reparse_csv(filepath: str, headers: Optional[List[str]]=None) -> Tuple[List, List]:
+def reparse_csv(filepath: str, rules: List[FilterRule], headers: Optional[List[str]]=None) -> Tuple[List, List]:
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
-    correct_data, failed_data = [], []
+#    correct_data, failed_data = [], []
     with io.open(filepath, "r", encoding="utf-8") as rf:
         reader = csv.DictReader(rf, fieldnames=headers)
-        for row in reader:
-            try:
-                if "question" not in row or not row["question"].strip():
-                    print("Question do not have appropriate text: {}".format(row))
-                    raise ValueError
-                process_field(row)
-                correct_data.append(row)
-            except Exception as e:
-                failed_data.append(row)
+        correct_data, failed_data = parse_by_rules(reader, rules, output_removed=True)
+#        for row in reader:
+#            try:
+#                if "question" not in row or not row["question"].strip():
+#                    print("Question do not have appropriate text: {}".format(row))
+#                    raise ValueError
+#                process_field(row)
+#                correct_data.append(row)
+#            except Exception as e:
+#                failed_data.append(row)
     return correct_data, failed_data
 
 def export_valid(correct_data: List[Dict], failed_data: List[Dict], filepath: str):
@@ -65,7 +68,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Script usage: python -m src.parser.filter_data filename [cat]")
         sys.exit(1)
-    correct, failed = reparse_csv(sys.argv[1])
+    correct, failed = reparse_csv(sys.argv[1], [EmptyQuestionRule(), FullAnswerRule(), EmptyQuestionRule()])
     if len(sys.argv) > 2 and "cat" in sys.argv:
         splitted = split_by_category(correct)
         export_parsed(splitted, sys.argv[1], failed_data=failed)

@@ -13,7 +13,8 @@ from openpyxl.utils.exceptions import IllegalCharacterError
 import base64
 
 from src.image import DefaultClient, check_and_write_image
-from src.utils import cell_name_xl_to_tuple
+from src.utils import cell_name_xl_to_tuple 
+from src.parser.filter_rule import parse_by_rules, EmptyQuestionRule, FullAnswerRule, DuplicateAnswerRule, OutdatedDynamicFormattingRule
 
 import logging
 logger = logging.getLogger(__name__)
@@ -77,15 +78,18 @@ SPECIAL_TAGS = [
         "is_single_option",   # signify question with replacable keyword for correct answer; in practice, this would be a more manual version of is_single_equation as you can't autocalculate; but also more flexible as you can have specified strings.
 ]
 
-def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=False):
+DEFAULT_RULES = [EmptyQuestionRule(), FullAnswerRule(), DuplicateAnswerRule(), OutdatedDynamicFormattingRule(["is_fixed_equation", "is_single_equation"])]
+def read_file(filepath: str, headers: Optional[List[str]]=None, strict: bool=None, rules: List=DEFAULT_RULES):
+    if strict is not None:
+        logger.warning("@read_file: strict is deprecated in favor of \"rules\" argument.")
     if(".csv" in filepath):
-        return read_file_csv(filepath, headers=headers, strict=strict)
+        return read_file_csv(filepath, headers=headers, rules=rules)
     elif(".xlsx" in filepath):
-        return read_file_xlsx(filepath, headers=headers, strict=strict)
+        return read_file_xlsx(filepath, headers=headers, rules=rules)
     else:
         raise ValueError("Unusable filepath: {}; check the extension (must be .csv/.xlsx)".format(filepath))
 
-def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False):
+def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False, rules: List=DEFAULT_RULES):
     # read a file from `filepath` into a dict. Should at minimum has `question`, `answer1-4`, and `correct_id`
     data = []
     if(ignore_failed_row):
@@ -97,21 +101,24 @@ def read_file_csv(filepath: str, headers: Optional[List[str]]=None, strict: bool
                 data.append(process_field(row))
             except Exception as e:
                 if(ignore_failed_row):
-                    # logger.error("Failed row: {}".format(e, traceback.format_exc()))
+                    logger.error("Failed row: {}".format(e, traceback.format_exc()))
                     failed_rows.append(i+1)
                     continue
                 else:
                     raise e
     if(strict):
-        fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
-        valid_data = lambda row: all(field in row for field in fields) or row["is_single_equation"]
+        fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4", "category", "tag")
+        valid_data = lambda row: all(field in row for field in fields) or row.get("is_single_equation", False)
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
+    if rules:
+        data, failed_data = parse_by_rules(data, rules)
+        # TODO log the failed data for better clarity
     if(ignore_failed_row):
         return failed_rows, data
     else:
         return data
 
-def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False):
+def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: bool=False, ignore_failed_row: bool=False, rules: List=DEFAULT_RULES):
     workbook = openpyxl.load_workbook(filepath)
     data_sheet = workbook[workbook.sheetnames[0]]
     logger.debug("Expecting the first sheet to contain the data; which is: {}".format(workbook.sheetnames[0]))
@@ -163,6 +170,9 @@ def read_file_xlsx(filepath: str, headers: Optional[List[str]]=None, strict: boo
         fields = ("question", "correct_id", "answer1", "answer2", "answer3", "answer4")
         valid_data = lambda row: all(field in row for field in fields)
         assert all(valid_data(row) for row in data), "Read data missing field; exiting: {}".format(data)
+    if rules:
+        data, failed_data = parse_by_rules(data, rules)
+        # TODO log the failed data for better clarity
     if(ignore_failed_row):
         return failed_rows, data
     else:
@@ -210,7 +220,7 @@ def reconvert_field(row: Dict):
     # reconvert tag & correct_id to corresponding format if necessary
     if "tag" in row:
         row["tag"] = ", ".join(row["tag"])
-    if "hardness" in row and row["hardness"]:
+    if "hardness" in row and row["hardness"] and 0 < int(row["hardness"]) <= 10:
         # append hardness back in as an option
         hardness_tag = HARDNESS_TAGS[int(row["hardness"])-1]
         row["tag"] = (row["tag"] + ", " + hardness_tag) if "tag" in row else hardness_tag
@@ -288,14 +298,15 @@ def process_field(row, lowercase_field: bool=True, delimiter: str=",", image_dic
                 # image is out of expected column, ignore
                 logger.warning("Image {} is at invalid column {} (should be put at image_1-image6/10-15); not used.".format(image_info["link"], col))
     # assert no duplicate answers.
-    answers = [v for k, v in new_data.items() if "answer" in k]
-    assert "question" in new_data, "Data must have a valid question field."
-    # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
-    assert new_data.get("is_single_equation", False) or new_data.get("is_single_option", False) or \
-        len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
-    # if is_single_option, make sure that it has at least 4 corresponding templates.
-    if(new_data.get("is_single_option", False) and new_data["variable_limitation"].count("\n") < 4):
-        raise ValueError("Question {} must have at least 4 variant, but only has {}".format(new_data, new_data["variable_limitation"].count("\n")+1))
+    answers = [v for k, v in new_data.items() if "answer" in k] 
+    # this section is expanded into src.parser.filter_rule for more flexibility 
+#    assert "question" in new_data, "Data must have a valid question field."
+#    # fixed equation only has answer1; TODO if there is answer2/3/4 then fire a warning
+#    assert new_data.get("is_single_equation", False) or new_data.get("is_single_option", False) or \
+#        len(set(answers)) == len(answers), "There are duplicates in the list of answers of: {}".format(new_data)
+#    # if is_single_option, make sure that it has at least 4 corresponding templates.
+#    if(new_data.get("is_single_option", False) and new_data["variable_limitation"].count("\n") < 4):
+#        raise ValueError("Question {} must have at least 4 variant, but only has {}".format(new_data, new_data["variable_limitation"].count("\n")+1))
     # if multiple-choice question with only a single selection, convert it to list 
     if(new_data["is_multiple_choice"] and isinstance(new_data["correct_id"], int)):
         new_data["correct_id"] = (new_data["correct_id"],)

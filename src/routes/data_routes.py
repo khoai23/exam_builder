@@ -5,7 +5,7 @@ import sass
 import os, time
 import traceback 
 
-from src.session import current_data
+from src.session import current_data, TEMPORARY_FILE_DIR
 from src.session import wipe_session # migrate to external module
 
 import logging 
@@ -182,13 +182,20 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
     @login_decorator
     def file_export():
         """Allow downloading the database file."""
-        raise NotImplementedError # disable until further sorting out
+        current_category = current_data.current_category
+        current_category_path = current_data._data[current_category]
+        logger.debug("Attempting export for {} with path {}".format(current_category, current_category_path))
+        if current_category_path:
+            return flask.send_file(current_category_path, as_attachment=True)
+        return flask.jsonify(result=False, error="Invalid category_path {} for category {}; the operation is not possible".format(current_category_path, current_category))
+    #    raise NotImplementedError # disable until further sorting out
     #    return flask.send_file(filepath_dict["current_path"], as_attachment=True)
     
     @app.route("/import", methods=["POST"])
     @login_decorator
     def file_import():
-        """Allow overwriting or appending to the database file."""
+        """Allow overwriting or appending to the database file.
+        TODO this is allowing multiple category at the same time; maybe add an enforce_category mode so it can only affect one """
         try:
             is_replace_mode = request.args.get("replace", "false").lower() == "true"
             file = request.files["file"]
@@ -197,17 +204,18 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
             temporary_filename = os.path.join(TEMPORARY_FILE_DIR, str(int(time.time())) + file_extension)
             file.save(temporary_filename)
             # performing the importing procedure; ALWAYS creating backup to be used with rollback
-            current_data.update_data_from_file(temporary_filename)
+            current_data.update_data_from_file(temporary_filename, replacement_mode=is_replace_mode)
             wipe_session()
             return flask.jsonify(result=True)
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
-            keep_backup = request.args.get("keep_backup")
+            return flask.jsonify(result=False, error=str(e))
+        finally:
+            keep_backup = request.args.get("keep_backup", "false")
             if(not keep_backup or keep_backup.lower() != "true"):
                 if(os.path.isfile(temporary_filename)):
-                    logger.info("Detected failed import file: {}; removing.".format(temporary_filename))
+                    logger.info("Finished with import file: {}; removing.".format(temporary_filename))
                     os.remove(temporary_filename)
-            return flask.jsonify(result=False, error=str(e))
     #    raise NotImplementedError
     
     @app.route("/rollback")

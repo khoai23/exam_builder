@@ -9,11 +9,12 @@ All possible extension regard the builder, unlikely first:
 - [ ] User management (add, delete, change roles etc.)
 
 Remaining bugfix/missing features:
+- [ ] Dynamic designation are being lumped with LaTeX's grouping signature e.g x_{2a}. This will likely cause problem for complex signatures. Need some way to completely move away from it.
 - [ ] Session expiration & archive 
 - [ ] Button to flag possible duplicate items (remove or confirm as not-duplicate)
 - [ ] Loading icon while performing modifying action e.g import/rollback 
 - [ ] Commit-type import to prevent stupidity
-- [ ] Shared & persistent last category, used for both Build & Modify
+- [x] Shared & persistent last category, used for both Build & Modify
 - [ ] Converter supporting doc file (only docx for now)
 - [ ] Converter supporting multiple-choice question selection; exporting in the more generic xlsx instead.
 - [ ] Converter direct import and copy content to clipboard (right now not working on Firefox)

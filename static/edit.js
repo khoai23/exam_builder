@@ -66,6 +66,7 @@ function submit_file(event) {
 }
 
 function export_file(event) {
+	// console.log($("#export_link"))
 	// simply transfer the click to the link 
 	$("#export_link").click();
 }
