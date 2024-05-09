@@ -21,7 +21,7 @@ def catname_to_filename(catname: str, safe=""):
     if sys.platform in ("win32", "cygwin"):
         return parselib.quote(catname, safe=safe) # use html derivative name (space = %20 etc)
     else:
-        return fname.replace(" ", "_") # use unicode name as-is (space = underscore)
+        return catname.replace(" ", "_") # use unicode name as-is (space = underscore)
 
 def filename_to_catname(fname: str):
     if sys.platform in ("win32", "cygwin"):
