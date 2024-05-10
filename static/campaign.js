@@ -103,6 +103,13 @@ function perform_and_reload(event, action) {
 	var payload = ""; // post with no actual data; using GET will spawn whole webpage, whereas 
 	var on_success = function(data, textStatus, jqXHR){
 		if(data["result"]) {
+			// if has key, allow access to the quiz thru the link(quasi-button)
+			var quiz_button = $("#to_quiz_btn");
+			if(data["quiz_key"]) {
+				quiz_button.removeClass("disabled").attr("href", "campaign_quiz?key=" + data["quiz_key"]);
+			} else {
+				quiz_button.addClass("disabled").attr("href", "");
+			}
 			// received data, reloading display elements 
 			console.log("Received map data: ", data);
 			reload_map(data["polygons"], data["arrows"]);
@@ -126,6 +133,16 @@ function perform_and_reload(event, action) {
 		}
 	};
 	perform_post(payload, url, success_fn=on_success);
+}
+
+function debug_campaign(event) {
+	// just perform a setcoef action for now 
+	var on_success = function(data, textStatus, jqXHR){
+		if(data["result"]) {
+			// should not 
+		}
+	};
+	$.get("set_coef?coef=3", on_success)
 }
 
 function toggle_phase(event, phase_type) {

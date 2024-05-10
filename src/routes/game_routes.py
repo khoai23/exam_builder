@@ -35,7 +35,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                     return FrontlineBot(player_id, aspects=[CoalitionAspect()], *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = BaseCampaign(players=[], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule])
+            campaign_data["map"] = campaign = PlayerCampaign(players=[0], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule])
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))
@@ -71,6 +71,21 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         else:
             # should be the end phase, need no extra data 
             logger.debug("End phase; Next button should be enabled")
+
+        # retrieve/generate the new quiz key; for now only allow 1 key for whole turn.
+        orders = campaign_data["session"]["orders"]
+        if len(orders) > 1:
+            logger.warning("Campaign is having more than 1 quiz ready; check the cleanup function. Keys: {}".format(orders.keys()))
+        current_key = next(iter(orders.keys()), None)
+        if current_key is None:
+            logger.info("No key-quiz currently exist; creating new.")
+            result, current_key = build_order_quiz(campaign_data["session"])
+            if not result:
+                # failure for some reason; key cannot be generated.
+                logger.error("Failure when generating key: {}".format(current_key))
+                current_key = None 
+        kwargs["quiz_key"] = current_key
+
         if(request.method == "GET"):
             # for get, return whole page to read
             return flask.render_template("campaign.html", **kwargs)
@@ -110,7 +125,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                 return flask.jsonify(result=True)
             else:
                 return flask.jsonify(result=False, error="Invalid action_type: {}".format(action_type))
-    
+ 
     @app.route("/confirm_action", methods=["POST"])
     def confirm_action():
         # The player action will go through 3 steps
@@ -138,5 +153,34 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             else:
                 return flask.jsonify(result=False, error="Unrecognized phase: {}".format(campaign.current_phase))
 
+    @app.route("/set_coef", methods=["GET"])
+    def set_coef():
+        # DEBUG: set the specific player_coef of the campaign for now. If this works, upgrade to trigger the quiz.
+        campaign = campaign_data.get("map", None)
+        if campaign is None:
+            return flask.jsonify(result=False, error="No campaign available")
+        coef = float(request.args.get("coef", 2.0))
+        campaign.set_player_coef(coef)
+        return flask.jsonify(result=True)
+        
+
+    @app.route("/campaign_quiz", methods=["GET"])
+    def campaign_quiz():
+        # allow access to the quiz in this link; this should have a secret agreed-upon key when confirm_action trigger 
+        key = request.args.get("key", None)
+        if key is None:
+            return flask.jsonify(result=False, error="Invalid key for campaign_quiz")
+        return access_order_quiz(campaign_data["session"], key)
+
+    @app.route("/campaign_quiz_submit", methods=["POST"])
+    def campaign_quiz_submit():
+        """Same as session_routes's submit for the most part."""
+        try:
+            student_key  = request.args.get("key")
+            submitted_answers = request.get_json()
+            return submit_order_quiz_result(campaign_data["map"], campaign_data["session"], submitted_answers, student_key)
+        except Exception as e:
+            logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
+            return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 
     return campaign_data, app

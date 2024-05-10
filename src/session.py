@@ -1,6 +1,6 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
-import time, os, sys
+import time, os, sys, random
 import traceback
 import flask 
 from flask import url_for
@@ -323,8 +323,8 @@ def create_campaign_session(campaign, categories: List[str]):
     session = {"categories": categories, "orders": dict()}
     return session 
 
-_default_coefficient_calculator = lambda c, t: 2.0 * c / t # break even at 50% correct
-def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, select_category: Optional[str]=None, coefficient_calculator: callable=_default_coefficient_calculator) -> Tuple[bool, str]:
+_default_coefficient_calculator = lambda c, t: 0.5 + (2.0 * c / t) * 0.5 # worst at 0.5, break even (1.0) at 50%, and best at 1.5
+def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, select_category: Optional[str]=None, coefficient_calculator: callable=_default_coefficient_calculator, convert_embedded_image: bool=True) -> Tuple[bool, str]:
     # attempt to build a quiz for the order, returning a referring key to be re-accessed if necessary 
     # get a random key
     key = secrets.token_hex(8)
@@ -345,6 +345,9 @@ def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, se
         quiz_count = len(available)
     question_ids = random.sample(range(len(available)), k=quiz_count)
     questions, correct = shuffle(available, [(len(question_ids), 0.0, question_ids)])
+    if convert_embedded_image:
+        # run a function to convert text + inline image into list of options 
+        questions = convert_text_with_image(questions)
     # write it into the "orders" section 
     start_time = time.time()
     end_time = time.time() + duration_min * 60
@@ -355,22 +358,20 @@ def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, se
 def access_order_quiz(session: dict, key: str):
     order_data = session["orders"][key]
     # calculate the remaining time
-    end_time = order_data["end_time"]
-    elapsed = min(time.time() - order_data["start_time"], exam_duration)
+    start_time, end_time = order_data["start_time"], order_data["end_time"]
+    exam_duration = end_time - start_time
+    elapsed = min(time.time() - start_time, exam_duration)
     remaining = exam_duration - elapsed
     # convert the exam_data into image-compatible version
     exam_data = order_data["exam_data"]
-    if convert_embedded_image:
-        # run a function to convert text + inline image into list of options 
-        exam_data = convert_text_with_image(exam_data)
     if(time.time() > end_time):
         # render the error when timer is exceeded
         return flask.render_template("error.html", error="Order quiz over; cannot submit", error_traceback=None)
     else:
         # render normally
-        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting=session_data["setting"], custom_navbar=True, score=student_score)
+        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting={"session_name": "Quiz Session", "exam_duration": exam_duration}, custom_navbar=True, score=None, submit_route="campaign_quiz_submit")
 
-def submit_order_quiz_result(session: dict, submitted_answers: Dict, key: str):
+def submit_order_quiz_result(campaign, session: dict, submitted_answers: Dict, key: str):
     # simplified variant of the order quiz; 
     order_data = session["orders"][key]
     if("answers" in order_data):
@@ -388,5 +389,6 @@ def submit_order_quiz_result(session: dict, submitted_answers: Dict, key: str):
         order_data["order_coef"] = order_coef = coefficient_calculator(correct, total)
         # use the localstorage to trigger update from the campaign map 
         # do not send it over through localstorage; since such data could be tampered with 
-        # TODO hook an update for campaign here through the order_data 
-        return flask.jsonify(result=True, coef=order_coef, trigger_campaign_update=True)
+        session["orders"].pop(key) # TODO perform cleanups when end turn instead; allowing revisit to see the correct section
+        campaign.set_player_coef(order_coef)
+        return flask.jsonify(result=True, correct=order_data["correct"], score=order_coef, coef=order_coef, trigger_campaign_update=True)

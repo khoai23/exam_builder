@@ -123,10 +123,35 @@ class SinoLatinizedNameGenerator(NameGenerator):
         suffix = random.choice(SinoLatinizedNameGenerator.PROVINCE_SUFFIX)
         return prefix + " " + suffix
 
+class GermanNameGenerator(NameGenerator):
+    """Same nonsense as we had always been doing; this time for the kraut. Extra X-Y variant can be very rarely generated."""
+    PROVINCE_SUFFIX = ["sheim", "shaven", "bach", "burg", "berg", "nach", "dorn", "dorf", "münde", "stein", "städt", "feld", "land", "nau", "shausen", "snitz"]
+    # essentially prefix; but allow some adj prefix appendage e.g Gross
+
+    PROVINCE_CENTER = ["Her", "Hau", "Hör", "Höch", "Frei", "Elster", "Dorn", "Augs", "Arn", "Ilmen", "Kaiser", "Kreuz", "Langen", "Lieben", "Mackt", "Lützen", "Oder", "Oppen", "Ratzen", "Rhein", "Roß", "Schön", "Wessel", "Walder", "Witten", "Königs"]
+    PROVINCE_PREFIX = ["Groß", "Bad ", "Oster", "Schwarzen", "Unter", "Weiß"]
+    SPECIAL_LINK = ["Vellen-", "-Lengefeld", "Ober-", "-Lößnitz", "-Greiz", "-Freren", "-am-Rhein", "Breisach-"]
+
+    @staticmethod
+    def generate_province_name(**kwargs) -> str:
+        core = random.choice(GermanNameGenerator.PROVINCE_CENTER)
+        suffix = random.choice(GermanNameGenerator.PROVINCE_SUFFIX)
+        name = core + suffix if suffix[0] != core[-1] else core + suffix[1:] # duplicate char (s mostly) will get truncated
+        if len(name) < 10 and random.random() < 0.5:
+            # 50% to append the prefix if name is too short
+            prefix = random.choice(GermanNameGenerator.PROVINCE_PREFIX)
+            name = prefix + name if prefix[-1] == " " else prefix + name[0].lower() + name[1:] 
+        if random.random() < 0.1:
+            # 10% to put the special link; either forward or backward depending on which
+            linker = random.choice(GermanNameGenerator.SPECIAL_LINK)
+            name = name + linker if linker[0] == "-" else linker + name
+        return name
+
 NAME_GENERATOR_BY_CUE = {
     "ruskie": RussianNameGenerator,
     "polack": PolishNameGenerator,
-    "gook": SinoLatinizedNameGenerator
+    "gook": SinoLatinizedNameGenerator,
+    "kraut": GermanNameGenerator
 }
 
 if __name__ == "__main__":

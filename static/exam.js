@@ -1,4 +1,5 @@
 var submitted = false;
+var submit_route = "submit";
 
 function runTimer(elapsed, remaining) {
 	var total = elapsed + remaining;
@@ -10,20 +11,21 @@ function runTimer(elapsed, remaining) {
 	}
 	var id = setInterval(function() {
 		let percentage = Math.min(elapsed / total, 1.0);
-		if(elapsed >= total) {
+		if(elapsed >= total || submitted) { 
 			// quit increasing 
 			clearInterval(id);
+			// reset the percentage 
+			$("#timer").css("width", "100%");
+			$("#timer").text("Finished.");
 			// enforce submission here.
 			if(!submitted) {
+				console.log("Autosubmit triggered; attempting event firing.")
 				// force closing all regions
 				$("#finished_region").show();
 				$("#exam_region").hide();
 				$("#submit_region").hide();
 				// send the submission command
 				submit(null, true);
-				// reset the percentage 
-				$("#timer").css("width", "100%");
-				$("#timer").text("Finished.");
 				// hide the autosubmit again
 				$("#autosubmit_warning").hide()
 			}
@@ -103,7 +105,7 @@ function updateModal() {
 	}
 }
 
-function submit(event, autosubmit) {
+function submit(event, autosubmit=false, _submit_route=null) {
 	// the modal confirmed submission; compile the answer list
 	var answers = listAnswers();
 	var submission = [];
@@ -111,9 +113,10 @@ function submit(event, autosubmit) {
 	for(let i=0; i<exam_data_length; i++) {
 		submission.push(answers[i]);
 	}
-	console.log("Sending submission:", submission); // view for now
 	// var base = window.location.origin;
-	var submit_link = "submit?key=" + getUrlParameter("key");
+	_submit_route = _submit_route || submit_route; // if specified in function, use that; if not, use the var version.
+	var submit_link = _submit_route + "?key=" + getUrlParameter("key");
+	console.log("Sending submission: ", submission, " to: ", submit_link); // view for now
 	// send 
 	$.ajax({
 		url: submit_link, 

@@ -1,5 +1,6 @@
-# CAMPAIGN BASE
+# CAMPAIGN BASE + With player
 from src.campaign.rules.base_campaign import BaseCampaign 
+from src.campaign.for_player import PlayerCampaign
 
 # RULESET 
 from src.campaign.rules.field import ScorchedRule, TerrainRule, TERRAIN_ICON, TERRAIN_COLOR 

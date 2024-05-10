@@ -1,9 +1,12 @@
 """Base campaign that allows specific behaviors on "Rule". This should allow customizable option so I can try out all the new ideas"""
 from abc import ABC, abstractmethod
 
-from src.campaign.default import PlayerCampaignMap as DefaultCampaignMap
+from src.campaign.default import CampaignMap as DefaultCampaignMap
 
 from typing import Optional, List, Tuple, Any, Union, Dict 
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Rule(ABC):
     """Generic base for rule. Either phase-based (allow specific modifier to happen before/after specific phase) or action-based (allow specific modifier to affect the outcome of action)""" 

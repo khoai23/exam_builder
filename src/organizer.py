@@ -117,8 +117,9 @@ def check_duplication_in_data(data: List[Dict], deviation: Optional[int]=None):
     # result is dictionary for duplicate_new vs duplicate_old; since newer one should be removed
     return check_dictionary
 
-def convert_text_with_image(data: List[Dict], image_delimiter: str="|||"):
+def convert_text_with_image(data: List[Dict], image_delimiter: str="|||", ignore_processed: bool=False):
     # Checking all question + answer field; if there is text and inline image, separate them on representative list 
+    # if ignore_processed, items that already got converted to list will be ignored. Default to False to cause error as this is not meant to be recalled on already processed dictionary
     new_data = [dict(d) for d in data]
     for d in new_data:
         if image_delimiter in d["question"] and not d["question"].startswith(image_delimiter) or not d["question"].endswith(image_delimiter):

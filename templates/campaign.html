@@ -144,20 +144,22 @@ Winning condition is achieved by having 75% of total tile points.
 				<button class="btn btn-primary m-2" id="execute_btn" onclick="alert('testing')" {% if current_phase == "end" %}disabled{% endif %}>Execute</button>
 				<button class="btn btn-primary m-2" id="next_btn" onclick="perform_and_reload(event, 'next')">Next</button>
 				<button class="btn btn-info m-2" id="autorun_btn" onclick="toggle_autorun(event)">Auto Run</button>
+				<button class="btn btn-warning m-2" id="debug_btn" onclick="debug_campaign(event)">Debug</button>
+				<a href="{%if quiz_key%}campaign_quiz?key={{quiz_key}}{%endif%}" target="_blank" class="btn btn-outline-primary m-2" id="to_quiz_btn">To Quiz</a>
 			</div>
 
-		<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
+		<div id="legend" class="d-flex flex-row mt-auto" style="display: inline; vertical-align: bottom; width: 100%;">
 			{% for color in colorscheme %}
-			<p id="mr-auto p-2">
-			<span style="color: {{color}}">■</span>  <b>Player {{loop.index}}</b>	
+			<p class="pr-2">
+			<span style="color: {{color}}">■</span>  <b>Player {{loop.index}}</b>
 			</p>
 			{% endfor %}
 		</div>
 		
 		{% if terrain_scheme %}
-			<div id="legend" class="h-100 d-flex flex-row p-2" style="display: inline; vertical-align: bottom; width: 100%;">
+			<div id="legend" class="d-flex flex-row" style="display: inline; vertical-align: bottom; width: 100%;">
 				{% for terrain, (capitalized, color, icon) in terrain_scheme.items() %}
-				<p id="mr-auto p-2">
+				<p class="pr-2">
 				<span style="color: {{color}}">{{icon}}</span> {{capitalized}}
 				</p>
 				{% endfor %}

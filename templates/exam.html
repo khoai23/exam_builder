@@ -16,7 +16,7 @@
 	
 	<span>Duration: 
 	{% if "exam_duration" in exam_setting %}
-		<b>{{ exam_setting["exam_duration"] }}</b>min
+		<b>{{ exam_setting["exam_duration"] }}</b> min
 	{% else %}
 		<u>Unlimited</u>
 	{% endif %}
@@ -136,6 +136,10 @@
 <script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="exam.js") }}></script>
 <script>
+	{% if submit_route %}
+		submit_route = "{{ submit_route }}";
+		console.log("Changins submitted routes to", submit_route);
+	{% endif %}
 	var elapsed_time = {{ elapsed | safe }};
 	var remaining_time = {{ remaining | safe }};
 	var exam_data_length = {{ exam_data | length }};
