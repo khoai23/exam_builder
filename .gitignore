@@ -3,5 +3,7 @@ __pycache__/
 src/crawler/bin/ 
 test 
 data
+bin 
+.DS_Store
 geckodriver.log
 ~$*

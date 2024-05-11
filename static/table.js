@@ -1,5 +1,5 @@
 var use_local_data = false;
-var edit_by_modal = true;
+var convert_to_editable = undefined; // this will decide if the table can edit its data. If left undefined, the table will remain read-only. If supplied with a callable (e.g edit.js's update_cell_editable), this callable will be supplied to get_and_reupdate_question and change the matching cells with the functions.
 
 function get_selected_question_ids(in_index0 = true) {
 	var valid_id = [];
@@ -21,114 +21,8 @@ var current_selected_category = localStorage.getItem("8thcircle_category");
 var current_selected_hardness = localStorage.getItem("8thcircle_hardness") || 0; 
 var all_tags = null;
 var currently_selected_tag = []; 
-var editable = false;
 
 var current_data = null;
-var currently_edited_cell_id = null;
-var currently_edited_key = null;
-var currently_edited_content = null;
-function _focus_fn() {
-	let edit_id = $(this).attr("qid");
-	let edit_key = $(this).attr("key");
-	if((edit_id != currently_edited_cell_id || edit_key != currently_edited_key)
-		&& currently_edited_cell_id && currently_edited_key && currently_edited_content) {
-		// change is registered; will attempt to propagate data 
-		//console.log("Sending: ", currently_edited_cell_id, currently_edited_key, currently_edited_content);
-		//alert("Check log for data supposed to be push");
-		edit_question(currently_edited_cell_id, currently_edited_key, currently_edited_content); // using index0 for this.
-		currently_edited_cell_id = edit_id;
-		currently_edited_key = edit_key;
-		currently_edited_content = null;
-	} else {
-		console.log("1st focus at ", edit_id, " recording edit.");
-		currently_edited_cell_id = edit_id;
-		currently_edited_key = edit_key;
-		currently_edited_content = null;
-	}
-}
-function _alias_input_fn() {
-	$(this).trigger("change");
-}
-function _change_fn() {
-	currently_edited_content = $(this).text();
-}
-
-var current_edit_item = null;
-var bounded_edit = false;
-function _render_edit() {
-	// retrieve, convert & create appropriate display element if there is MathJax/embedded image in the data. 
-	let content = $("#edit_true_text").val();
-	let display = $("#edit_display");
-	display.empty();
-	// console.log("Current content: ", content);
-	if(content.includes("|||")) {
-		// if has image; render them
-		const pieces = content.split("|||");
-		pieces.forEach(function (p) {
-			p = p.trim();
-			if(p) {
-				if(p.startsWith("http")){ // hack to detect image
-					display.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
-				} else { // TODO re-add the splitted value if exist (e.g is_single_equation)
-					display.append($("<span>").text(p));
-				}
-			}
-		});
-	} else {
-		display.text(content);
-	}
-	if(content.includes("\\(") || content.includes("\\)") || content.includes("$$")) {
-		// if has MathJax; reload them.
-		// MathJax.Hub.Queue(["TypeSet", MathJax.Hub, "edit_display"]);
-		MathJax.typesetClear([display[0]]);
-		MathJax.typesetPromise([display[0]]);
-	}
-}
-
-function _open_edit_modal(index0, key, parent_cell) {
-	// retrieve targetted data; populate the modal with it and then pops.
-	let q = current_data[index0];
-	currently_edited_cell_id = q["id"];
-	currently_edited_key = key;
-	current_edit_item = parent_cell;
-	if(!bounded_edit) {
-		console.log("1st edit modal triggered; binding function.");
-		$("#edit_true_text").on("change input", _render_edit);
-		bounded_edit = true;
-	}
-	// console.log("True content: ", q[key]);
-	$("#edit_true_text").val(q[key]);
-	_render_edit();
-	$("editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
-	$("#editModal").modal("show");
-}
-
-function _submit_edit_modal() {
-	// when submitting; send the necessary data in #edit_true_text away 
-	let content = $("#edit_true_text").val();
-	console.log("Sending: ", currently_edited_cell_id, currently_edited_key, content);
-	// alert("Check log for data supposed to be push");
-	edit_question(currently_edited_cell_id, currently_edited_key, content); // using index0 for this.
-	current_edit_item.text(content);
-	// voiding the rest & hide
-	currently_edited_cell_id = null;
-	currently_edited_key = null;
-	current_edit_item = null;
-	$("#editModal").modal("hide");
-}
-
-function setup_editable(cell, qid, key, index0) {
-	if(edit_by_modal) {
-		edit_button = $("<button>").attr("class", "btn btn-link").append($("<i>").attr("class", "bi bi-pen"));
-		edit_button.on('click', () => _open_edit_modal(index0, key, cell));
-		cell.append(edit_button);
-		return cell;
-	} else {
-		converted_cell = cell.attr("contenteditable", "true").attr("qid", qid).attr("key", key);
-		converted_cell.on('focus', _focus_fn).on('blur keyup paste', _alias_input_fn).on('change', _change_fn);
-		return converted_cell;
-	}
-}
 
 // used when use_local_data is false; data is reloaded on the long web instead 
 function load_data_into_table(start, end, request_tags=false, hardness=undefined, url="filtered_questions") {
@@ -166,8 +60,8 @@ function load_data_into_table(start, end, request_tags=false, hardness=undefined
 		url: url,
 		success: function(data, textStatus, jqXHR) {
 			current_data = data["questions"];
-			// update the questions 
-			reupdate_questions(data["questions"]);
+			// update the questions, clear the table & propagate conversion fn if necessary
+			reupdate_questions(data["questions"], clear_table=true);
 			// show all necessary tags if specifically requested
 			if(request_tags) {
 				internal_update_filter(data["tags"]);
@@ -447,7 +341,7 @@ function internal_update_filter(tags) {
 }
 
 // upon successful update, rebuild the table accordingly
-function reupdate_questions(data, clear_table = true) {
+function reupdate_questions(data, clear_table=true) {
 	var i = 0;
 	if(clear_table) {
 		// if clear table, delete everything and re-show 
@@ -458,10 +352,6 @@ function reupdate_questions(data, clear_table = true) {
 		i = $("tbody").find("tr").length;
 	}
 	let categories = []; let tags = [];
-	if(editable && edit_by_modal) {
-		// if edit by modal; requires the data to be kept 
-		current_data = data;
-	}
 	// regardless of mode; inserting from start-index to end of data 
 	table_body = $("tbody");
 	for(; i < data.length; i++) {
@@ -499,9 +389,9 @@ function reupdate_questions(data, clear_table = true) {
 			question_cell.text(q["question"]); // plaintext, just
 		}
 		// additionally; if editable value is active; allow editing & binding
-		if(editable) {
-			hardness_cell = setup_editable(hardness_cell, q["id"], "hardness", i);
-			question_cell = setup_editable(question_cell, q["id"], "question", i);
+		if(convert_to_editable) {
+			hardness_cell = convert_to_editable(hardness_cell, q["id"], "hardness", i);
+			question_cell = convert_to_editable(question_cell, q["id"], "question", i);
 		}
 		let row = $("<tr>")
 		if(q["is_fixed_equation"] && q["variable_limitation"]) {
@@ -518,9 +408,9 @@ function reupdate_questions(data, clear_table = true) {
 			let formatted_templates = q["variable_limitation"].trim().replaceAll("|||", "\t=>\t");
 			let answer_cell = $("<td colspan='3' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);
 			let template_cell = $("<td colspan='2' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates);
-			if(editable) {
-				answer_cell = setup_editable(answer_cell, q["id"], "answer1", i);
-				template_cell = setup_editable(template_cell, q["id"], "variable_limitation", i);
+			if(convert_to_editable) {
+				answer_cell = convert_to_editable(answer_cell, q["id"], "answer1", i);
+				template_cell = convert_to_editable(template_cell, q["id"], "variable_limitation", i);
 			}
 			row.append([answer_cell, template_cell]);
 		} else if(q["is_single_option"]) {
@@ -528,9 +418,9 @@ function reupdate_questions(data, clear_table = true) {
 			// console.log(formatted_templates);
 			let answer_cell = $("<td colspan='2'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(q["answer1"]);
 			let template_cell = $("<td colspan='3' style='white-space: pre-wrap'>").attr("class", "d-none d-lg-table-cell d-xl-table-cell").text(formatted_templates);
-			if(editable) {
-				answer_cell = setup_editable(answer_cell, q["id"], "answer1", i);
-				template_cell = setup_editable(template_cell, q["id"], "variable_limitation", i);
+			if(convert_to_editable) {
+				answer_cell = convert_to_editable(answer_cell, q["id"], "answer1", i);
+				template_cell = convert_to_editable(template_cell, q["id"], "variable_limitation", i);
 			}
 			row.append([answer_cell, template_cell]);
 		} else {
@@ -562,8 +452,8 @@ function reupdate_questions(data, clear_table = true) {
 				if(correct_ids.includes(j)) {
 					answers[answers.length-1].addClass(is_multiple_choice ? "table-info" : "table-success");
 				}
-				if(editable) {
-					answers[answers.length-1] = setup_editable(answers[answers.length-1], q["id"], key, i);
+				if(convert_to_editable) {
+					answers[answers.length-1] = convert_to_editable(answers[answers.length-1], q["id"], key, i);
 				}
 			}
 			// append everything 

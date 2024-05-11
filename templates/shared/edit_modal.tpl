@@ -8,7 +8,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <form>
+        <form id="edit_single_value">
           <div class="form-group">
             <label for="edit_true_text" class="col-form-label">True Input:</label>
             <textarea class="form-control tex2jax_ignore" id="edit_true_text"></textarea>
@@ -16,6 +16,68 @@
           <div class="form-group">
             <label for="edit_display" class="col-form-label">Display</label>
             <div id="edit_display" style="white-space: pre-wrap"></div>
+          </div>
+        </form>
+        <form id="edit_full_question" class="d-flex aligns-items-start">
+          <ul class="nav-tabs flex-column mr-2" id="question_type_tab" role="tablist">
+          {% for question_type, question_type_label in [["generic", "Default"], ["is_single_equation", "Single Equation"], ["is_fixed_equation", "Fixed Equation"], ["is_single_option", "Randomized Pairs"]] %}
+            <li class="nav-item justify-content-center" role="presentation">
+              <button class="nav-link" id="{{question_type}}_tab" role="tab" onclick="switch_question_mode(event)">{{question_type_label}}</button>
+            </li>
+          {% endfor %}
+          </ul>
+          <div id="edit_content" class="tab-content">
+            <!-- question - full row always -->
+            <div class="form-group row">
+              <label for="edit_question">Question</label>
+              <textarea class="form-control tex2jax_ignore" id="edit_question"></textarea>
+              <div id="edit_question_display" style="white-space: pre-wrap"></div>
+            </div>
+            <!-- answer block - 2 per row on larger form -->
+            <div id="edit_answer_set_1" class="row">
+              <div class="form-group col-md-6 col-sm-12">
+                <label for="edit_answer1">Answer 1</label>
+                <textarea class="form-control tex2jax_ignore" id="edit_answer1"></textarea>
+                <div id="edit_answer1_display" style="white-space: pre-wrap"></div>
+              </div>
+              <div class="form-group col-md-6 col-sm-12">
+                <label for="edit_answer2">Answer 2</label>
+                <textarea class="form-control tex2jax_ignore" id="edit_answer2"></textarea>
+                <div id="edit_answer2_display" style="white-space: pre-wrap"></div>
+              </div>
+            </div>
+            <div id="edit_answer_set_2" class="row">
+              <div class="form-group col-md-6 col-sm-12">
+                <label for="edit_answer3">Answer 3</label>
+                <textarea class="form-control tex2jax_ignore" id="edit_answer3"></textarea>
+                <div id="edit_answer3_display" style="white-space: pre-wrap"></div>
+              </div>
+              <div class="form-group col-md-6 col-sm-12">
+                <label for="edit_answer4">Answer 4</label>
+                <textarea class="form-control tex2jax_ignore" id="edit_answer4"></textarea>
+                <div id="edit_answer4_display" style="white-space: pre-wrap"></div>
+              </div>
+            </div>
+            <!-- answer section; if select more than 1, this will automatically becomes an is_multiple_choice question. Will throw error if none/all are selected  -->
+            <div id="edit_correct_answer" class="form-group row">
+              <label>Correct: </label>
+              {% for _ in range(4) %}
+                <input type="checkbox" id="edit_correct_answer_{{loop.index}}">{{loop.index}}</input>
+              {% endfor %}
+              <br>
+              <label id="edit_correct_answer_invalid" class="text-danger fst-italic"></label>
+            </div>
+            <!-- special answer block span entire row, used for is_single_equation to highlight it not needing any choices -->
+            <div id="edit_answer_single" class="form-group row">
+              <label for="edit_answer_single_equation">Single Equation Answer</label>
+              <textarea class="form-control tex2jax_ignore" id="edit_answer_single_equation"></textarea>
+              <div id="edit_answer_equation_display" style="white-space: pre-wrap"></div>
+            </div>
+            <!-- special-only field "variable_limitation" -->
+            <div id="edit_limitation" class="form-group row">
+              <label for="edit_variable_limitation" id="edit_variable_limitation_lbl">Variable Limitations</label>
+              <textarea class="form-control tex2jax_ignore" id="edit_variable_limitation"></textarea>
+            </div>
           </div>
         </form>
       </div>

@@ -1,3 +1,156 @@
+// this section will bind with associated table (& edit modal if specified)
+
+var edit_by_modal = true;
+var full_edit = false; // if false, this will edit per field; if true, edit the whole basis of the question (question, answer1-4, correct_ids) including all the special variants.
+
+// v1: edit inline
+var currently_edited_cell_id = null;
+var currently_edited_key = null;
+var currently_edited_content = null;
+function _focus_fn() {
+	let edit_id = $(this).attr("qid");
+	let edit_key = $(this).attr("key");
+	if((edit_id != currently_edited_cell_id || edit_key != currently_edited_key)
+		&& currently_edited_cell_id && currently_edited_key && currently_edited_content) {
+		// change is registered; will attempt to propagate data 
+		//console.log("Sending: ", currently_edited_cell_id, currently_edited_key, currently_edited_content);
+		//alert("Check log for data supposed to be push");
+		edit_question(currently_edited_cell_id, currently_edited_key, currently_edited_content); // using index0 for this.
+		currently_edited_cell_id = edit_id;
+		currently_edited_key = edit_key;
+		currently_edited_content = null;
+	} else {
+		console.log("1st focus at ", edit_id, " recording edit.");
+		currently_edited_cell_id = edit_id;
+		currently_edited_key = edit_key;
+		currently_edited_content = null;
+	}
+}
+function _alias_input_fn() {
+	$(this).trigger("change");
+}
+function _change_fn() {
+	currently_edited_content = $(this).text();
+}
+
+// v2, edit by the associated modal
+var current_edit_item = null;
+var bounded_edit = false;
+function _render_edit() {
+	// retrieve, convert & create appropriate display element if there is MathJax/embedded image in the data. 
+	let content = $("#edit_true_text").val();
+	let display = $("#edit_display");
+	display.empty();
+	// console.log("Current content: ", content);
+	if(content.includes("|||")) {
+		// if has image; render them
+		const pieces = content.split("|||");
+		pieces.forEach(function (p) {
+			p = p.trim();
+			if(p) {
+				if(p.startsWith("http")){ // hack to detect image
+					display.append($("<img class=\"img-thumbnail\" style=\"max-width: 300px;\">").attr("src", p));
+				} else { // TODO re-add the splitted value if exist (e.g is_single_equation)
+					display.append($("<span>").text(p));
+				}
+			}
+		});
+	} else {
+		display.text(content);
+	}
+	if(content.includes("\\(") || content.includes("\\)") || content.includes("$$")) {
+		// if has MathJax; reload them.
+		// MathJax.Hub.Queue(["TypeSet", MathJax.Hub, "edit_display"]);
+		MathJax.typesetClear([display[0]]);
+		MathJax.typesetPromise([display[0]]);
+	}
+}
+
+function _open_edit_modal(index0, key, parent_cell) {
+	// retrieve targetted data; populate the modal with it and then pops.
+	let q = current_data[index0];
+	currently_edited_cell_id = q["id"];
+	currently_edited_key = key;
+	current_edit_item = parent_cell;
+	if(!bounded_edit) {
+		console.log("1st edit modal triggered; binding function.");
+		$("#edit_true_text").on("change input", _render_edit);
+		bounded_edit = true;
+	}
+	// console.log("True content: ", q[key]);
+	$("#edit_true_text").val(q[key]);
+	_render_edit();
+	$("editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
+	$("#editModal").modal("show");
+}
+
+function _submit_edit_modal() {
+	// when submitting; send the necessary data in #edit_true_text away 
+	let content = $("#edit_true_text").val();
+	console.log("Sending: ", currently_edited_cell_id, currently_edited_key, content);
+	// alert("Check log for data supposed to be push");
+	edit_question(currently_edited_cell_id, currently_edited_key, content); // using index0 for this.
+	current_edit_item.text(content);
+	// voiding the rest & hide
+	currently_edited_cell_id = null;
+	currently_edited_key = null;
+	current_edit_item = null;
+	$("#editModal").modal("hide");
+}
+
+function update_cell_editable(cell, qid, key, index0) {
+	if(edit_by_modal) {
+		edit_button = $("<button>").attr("class", "btn btn-link").append($("<i>").attr("class", "bi bi-pen"));
+		edit_button.on('click', () => _open_edit_modal(index0, key, cell));
+		cell.append(edit_button);
+		return cell;
+	} else {
+		converted_cell = cell.attr("contenteditable", "true").attr("qid", qid).attr("key", key);
+		converted_cell.on('focus', _focus_fn).on('blur keyup paste', _alias_input_fn).on('change', _change_fn);
+		return converted_cell;
+	}
+}
+// regardless of mode; bind this to table.js's convert_to_editable
+convert_to_editable = update_cell_editable;
+
+function switch_question_mode(event) {
+	event.preventDefault();
+	//console.log("Received event: ", event, "; target: ", event.currentTarget);
+	//alert("Switched.");
+	var current_tab = $(event.currentTarget);
+	var variant = current_tab.attr("id").replace("_tab", "");
+	$("#question_type_tab").find("button").each(function() {
+		if($(this) == current_tab) {
+			$(this).addClass("active");
+		} else {
+			$(this).removeClass("active");
+		}
+	});
+	console.log("Switching to variant: ", variant);
+	if(variant === "generic") { // all except "generic" will has variable_limitation
+		$("#edit_limitation").addClass("d-none");
+	} else {
+		$("#edit_limitation").removeClass("d-none");
+		if(variant === "is_single_option") {
+			$("#edit_variable_limitation_lbl").text("Variable Limitations");
+		} else {
+			$("#edit_variable_limitation_lbl").text("Pairings");
+		}
+	}
+
+	if(variant === "is_single_equation" || variant === "is_single_option") { // is_single_equation | is_single_option will use the special answer box
+		$("#edit_answer_set_1").addClass("d-none");
+		$("#edit_answer_set_2").addClass("d-none");
+		$("#edit_correct_answer").addClass("d-none");
+		$("#edit_answer_single").removeClass("d-none");
+	} else {
+		$("#edit_answer_set_1").removeClass("d-none");
+		$("#edit_answer_set_2").removeClass("d-none");
+		$("#edit_correct_answer").removeClass("d-none");
+		$("#edit_answer_single").addClass("d-none");
+	}
+}
+
 function set_modifiers_state(enable) {
 	// set the modifier (swap category, add tag, remove tag, delete) to appropriate state
 	$("#modify_bar").find("button").prop("disabled", !enable);
