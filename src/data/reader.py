@@ -206,6 +206,8 @@ def write_file_xlsx(filepath: str, data: List[Dict], headers: List[str]=HEADERS)
             logger.warning("data_row {} has error character; wiping.".format(data_row))
             data_row = [re.sub(ILLEGAL_CHARACTERS_RE, "", r) if isinstance(r, str) else r for r in data_row]
             data_sheet.append(data_row)
+        except ValueError:
+            logger.warning("data_row {} has unconvertable field; ignoring".format(data_row))
     # save 
     workbook.save(filepath)
     return filepath
@@ -224,7 +226,7 @@ def reconvert_field(row: Dict):
         # append hardness back in as an option
         hardness_tag = HARDNESS_TAGS[int(row["hardness"])-1]
         row["tag"] = (row["tag"] + ", " + hardness_tag) if "tag" in row else hardness_tag
-    if(isinstance(row["correct_id"], tuple)):
+    if(isinstance(row["correct_id"], (tuple, list))):
         row["correct_id"] = ", ".join([str(i) for i in row["correct_id"]])
     return row
 

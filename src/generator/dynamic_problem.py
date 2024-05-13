@@ -117,7 +117,7 @@ def create_variable_set(variable_and_limitation: str, duplicate_set: Optional[in
             result[name.strip()] = random.choice(choices)
     return result
 
-var_exp_regex = re.compile(r"({{1, 2}(.+?){{1,2})") # catch both {...} and {{...}} for now. TODO will attempt to enforce {{}}
+var_exp_regex = re.compile(r"({{1,2}(.+?)}{1,2})") # catch both {...} and {{...}} for now. TODO will attempt to enforce {{}}
 def convert_fixed_equation_problem(problem: Dict, separator="|||", generator_mode=False):
     """Designated fixed-equation format (e.g algebraic) will be `{variable}` and `{expression}` with the same 4 answers format, expression can only uses the designated variables.
         generator_mode: see above"""
@@ -165,7 +165,7 @@ def convert_single_equation_problem(problem: Dict, separator="|||", generator_mo
     # answer1 will contain the correct expression
     answer_section = problem["answer1"]
     expressions = set([catch for catch in re.findall(var_exp_regex, question_section + "\n" + answer_section)])
-    assert any((exp in answer_section for exp in expressions)), "Single-equation question {} had an invalid (immutable) correct answer {}".format(problem, answer_section)
+    assert any((base in answer_section for base, exp in expressions)), "Single-equation question {} had an invalid (immutable) correct answer {}. All expressions: {}".format(problem, answer_section, expressions)
     # assign value to variables in four-tuple 
     four_problems = [dict(problem) for _ in range(4)]
     i = 0

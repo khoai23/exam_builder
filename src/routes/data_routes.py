@@ -91,12 +91,18 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
         category = request.args.get("category", None)
         if category is None:
             return flask.jsonify(result=False, error="Must supply a valid category to modify")  
-        if any(key not in modify_data for key in ("id", "field", "value")):
-            return flask.jsonify(result=False, error="Must supply valid modification data to allow changing")
-        current_data.modify_data_by_id(int(modify_data["id"]), category, modify_data["field"], modify_data["value"])
-        if request.args.get("wipe", "false").lower() == "true":
-            wipe_session(for_categories=[category]) # only wipe when asked
-        return flask.jsonify(result=True)
+        if request.args.get("multiple_mode", "false").lower() == "true":
+            # multiple mode; edit the entire set 
+            current_data.modify_data_by_id(modify_data, category)
+            return flask.jsonify(result=True)
+        else:
+            # single mode; just edit a specific field
+            if any(key not in modify_data for key in ("id", "field", "value")):
+                return flask.jsonify(result=False, error="Must supply valid modification data to allow changing")
+            current_data.modify_data_by_id(int(modify_data["id"]), category, modify_data["field"], modify_data["value"])
+            if request.args.get("wipe", "false").lower() == "true":
+                wipe_session(for_categories=[category]) # only wipe when asked
+            return flask.jsonify(result=True)
 
     @app.route("/swap_category", methods=["POST"])
     @login_decorator

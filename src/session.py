@@ -252,7 +252,7 @@ def retrieve_submit_route_restricted(template_key: str, restricted_ids: Dict[str
 
     return flask.render_template("generic_input.html", **default_setting) 
 
-def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_score: bool=True, return_result: Optional[bool]=None, return_score: Optional[bool]=None):
+def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_score: bool=True, return_result: Optional[bool]=None, return_score: Optional[bool]=None, partial_score: Optional[bool]=False):
     template_key = student_belong_to_session[student_key]
     student_data = session[template_key]["student"][student_key]
     logger.debug("Student data: {}".format(student_data))
@@ -267,12 +267,19 @@ def submit_exam_result(submitted_answers: Dict, student_key: str, calculate_scor
             detailed_score = []
             for sub, crt, qst in zip(submitted_answers, student_data["correct"], student_data["exam_data"]):
                 if(isinstance(crt, (tuple, list))):
-                    if(all((s in crt for s in sub))):
-                        # upon all correct answers, add to the student score 
-                        # TODO partial score mode 
+                    correct_count = sum((1 if s in sub else 0 for s in crt))
+                    if not partial_score and correct_count == len(crt) and correct_count == len(sub):
+                        # if not partial mode; only count if sending exactly all correct answer
                         score += qst["score"]
                         detailed_score.append(qst["score"])
-                        continue
+                        continue 
+                    else:
+                        # if in partial mode; only take extra if all the sub-answer are correct, and if does flag the appropriate ratio
+                        if correct_count == len(sub):
+                            pscore = qst["score"] * correct_count / len(crt)
+                            score += pscore
+                            detailed_score.append(pscore)
+                            continue
                 else:
                     if(sub == crt): 
                         # upon a correct answer submitted; add to the student score
@@ -361,7 +368,8 @@ def access_order_quiz(session: dict, key: str):
     start_time, end_time = order_data["start_time"], order_data["end_time"]
     exam_duration = end_time - start_time
     elapsed = min(time.time() - start_time, exam_duration)
-    remaining = exam_duration - elapsed
+    remaining = exam_duration - elapsed 
+    exam_duration_min = int(exam_duration) // 60
     # convert the exam_data into image-compatible version
     exam_data = order_data["exam_data"]
     if(time.time() > end_time):
@@ -369,7 +377,7 @@ def access_order_quiz(session: dict, key: str):
         return flask.render_template("error.html", error="Order quiz over; cannot submit", error_traceback=None)
     else:
         # render normally
-        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting={"session_name": "Quiz Session", "exam_duration": exam_duration}, custom_navbar=True, score=None, submit_route="campaign_quiz_submit")
+        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting={"session_name": "Quiz Session", "exam_duration": exam_duration_min}, custom_navbar=True, score=None, submit_route="campaign_quiz_submit")
 
 def submit_order_quiz_result(campaign, session: dict, submitted_answers: Dict, key: str):
     # simplified variant of the order quiz; 

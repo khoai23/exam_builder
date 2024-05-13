@@ -1,7 +1,7 @@
 // this section will bind with associated table (& edit modal if specified)
 
 var edit_by_modal = true;
-var full_edit = false; // if false, this will edit per field; if true, edit the whole basis of the question (question, answer1-4, correct_ids) including all the special variants.
+var full_edit = true; // if false, this will edit per field; if true, edit the whole basis of the question (question, answer1-4, correct_ids) including all the special variants.
 
 // v1: edit inline
 var currently_edited_cell_id = null;
@@ -72,25 +72,86 @@ function _open_edit_modal(index0, key, parent_cell) {
 	currently_edited_cell_id = q["id"];
 	currently_edited_key = key;
 	current_edit_item = parent_cell;
-	if(!bounded_edit) {
-		console.log("1st edit modal triggered; binding function.");
-		$("#edit_true_text").on("change input", _render_edit);
-		bounded_edit = true;
+	if(full_edit) {
+		$("#edit_single_value").addClass("d-none"); $("#edit_full_question").removeClass("d-none");
+		// populate
+		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation"].forEach(function(field) {
+			if(q[field] === undefined) return; // do not attempt to populate if missing
+			$("#edit_" + field).val(q[field]);
+		});
+		$("#edit_answer_single_equation").val(q["answer1"]); // answer1 should always be available anyway 
+		console.log($("#edit_correct_answer").find("input"));
+		$("#edit_correct_answer").find("input").each(function() {
+			let active = false;
+			let answer_index = parseInt( $(this).attr("id").split("_")[3] );
+			if(q["is_multiple_choice"]) {
+				active = $.inArray(answer_index, q["correct_id"]) >= 0;
+			} else {
+				active = (answer_index === q["correct_id"]);
+			}
+			// console.log("check: ", $(this).attr("id").split("_")[3], answer_index, q["correct_id"], active);
+			$(this).prop("checked", active);
+		});
+		// after filling; trigger the hiding depending on which variant of questions & convert it.
+		var variant = "generic";
+		["is_single_option", "is_single_equation", "is_fixed_equation"].forEach(function(special) {
+			if(q[special]) {
+				variant = special;
+			}
+		})
+		switch_question_mode(null, enforce_variant=variant);
+	} else {
+		$("#edit_single_value").removeClass("d-none"); $("#edit_full_question").addClass("d-none").removeClass("d-flex");
+		if(!bounded_edit) {
+			console.log("1st edit modal triggered; binding function.");
+			$("#edit_true_text").on("change input", _render_edit);
+			bounded_edit = true;
+		}
+		$("#edit_single_value").show(); $("#edit_full_question").hide();
+		$("#edit_true_text").val(q[key]);
+		_render_edit();
 	}
-	// console.log("True content: ", q[key]);
-	$("#edit_true_text").val(q[key]);
-	_render_edit();
-	$("editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
+	$("#editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
 	$("#editModal").modal("show");
 }
 
 function _submit_edit_modal() {
-	// when submitting; send the necessary data in #edit_true_text away 
-	let content = $("#edit_true_text").val();
-	console.log("Sending: ", currently_edited_cell_id, currently_edited_key, content);
-	// alert("Check log for data supposed to be push");
-	edit_question(currently_edited_cell_id, currently_edited_key, content); // using index0 for this.
-	current_edit_item.text(content);
+	if(full_edit) {
+		// depending on which tab had been used & which values had been modified, selectively send up the rest 
+		let variant = $("#question_type_tab").find("button.active").attr("id").replace("_tab", "");
+		console.log("variant:", variant);
+		let question = current_data[currently_edited_cell_id];
+		let new_question = {};
+		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation"].forEach(function(field) {
+			new_question[field] = $("#edit_" + field).val();
+		});
+		if(variant === "generic") { // generic will void undefined
+			delete new_question["variable_limitation"];
+		} else { 
+			new_question[variant] = true;
+			if(variant === "is_single_option" || variant === "is_single_equation") { // single option/equation will void 2-4 answers; plus retrieve 1 from "edit_answer_single_equation" instead 
+			new_question["answer1"] = $("#edit_answer_single_equation").val();
+			["answer2", "answer3", "answer4"].forEach(function(field) { delete new_question[field]; });
+			}
+		}
+		let checkboxes = $("#edit_correct_answer").find("input").filter(function() { return $(this).prop("checked"); }); //.filter(cb => cb.prop("checked"));
+		if(checkboxes.length > 1) {
+			new_question["is_multiple_choice"] = true;
+			new_question["correct_id"] = checkboxes.toArray().map( item => parseInt($(item).attr("id").split("_")[3]) );
+		} else {
+			new_question["is_multiple_choice"] = false;
+			new_question["correct_id"] = parseInt( checkboxes.attr("id").split("_")[3] );
+		}
+		console.log("New question obj: ", new_question);
+		edit_question_multiplefield(currently_edited_cell_id, new_question, question);
+	} else {
+		// when submitting; send the necessary data in #edit_true_text away 
+		let content = $("#edit_true_text").val();
+		console.log("Sending: ", currently_edited_cell_id, currently_edited_key, content);
+		// alert("Check log for data supposed to be push");
+		edit_question(currently_edited_cell_id, currently_edited_key, content); // using index0 for this.
+		current_edit_item.text(content);
+	}
 	// voiding the rest & hide
 	currently_edited_cell_id = null;
 	currently_edited_key = null;
@@ -113,17 +174,27 @@ function update_cell_editable(cell, qid, key, index0) {
 // regardless of mode; bind this to table.js's convert_to_editable
 convert_to_editable = update_cell_editable;
 
-function switch_question_mode(event) {
-	event.preventDefault();
+function switch_question_mode(event, enforce_variant=undefined) {
 	//console.log("Received event: ", event, "; target: ", event.currentTarget);
 	//alert("Switched.");
-	var current_tab = $(event.currentTarget);
-	var variant = current_tab.attr("id").replace("_tab", "");
+	var current_tab, variant;
+	if(enforce_variant) {
+		// console.log("Question variant is set to ", enforce_variant)
+		variant = enforce_variant;
+		current_tab = $("#" + variant + "_tab");
+	} else {
+		event.preventDefault();
+		current_tab = $(event.currentTarget);
+		variant = current_tab.attr("id").replace("_tab", "");
+	}
+	//console.log("find button:", current_tab, " in ", $("#question_type_tab").find("button"));
 	$("#question_type_tab").find("button").each(function() {
-		if($(this) == current_tab) {
-			$(this).addClass("active");
+		let btn = $(this);
+		//console.log("iterate btn: ", btn, "vs", current_tab, "=", btn[0] === current_tab[0]);
+		if(btn[0] === current_tab[0]) {
+			btn.addClass("active");
 		} else {
-			$(this).removeClass("active");
+			btn.removeClass("active");
 		}
 	});
 	console.log("Switching to variant: ", variant);
@@ -131,7 +202,7 @@ function switch_question_mode(event) {
 		$("#edit_limitation").addClass("d-none");
 	} else {
 		$("#edit_limitation").removeClass("d-none");
-		if(variant === "is_single_option") {
+		if(variant !== "is_single_option") {
 			$("#edit_variable_limitation_lbl").text("Variable Limitations");
 		} else {
 			$("#edit_variable_limitation_lbl").text("Pairings");
@@ -316,6 +387,53 @@ function edit_question(qid, key, value) {
 	};
 	perform_post(payload, "modify_question?category=" + encodeURIComponent(category), success_fn=success_fn, error_fn=error_fn, type="POST");
 } 
+
+function edit_question_multiplefield(qid, new_question, old_question) {
+	// parse the entire question object into json; if any field already matches the old question, discard it to lessen server workload.
+	// after finishing; update the old question object in current_data too.
+	for(const [key, value] of Object.entries(new_question)) {
+		if(!value) continue; // just ignore 
+		let old_value = old_question[key];
+		if(typeof value !== typeof old_value) {
+			// change in type (e.g convert to is_multiple_choice question.); keep
+			continue;
+		} else {
+			if(typeof value === 'string' || value instanceof String) {
+				if(value.trim() === old_value.trim()) {
+					// trimmed version match; skip 
+					delete new_question[key];
+				}
+			} else if(typeof value == "number") {
+				if(value == old_value) {
+					// value match; skip 
+					delete new_question[key];
+				}
+			} // we could skip is_multiple_choice answer as well; but later.
+		}
+	}
+	new_question["id"] = qid; // put the id in 
+	["is_single_equation", "is_single_option", "is_fixed_equation"].forEach(function(field) {
+		// these properties MUST be available always; to ensure question format is not screwed.
+		if(new_question[field]) return;
+		new_question[field] = false;
+	})
+
+	var category = $("#category_dropdown").text();
+	var payload = JSON.stringify(new_question)
+	let success_fn = function(data, textStatus, jqXHR) {
+		if(data["result"]) {
+			$("#io_result").removeClass("text-danger").addClass("text-success").text("Question \"" + qid + "\" updated.");
+			// reaching here, we rewrite the data on current_data. TODO also reload the table item as well.
+			$.extend(true, old_question, new_question);
+		} else {
+			$("#io_result").removeClass("text-success").addClass("text-danger").text("Question update failed. Please manually reset the page.");
+		}
+	};
+	let error_fn = function(jqXHR, textStatus, error){
+			console.log("Received error", error);
+	};
+	perform_post(payload, "modify_question?multiple_mode=true&category=" + encodeURIComponent(category), success_fn=success_fn, error_fn=error_fn, type="POST");
+}
 
 // delete the selected boxes. Sending the command and reload the data 
 // should be called by perform_confirm_modal 

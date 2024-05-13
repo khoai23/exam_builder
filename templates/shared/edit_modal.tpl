@@ -18,17 +18,17 @@
             <div id="edit_display" style="white-space: pre-wrap"></div>
           </div>
         </form>
-        <form id="edit_full_question" class="d-flex aligns-items-start">
-          <ul class="nav-tabs flex-column mr-2" id="question_type_tab" role="tablist">
+        <form id="edit_full_question" class="d-flex">
+          <ul class="nav nav-tabs flex-column mr-2" id="question_type_tab" role="tablist">
           {% for question_type, question_type_label in [["generic", "Default"], ["is_single_equation", "Single Equation"], ["is_fixed_equation", "Fixed Equation"], ["is_single_option", "Randomized Pairs"]] %}
-            <li class="nav-item justify-content-center" role="presentation">
+            <li class="nav-item" role="presentation">
               <button class="nav-link" id="{{question_type}}_tab" role="tab" onclick="switch_question_mode(event)">{{question_type_label}}</button>
             </li>
           {% endfor %}
           </ul>
           <div id="edit_content" class="tab-content">
             <!-- question - full row always -->
-            <div class="form-group row">
+            <div class="form-group">
               <label for="edit_question">Question</label>
               <textarea class="form-control tex2jax_ignore" id="edit_question"></textarea>
               <div id="edit_question_display" style="white-space: pre-wrap"></div>
@@ -59,22 +59,22 @@
               </div>
             </div>
             <!-- answer section; if select more than 1, this will automatically becomes an is_multiple_choice question. Will throw error if none/all are selected  -->
-            <div id="edit_correct_answer" class="form-group row">
-              <label>Correct: </label>
+            <div id="edit_correct_answer" class="form-group">
+              <label class="mr-3">Correct: </label>
               {% for _ in range(4) %}
-                <input type="checkbox" id="edit_correct_answer_{{loop.index}}">{{loop.index}}</input>
+                <input type="checkbox" id="edit_correct_answer_{{loop.index}}" class="mx-2">{{loop.index}}</input>
               {% endfor %}
               <br>
               <label id="edit_correct_answer_invalid" class="text-danger fst-italic"></label>
             </div>
             <!-- special answer block span entire row, used for is_single_equation to highlight it not needing any choices -->
-            <div id="edit_answer_single" class="form-group row">
+            <div id="edit_answer_single" class="form-group">
               <label for="edit_answer_single_equation">Single Equation Answer</label>
               <textarea class="form-control tex2jax_ignore" id="edit_answer_single_equation"></textarea>
               <div id="edit_answer_equation_display" style="white-space: pre-wrap"></div>
             </div>
             <!-- special-only field "variable_limitation" -->
-            <div id="edit_limitation" class="form-group row">
+            <div id="edit_limitation" class="form-group">
               <label for="edit_variable_limitation" id="edit_variable_limitation_lbl">Variable Limitations</label>
               <textarea class="form-control tex2jax_ignore" id="edit_variable_limitation"></textarea>
             </div>

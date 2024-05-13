@@ -185,11 +185,21 @@ class OnRequestData(dict):
         new_data = [d for i, d in enumerate(old_data) if i not in list_ids]
         self.update_category(category, new_data, update_cache=update_cache, replacement_mode=True)
 
-    def modify_data_by_id(self, qid: int, category: str, field: str, value: str, update_cache: bool=True):
+    def modify_data_by_id(self, qid_or_dict: int, category: str, field: str=None, value: str=None, update_cache: bool=True):
         data = self.load_category(category)
+        if isinstance(qid_or_dict, int):
+            assert field and value, "@modify_data_by_id: qid specified (single mode), must have appropriate field: value; but only has {}: {}".format(field, value)
+            multiple_mode = False
+        else:
+            qid = qid_or_dict.pop("id")
+            multiple_mode = True
         target = data[qid]
-        logger.debug("Perform modification: base question {}; value \"{}\"=\"{}\"".format(target, field, value))
-        target[field] = value 
+        if multiple_mode:
+            logger.debug("Perform modification: base question {}; updating with {}".format(target, qid_or_dict))
+            target.update(qid_or_dict)
+        else:
+            logger.debug("Perform modification: base question {}; value \"{}\"=\"{}\"".format(target, field, value))
+            target[field] = value 
         if update_cache:
             self.update_category(category, data, update_cache=update_cache)
 
