@@ -19,6 +19,9 @@
 			<li class="nav-item">
 				<a class="nav-link" href="convert">Converter Tool</a>
 			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="play">Map Game</a>
+			</li>
 			{% if current_user.is_authenticated %}
 			<li class="nav-item nav-link ml-auto">
 				Hello, <b><u>{{current_user.name}}</u></b>

@@ -55,6 +55,8 @@ class RevanchismRule(Rule):
             for player_id in range(self.campaign._player_count):
                 if self._trigger_condition(player_id):
                     print("RevanchismRule triggered for [P{:d}]!".format(player_id))
+                    if self.campaign.flavor_text:
+                        self.campaign.flavor_text("revanchism_start", {"player_id": player_id, "player_name": self.campaign.plname(player_id), "turns": self.status_duration})
                     self.current_affected_player = player_id
                     self.affected_turn = self.campaign._context["turn"]
                     self.spent.add(player_id)
@@ -63,6 +65,8 @@ class RevanchismRule(Rule):
             # if during revanchism, check for expiration and if does, delete the property 
             if self.affected_turn + self.status_duration <= self.campaign._context["turn"]:
                 print("RevanchismRule expired for [P{:d}]".format(self.current_affected_player))
+                if self.campaign.flavor_text:
+                    self.campaign.flavor_text("revanchism_end", {"player_id": player_id, "player_name": self.campaign.plname(player_id)})
                 self.current_affected_player = self.affected_turn = None 
 
 

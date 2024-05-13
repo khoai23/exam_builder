@@ -48,7 +48,7 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
     retrieve_interval: base + variance; the process will wait [base-var; base+var] second before attempting the next link.
     delete_dump_after_done: if true, the recovery_dump_path will be cleared upon finishing everything.
     failed_get_incremental: with every nth failed access to a link, process will wait for n*inc second then try again.
-    prefer_cue: if specified; crawled neighbors matching this will get prioritized to go first. Base with each question on page (e.g tracnghiem_net) can use this to minimize size of the queue
+    prefer_cue: if specified; crawled neighbors matching this will get prioritized to go first. Base with each question on page (e.g tracnghiem_net) can use this to minimize size of the queue 
     """
     # get_neighbor_links(start_url)
     if(os.path.isfile(recovery_dump_path)):
@@ -77,6 +77,12 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
                 # usable_links.append(current_url)
             else:
                 logger.info("Re-checking: " + current_url)
+                # try to eject all links that are non-html 
+                extension_if_any = current_url.split(".")[-1]
+                if(len(extension_if_any) <= 4 and extension_if_any not in ("html", "xml")):
+                    logger.warning("Link {} is very likely to be a file; ignored. Check & verify if possible.".format(current_url))
+                    failed_run = False
+                    continue
             try:
                 # get_neighbor_links(current_url, include_key=include_key, filter_key=filter_key)
                 soup = get_parsed(current_url)

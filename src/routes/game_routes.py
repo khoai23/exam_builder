@@ -35,7 +35,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                     return FrontlineBot(player_id, aspects=[CoalitionAspect()], *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = PlayerCampaign(players=[0], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule])
+            campaign_data["map"] = campaign = PlayerCampaign(players=[0], player_names=["Glorious Green", "Revolutionary Red", "Confidential Cyan", "Brash Beige"], colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule], flavor_text=DefaultFlavorText)
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))
@@ -59,7 +59,7 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
             campaign = campaign_data["map"]
         # check appropriate phases; this should enable corresponding fields down in the website
         phase = campaign.current_phase 
-        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase, "colorscheme": campaign.retrieve_player_color(), "terrain_scheme": {t: (t[0].upper() + t[1:], TERRAIN_COLOR[t], TERRAIN_ICON[t]) for t in TERRAIN_COLOR}}
+        kwargs = {"polygons": campaign.retrieve_draw_map(), "arrows": campaign.retrieve_draw_arrows(), "phase": phase, "colorscheme": campaign.retrieve_player_color(), "player_names": campaign.retrieve_player_names(), "terrain_scheme": {t: (t[0].upper() + t[1:], TERRAIN_COLOR[t], TERRAIN_ICON[t]) for t in TERRAIN_COLOR}}
         if phase == "attack":
             # attack is in (source_province_name, target_province_name, source_id, target_id, max_attack_amount)
             kwargs["attacks"] = [(campaign.pname(s), campaign.pname(t), s, t, a) for s, t, a in campaign.all_attack_vectors(0)]
@@ -87,11 +87,17 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
         kwargs["quiz_key"] = current_key
 
         if(request.method == "GET"):
+            if campaign.flavor_text:
+                full_action_logs = list(campaign.flavor_text.get_full_logs(text_mode=False))
             # for get, return whole page to read
-            return flask.render_template("campaign.html", **kwargs)
+            return flask.render_template("campaign.html", full_action_logs=full_action_logs, **kwargs)
         else:
+            if campaign.flavor_text and campaign.last_action_logs:
+                # take & void the log after actions had been committed
+                action_logs = campaign.last_action_logs 
+                campaign.last_action_logs = []
             # for post, return jsonified data to update the map 
-            return flask.jsonify(result=True, **kwargs)
+            return flask.jsonify(result=True, action_logs=action_logs, **kwargs)
 
     @app.route("/campaign_action", methods=["GET", "POST"])
     def campaign_action():

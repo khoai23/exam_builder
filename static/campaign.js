@@ -110,6 +110,14 @@ function perform_and_reload(event, action) {
 			} else {
 				quiz_button.addClass("disabled").attr("href", "");
 			}
+			if(data["action_logs"]) {
+				// new log had been created; put it to the `log` object as separate paragraph 
+				let log_container = $("#log");
+				data["action_logs"].forEach(function(log) {
+					log_container.append($("<p>").text(log));
+				});
+				log_container.animate({ scrollTop: log_container.prop("scrollHeight")}, 1000);
+			}
 			// received data, reloading display elements 
 			console.log("Received map data: ", data);
 			reload_map(data["polygons"], data["arrows"]);

@@ -3,6 +3,7 @@ import random
 from typing import Optional, List, Tuple, Any, Union, Dict, Callable
 
 from src.campaign.rules.base_campaign import BaseCampaign 
+from src.campaign.event_flavor import GenericFlavorText
 
 import logging
 logger = logging.getLogger(__name__)
@@ -10,12 +11,26 @@ logger = logging.getLogger(__name__)
 class PlayerCampaign(BaseCampaign):
     """Version of campaign map that support player actions instead of bots. The bot can still be used for suggestion and/or substitution.
     """
-    def __init__(self, *args, players: List[int]=None, **kwargs):
+    def __init__(self, *args, players: List[int]=None, player_names: List[str]=None, flavor_text: GenericFlavorText=None, **kwargs):
         super(PlayerCampaign, self).__init__(*args, **kwargs)
         self._is_players = set(players)
         self._player_coef = None
         self._action_dict = {}
         self._current_phase = "deploy"
+        # this will create & maintain flavor text that occurs during event; providing that it even exist.
+        self.flavor_text = flavor_text(self)
+        self.last_action_logs = []
+        if self.flavor_text:
+            self.flavor_text.on_event_triggered("introduction", None)
+        # this will use a specific string for player if supplied; fallback to default [P?] if not available 
+        if player_names:
+            self._setting["player_names"] = player_names
+
+    def plname(self, player_id):
+        if "player_names" in self._setting:
+            return self._setting["player_names"][player_id]
+        else:
+            return super(PlayerCampaign, self).plname(player_id)
 
     @property
     def current_phase(self):
@@ -36,8 +51,12 @@ class PlayerCampaign(BaseCampaign):
             if target["owner"] in self._is_players:
                 logger.info("Defend done by player with completed quiz; modifier: {}".format(self._player_coef))
                 defend_modifier = self._player_coef
-        return super(PlayerCampaign, self).perform_action_attack(player_id, attacking, target_id, attack_modifier=attack_modifier, defend_modifier=defend_modifier, preserve_modifier=preserve_modifier)
-
+        full_result = result, target, casualty = super(PlayerCampaign, self).perform_action_attack(player_id, attacking, target_id, attack_modifier=attack_modifier, defend_modifier=defend_modifier, preserve_modifier=preserve_modifier)
+        if self.flavor_text:
+            event_text = self.flavor_text.on_event_triggered("attack", {"player_id": player_id, "player_name": self.plname(player_id), "result": result, "result_as_str": "succeeded" if result else "failed", "target_name": self.pname(target_id), "casualty": casualty})
+            if event_text:
+                self.last_action_logs.append(event_text)
+        return full_result
 
     def update_action(self, player_id: int, action_type: str, action_data: list) -> Tuple[bool, Optional[str]]:
         # save the supposed actions of the player; if anything gone wrong, throw back the issue
@@ -102,6 +121,7 @@ class PlayerCampaign(BaseCampaign):
         return self.all_deployable_provinces(player_id)
 
     def end_turn(self):
+        self.last_action_logs = []
         # also wipe the action dict 
         self._action_dict.clear() 
 #        self._player_coef = None

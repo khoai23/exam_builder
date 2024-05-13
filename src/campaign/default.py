@@ -17,8 +17,10 @@ class CampaignMap:
         Arrows: Performed actions will receive corresponding arrows, depending on the display mode, these arrows will be shown on the map"""
     def __init__(self, player_count: int=4, region_count: int=9, subregion_count: int=6, capital_point: int=10, region_point=30, 
             bot_class: Callable=None, name_generator: Optional[NameGenerator]=None,
-            attack_per_turn: int=1, movement_per_turn: int=2, deployment_province_count: int=2):
-        self._player_count = player_count 
+            attack_per_turn: int=1, movement_per_turn: int=2, deployment_province_count: int=2, colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"]):
+        self.flavor_text = None # backcompat option; see for_player.py for implementation
+
+        self._player_count = player_count  
         # create random bot that handle the actions done by player
         self._player_bot = [bot_class(i, self) for i in range(player_count)]
         # generate by region; this should help causing hubbed map 
@@ -72,7 +74,7 @@ class CampaignMap:
         # use for arrow caches 
         self._arrows = {i: list() for i in range(self._player_count)}
         # additinal setting 
-        self._setting = dict(colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], attack_per_turn=attack_per_turn, movement_per_turn=movement_per_turn, deployment_province_count=deployment_province_count, maximum_deployment=20, minimum_strength=10)
+        self._setting = dict(colorscheme=colorscheme, attack_per_turn=attack_per_turn, movement_per_turn=movement_per_turn, deployment_province_count=deployment_province_count, maximum_deployment=20, minimum_strength=10)
         self._action_order = list(range(self._player_count))
         self._update_action_order()
         self._context = {
@@ -138,6 +140,12 @@ class CampaignMap:
 
     def retrieve_player_color(self):
         return self._setting["colorscheme"]
+
+    def retrieve_player_names(self):
+        if "player_names" in self._setting:
+            return self._setting["player_names"]
+        else:
+            return [self.plname(player_id) for player_id in range(self._player_count)]
 
     def retrieve_draw_map(self, colorscheme: List[str]=None, default="white"):
         colorscheme = colorscheme or self._setting["colorscheme"]
@@ -306,6 +314,13 @@ class CampaignMap:
         self._context["smallest_player"] = self.smallest_player(use_cache=False)
         # update statistics as well
         self._context["greatest_occupied"] = {pid: max(self._context["greatest_occupied"][pid], self._context["total_owned"][pid]) for pid in range(self._player_count)}
+        # update to lessen player_alive interaction
+        for pid, powned in self._context["total_owned"].items():
+            if pid not in self._dead and powned <= 0:
+                self._dead.add(pid)
+                if self.flavor_text:
+                    self.flavor_text.on_event_triggered("player_knockout", {"player_name": self.plname(pid), "player_id": pid, "turn": self._context["turn"]})
+        self._context["turn"] += 1
 
     def biggest_player(self, use_cache: bool=True):
         if use_cache:
@@ -340,9 +355,12 @@ class CampaignMap:
 
     #=====================
     # Convenience function 
-    def pname(self, pid: int) -> str:
+    def pname(self, pid: int) -> str: # province name
         """Get province name; return id if not exist"""
         return self._map[pid][-1].get("province_name", str(pid))
+
+    def plname(self, player_id: int) -> str:
+        return "[P{:d}]".format(player_id)
 
     def capital(self, plid: int) -> int:
         """Get capital of specific player id; return None if no capital"""
@@ -503,7 +521,7 @@ class CampaignMap:
             player_province = self.all_owned_provinces(i) # in id format 
             #==========
             # knockout related - check if player is alive here, use this cached value on subsequent phases
-            if not self.player_alive(i, use_cache=False):
+            if not self.player_alive(i):
                 continue
             # run appropriate phasing function
             self.phase_set_capital(i, player_province)
@@ -513,14 +531,14 @@ class CampaignMap:
     def full_phase_move(self):
         for i in self._action_order:
             # knockout related
-            if not self.player_alive(i, use_cache=False):
+            if not self.player_alive(i):
                 continue 
             self.phase_perform_movement(i)
 
     def full_phase_attack(self):
         for i in self._action_order:
             # knockout related
-            if not self.player_alive(i, use_cache=False):
+            if not self.player_alive(i):
                 continue
             self.phase_perform_attack(i)
 
@@ -538,5 +556,4 @@ class CampaignMap:
         self._update_context()
         print("Biggest player: {}; Smallest player {};\nFull context: {}".format(self.biggest_player(), self.smallest_player(), self._context))
         self._update_action_order()
-        self._context["turn"] += 1
 
