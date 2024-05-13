@@ -71,13 +71,16 @@
             <div id="edit_answer_single" class="form-group">
               <label for="edit_answer_single_equation">Single Equation Answer</label>
               <textarea class="form-control tex2jax_ignore" id="edit_answer_single_equation"></textarea>
-              <div id="edit_answer_equation_display" style="white-space: pre-wrap"></div>
+              <div id="edit_answer_single_equation_display" style="white-space: pre-wrap"></div>
             </div>
             <!-- special-only field "variable_limitation" -->
             <div id="edit_limitation" class="form-group">
               <label for="edit_variable_limitation" id="edit_variable_limitation_lbl">Variable Limitations</label>
               <textarea class="form-control tex2jax_ignore" id="edit_variable_limitation"></textarea>
             </div>
+            <div class="form-group">
+              <label for="edit_hardness">Hardness: <span id="edit_hardness_display">N/A</span></label>
+              <input type="range" class="form-range" id="edit_hardness" min="0" max="10"></input>
           </div>
         </form>
       </div>

@@ -36,10 +36,15 @@ function _change_fn() {
 // v2, edit by the associated modal
 var current_edit_item = null;
 var bounded_edit = false;
-function _render_edit() {
+function _render_edit(edit_field=undefined, display=undefined, all_display_field=undefined) {
 	// retrieve, convert & create appropriate display element if there is MathJax/embedded image in the data. 
-	let content = $("#edit_true_text").val();
-	let display = $("#edit_display");
+	if(edit_field && display) {
+		console.log("_render_edit with fixed items: ", edit_field, display);
+	} else {
+		edit_field = $("#edit_true_text");
+		display = $("#edit_display");
+	}
+	let content = edit_field.val();
 	display.empty();
 	// console.log("Current content: ", content);
 	if(content.includes("|||")) {
@@ -64,6 +69,16 @@ function _render_edit() {
 		MathJax.typesetClear([display[0]]);
 		MathJax.typesetPromise([display[0]]);
 	}
+	if(all_display_field) {
+		// if supplied, all the other `display` field  will be hidden to save space 
+		all_display_field.forEach(function(df) { 
+			if(df == display) {
+				df.show();
+			} else {
+				df.hide();
+			}
+		})
+	}
 }
 
 function _open_edit_modal(index0, key, parent_cell) {
@@ -74,11 +89,44 @@ function _open_edit_modal(index0, key, parent_cell) {
 	current_edit_item = parent_cell;
 	if(full_edit) {
 		$("#edit_single_value").addClass("d-none"); $("#edit_full_question").removeClass("d-none");
+		if(!bounded_edit) {
+			var all_display_field = [];
+			console.log("1st edit modal triggered; binding function (full).");
+			["question", "answer1", "answer2", "answer3", "answer4", "answer_single_equation"].forEach(function(field) {
+				let edit_field = $("#edit_" + field);
+				let display = $("#edit_" + field + "_display");
+				all_display_field.push(display);
+				edit_field.on("change input", () => _render_edit(edit_field, display, all_display_field));
+			});
+			let hcon = $("#edit_hardness");
+			let hdis = $("#edit_hardness_display");
+			hcon.change(() => hdis.text(hcon.val().toString()));
+			let checkboxes = $("#edit_correct_answer").find("input");
+			checkboxes.on("change input", () => {
+				let answer_count = checkboxes.filter(function() { return $(this).prop("checked"); }).length;
+				if(answer_count <= 0) {
+					$("#edit_correct_answer_invalid").text("Cannot save question with no correct answer.");
+				} else if(answer_count >= 4) {
+					$("#edit_correct_answer_invalid").text("Cannot save question with no wrong answer.");
+				} else {
+					$("#edit_correct_answer_invalid").text("");
+				}
+			});
+			bounded_edit = true;
+		}
 		// populate
 		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation"].forEach(function(field) {
 			if(q[field] === undefined) return; // do not attempt to populate if missing
 			$("#edit_" + field).val(q[field]);
 		});
+		let hardness = parseInt(q["hardness"]);
+		if(isNaN(hardness) || hardness <= 0 || hardness > 10) {
+			hardness = 0;
+			$("#edit_hardness_display").text("?");
+		} else {
+			$("#edit_hardness_display").text(hardness.toString());
+		}
+		$("#edit_hardness").val(hardness);
 		$("#edit_answer_single_equation").val(q["answer1"]); // answer1 should always be available anyway 
 		console.log($("#edit_correct_answer").find("input"));
 		$("#edit_correct_answer").find("input").each(function() {
@@ -119,10 +167,10 @@ function _submit_edit_modal() {
 	if(full_edit) {
 		// depending on which tab had been used & which values had been modified, selectively send up the rest 
 		let variant = $("#question_type_tab").find("button.active").attr("id").replace("_tab", "");
-		console.log("variant:", variant);
+		//console.log("variant:", variant);
 		let question = current_data[currently_edited_cell_id];
 		let new_question = {};
-		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation"].forEach(function(field) {
+		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation", "hardness"].forEach(function(field) {
 			new_question[field] = $("#edit_" + field).val();
 		});
 		if(variant === "generic") { // generic will void undefined
@@ -393,6 +441,11 @@ function edit_question_multiplefield(qid, new_question, old_question) {
 	// after finishing; update the old question object in current_data too.
 	for(const [key, value] of Object.entries(new_question)) {
 		if(!value) continue; // just ignore 
+		if(false && key === "hardness" && value === 0) {
+			// special case: hardness is voided
+			delete new_question[key];
+			continue;
+		}
 		let old_value = old_question[key];
 		if(typeof value !== typeof old_value) {
 			// change in type (e.g convert to is_multiple_choice question.); keep
