@@ -79,6 +79,10 @@ function _render_edit(edit_field=undefined, display=undefined, all_display_field
 			}
 		})
 	}
+	if(full_edit) {
+		// if in full_edit; restrict user from sending incomplete data to question
+		_check_edit_submittable();
+	}
 }
 
 var all_display_field = [];
@@ -162,8 +166,36 @@ function _open_edit_modal(index0, key, parent_cell) {
 		$("#edit_true_text").val(q[key]);
 		_render_edit();
 	}
-	$("#editModalTitle").text("Editing question " + currently_edited_cell_id.toString());
-	$("#editModal").modal("show");
+	$("#edit_modal_title").text("Editing question " + currently_edited_cell_id.toString());
+	$("#edit_modal").modal("show");
+}
+
+function _check_edit_submittable(variant) {
+	if(!variant) {
+		// variant is not supplied; attempt to find it with the active tab 
+		variant = $("#question_type_tab").find("button.active").attr("id").replace("_tab", "");
+	}
+	// Only for full_edit; partial can be allowed if demands surface 
+	let submittable = true;
+	let check_field = ["question"];
+	if (variant === "generic") {
+		// need all 4 answers to be filled
+		check_field.push("answer1", "answer2", "answer3", "answer4");
+	} else if (variant === "is_fixed_equation") {
+		// need all 4 answers + variable_limitation to be filled 
+		check_field.push("answer1", "answer2", "answer3", "answer4", "variable_limitation");
+	} else if (variant === "is_single_option" || variant === "is_single_equation") {
+		// need designated answer + variable_limitation to be filled 
+		check_field.push("answer_single_equation", "variable_limitation")
+	}
+	check_field.forEach(function(field) {
+		let data = $("#edit_" + field).val();
+		if(!data.trim()) {
+			submittable = false; // at least one field is not valid, submitting should be disabled.
+		}
+	});
+	// set the button accordingly
+	$("#edit_submit_button").prop("disabled", !submittable);
 }
 
 function _submit_edit_modal() {
@@ -207,11 +239,12 @@ function _submit_edit_modal() {
 	currently_edited_cell_id = null;
 	currently_edited_key = null;
 	current_edit_item = null;
-	$("#editModal").modal("hide");
+	$("#edit_modal").modal("hide");
 }
 
 function update_cell_editable(cell, qid, key, index0) {
 	if(edit_by_modal) {
+		if(full_edit && key !== "question") { return cell; } // if in full_edit; just add this button for the question; all other got skipped
 		edit_button = $("<button>").attr("class", "btn btn-link").append($("<i>").attr("class", "bi bi-pen"));
 		edit_button.on('click', () => _open_edit_modal(index0, key, cell));
 		cell.append(edit_button);
@@ -271,6 +304,8 @@ function switch_question_mode(event, enforce_variant=undefined) {
 		$("#edit_correct_answer").removeClass("d-none");
 		$("#edit_answer_single").addClass("d-none");
 	}
+	
+	_check_edit_submittable(variant);
 }
 
 function set_modifiers_state(enable) {

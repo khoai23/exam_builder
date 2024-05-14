@@ -86,15 +86,21 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
     @app.route("/modify_question", methods=["POST"])
     @login_decorator
     def modify_question():
-        """Modify a selected question with a specific value. Best to attempt associating rollback once done."""
+        """Modify a selected question with a specific value. Best to attempt associating rollback once done.
+        This should also allow to add a new row in from scratch"""
         modify_data = request.get_json()
         category = request.args.get("category", None)
         if category is None:
             return flask.jsonify(result=False, error="Must supply a valid category to modify")  
         if request.args.get("multiple_mode", "false").lower() == "true":
-            # multiple mode; edit the entire set 
-            current_data.modify_data_by_id(modify_data, category)
-            return flask.jsonify(result=True)
+            new_row = request.args.get("new_row", "false") == "true"
+            if new_row:
+                raise NotImplementedError
+                return flask.jsonify(result=True)
+            else:
+                # multiple mode, edit the entire set 
+                current_data.modify_data_by_id(modify_data, category)
+                return flask.jsonify(result=True)
         else:
             # single mode; just edit a specific field
             if any(key not in modify_data for key in ("id", "field", "value")):

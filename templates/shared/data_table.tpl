@@ -1,4 +1,4 @@
-<div class="container-fluid d-flex flex-row-reverse m-2">
+<div class="container-fluid d-flex flex-row-reverse mt-2">
 	<div class="dropleft">
 		<button class="btn btn-secondary dropdown-toggle" type="button" id="category_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			Category
@@ -7,7 +7,7 @@
 			<button class="btn btn-link dropdown-item" onclick=select_category(event)>All</button>
 		</div>
 	</div>
-	<span class="h3 m-2">Category:</span>
+	<span class="h3 mx-2">Category:</span>
 	<div class="dropleft">
 		<button class="btn btn-secondary dropdown-toggle" type="button" id="hardness_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			Hardness
@@ -21,7 +21,7 @@
 			{% endfor %}
 		</div>
 	</div>
-	<span class="h3 m-2">Hardness:</span>
+	<span class="h3 mx-2">Hardness:</span>
 	<div class="dropleft">
 		<button class="btn btn-secondary dropdown-toggle" type="button" id="sizeperpage_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			N/A
@@ -33,7 +33,9 @@
 			<button class="btn btn-link dropdown-item" onclick=select_sizeperpage(100)>100</button>
 		</div>
 	</div>
-	<span class="h3 m-2">Row per Page:</span>
+	<span class="h3 mx-2">Row per Page:</span>
+
+	<button class="btn btn-success mr-auto my-2" hidden onclick="add_row(event)"><span class="bi bi-plus" /> New Row</button>
 </div>
 <div class="table-responsive card-body w-100 d-md-table">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">
