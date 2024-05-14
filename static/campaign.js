@@ -114,7 +114,13 @@ function perform_and_reload(event, action) {
 				// new log had been created; put it to the `log` object as separate paragraph 
 				let log_container = $("#log");
 				data["action_logs"].forEach(function(log) {
-					log_container.append($("<p>").text(log));
+					if(log.includes("<") && log.includes(">")) {
+						// html-formatted; parse as new item by jquery to generate any sub-tag
+						log_container.append($( "<p>" + log + "</p>"));
+					} else {
+						// unformatted; just append in as raw text
+						log_container.append($("<p>").text(log));
+					}
 				});
 				log_container.animate({ scrollTop: log_container.prop("scrollHeight")}, 1000);
 			}

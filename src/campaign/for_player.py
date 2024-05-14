@@ -17,14 +17,16 @@ class PlayerCampaign(BaseCampaign):
         self._player_coef = None
         self._action_dict = {}
         self._current_phase = "deploy"
+        # this will use a specific string for player if supplied; fallback to default [P?] if not available 
+        if player_names:
+            self._setting["player_names"] = player_names
         # this will create & maintain flavor text that occurs during event; providing that it even exist.
         self.flavor_text = flavor_text(self)
         self.last_action_logs = []
         if self.flavor_text:
-            self.flavor_text.on_event_triggered("introduction", None)
-        # this will use a specific string for player if supplied; fallback to default [P?] if not available 
-        if player_names:
-            self._setting["player_names"] = player_names
+            player_id = players[0] if len(players) else None 
+            player_name, player_color = ("All", "black") if player_id is None else (self.plname(player_id), self.plcolor(player_id))
+            self.flavor_text.on_event_triggered("introduction", {"player_name": player_name, "player_color": player_color})
 
     def plname(self, player_id):
         if "player_names" in self._setting:
@@ -43,17 +45,18 @@ class PlayerCampaign(BaseCampaign):
         logger.info("PlayerCampaign: p-coef is set as {}".format(self._player_coef))
 
     def perform_action_attack(self, player_id: int, attacking: int, target_id: int, attack_modifier: float=1.0, defend_modifier: float=1.0, preserve_modifier: float=2.0):
+        target = self._map[target_id][-1]
         if self._player_coef:
             if player_id in self._is_players:
                 logger.info("Attack initiated by player with completed quiz; modifier: {}".format(self._player_coef))
                 attack_modifier = self._player_coef
-            target = self._map[target_id][-1]
             if target["owner"] in self._is_players:
                 logger.info("Defend done by player with completed quiz; modifier: {}".format(self._player_coef))
-                defend_modifier = self._player_coef
+                defend_modifier = self._player_coef 
+        target_player_id = target["owner"] # save it here before the action to allow flavor_text to pick up the original owner.
         full_result = result, target, casualty = super(PlayerCampaign, self).perform_action_attack(player_id, attacking, target_id, attack_modifier=attack_modifier, defend_modifier=defend_modifier, preserve_modifier=preserve_modifier)
         if self.flavor_text:
-            event_text = self.flavor_text.on_event_triggered("attack", {"player_id": player_id, "player_name": self.plname(player_id), "result": result, "result_as_str": "succeeded" if result else "failed", "target_name": self.pname(target_id), "casualty": casualty})
+            event_text = self.flavor_text.on_event_triggered("attack", {"player_id": player_id, "player_name": self.plname(player_id), "player_color": self.plcolor(player_id), "result": result, "result_as_str": "succeeded" if result else "failed", "target_name": self.pname(target_id), "target_color": "black" if not isinstance(target_player_id, int) else self.plcolor(target_player_id), "casualty": casualty})
             if event_text:
                 self.last_action_logs.append(event_text)
         return full_result
@@ -121,7 +124,6 @@ class PlayerCampaign(BaseCampaign):
         return self.all_deployable_provinces(player_id)
 
     def end_turn(self):
-        self.last_action_logs = []
         # also wipe the action dict 
         self._action_dict.clear() 
 #        self._player_coef = None

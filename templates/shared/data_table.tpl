@@ -22,6 +22,18 @@
 		</div>
 	</div>
 	<span class="h3 m-2">Hardness:</span>
+	<div class="dropleft">
+		<button class="btn btn-secondary dropdown-toggle" type="button" id="sizeperpage_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			N/A
+		</button>
+		<div class="dropdown-menu" aria-labelledby="sizeperpage_dropdown" id="sizeperpage_dropdown_menu" style="z-index: 10; max-height: 350px; overflow: auto;">
+			<button class="btn btn-link dropdown-item" onclick=select_sizeperpage(1000)>1000</button>
+			<button class="btn btn-link dropdown-item" onclick=select_sizeperpage(500)>500</button>
+			<button class="btn btn-link dropdown-item" onclick=select_sizeperpage(200)>200</button>
+			<button class="btn btn-link dropdown-item" onclick=select_sizeperpage(100)>100</button>
+		</div>
+	</div>
+	<span class="h3 m-2">Row per Page:</span>
 </div>
 <div class="table-responsive card-body w-100 d-md-table">
 	<table class="table table-hover table-bordered" id="question_table" style="display: block; max-height: 700px; overflow: auto;">

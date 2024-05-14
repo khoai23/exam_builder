@@ -1,0 +1,7 @@
+{
+	"introduction": "Hello <span style=\"color:{player_color}\">{player_name}</span>. <b>Formatted</b> flavor text is enabled.",
+	"attack": "<span style=\"color:{player_color}\">{player_name}</span>'s attack on <span style=\"color:{target_color}\">{target_name}</span> {result_as_str}. They lose <b>{casualty}</b> units as a result.",
+	"player_knockout": "<span style=\"color:{player_color}\">{player_name}</span> has been eliminated from the game!",
+	"revanchism_start": "<span style=\"color:{player_color}\">{player_name}</span> has been driven into a corner. They will receive a noticeable buff!",
+	"revanchism_end": "The revanchism buff for <span style=\"color:{player_color}\">{player_name}</span> had run out. There will be no next time."
+}

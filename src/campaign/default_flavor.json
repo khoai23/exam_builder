@@ -1,5 +1,5 @@
 {
-	"introduction": "Hello Player",
+	"introduction": "Hello Player. Generic Flavor text is enabled.",
 	"attack": "{player_name}'s attack on {target_name} {result_as_str}. They lose {casualty} units as a result.",
 	"player_knockout": "{player_name} has been eliminated from the game!",
 	"revanchism_start": "{player_name} has been driven into a corner. They will receive a noticeable buff!",

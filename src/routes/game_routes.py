@@ -26,16 +26,16 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                 if player_id == 1:
                     logger.debug("Allegedly better bot for player 1")
                     # combined variant between FrontlineBot & LandGrabBot; need tweaking for coef
-                    return SecureFrontlineBot(player_id, aspects=[TerrainAwarenessAspect(), ExplorerAspect(), CoalitionAspect()], debug=True, *args, **kwargs)
+                    return SecureFrontlineBot(player_id, aspects=[TerrainAwarenessAspect(), ExplorerAspect()], debug=True, *args, **kwargs)
                 elif player_id == 3:
-                    logger.debug("Rogue bot for player 3.")
-                    return FrontlineBot(player_id, *args, **kwargs)
+                    logger.debug("Balancer bot for player 3.")
+                    return FrontlineBot(player_id, aspects=[CoalitionAspect()], *args, **kwargs)
                 else:
                     logger.debug("Normal bot for player {:d}".format(player_id))
-                    return FrontlineBot(player_id, aspects=[CoalitionAspect()], *args, **kwargs) 
+                    return FrontlineBot(player_id, *args, **kwargs) 
             name_generator_cue = request.args.get("name_type", "gook").lower()
             name_generator_class = NAME_GENERATOR_BY_CUE[name_generator_cue]
-            campaign_data["map"] = campaign = PlayerCampaign(players=[0], player_names=["Glorious Green", "Revolutionary Red", "Confidential Cyan", "Brash Beige"], colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule], flavor_text=DefaultFlavorText)
+            campaign_data["map"] = campaign = PlayerCampaign(players=[1], player_names=["Glorious Green", "Revolutionary Red", "Confidential Cyan", "Brash Beige"], colorscheme=["yellowgreen", "salmon", "powderblue", "moccasin"], bot_class=PrioritizedBot, name_generator=name_generator_class(shared_kwargs={"filter_generation_rule": True}), rules=[TerrainRule, CoreRule, ScorchedRule, RandomFactorRule, ExhaustionRule], flavor_text=FormattedFlavorText)
             # similarly, create a symbiotic session 
             # random 4 category 
             categories = random.sample(current_data.categories, k=min(4, len(current_data.categories)))

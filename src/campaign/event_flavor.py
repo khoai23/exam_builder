@@ -32,3 +32,8 @@ class DefaultFlavorText(GenericFlavorText):
         with io.open(flavor_text_file, "r") as fjf:
             data = json.load(fjf)
         super(DefaultFlavorText, self).__init__(campaign, data, **kwargs)
+
+class FormattedFlavorText(DefaultFlavorText):
+    """Same thing as before; except text is formatted by html tags. Will require campaign html/js to properly interpret it instead of .text()"""
+    def __init__(self, campaign, flavor_text_file: str="src/campaign/default_flavor_formatted.json", **kwargs):
+        super(FormattedFlavorText, self).__init__(campaign, flavor_text_file=flavor_text_file, **kwargs)

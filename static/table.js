@@ -19,6 +19,7 @@ var selector_update_function = null; // this value is to be updated upon a selec
 var all_categories = null;
 var current_selected_category = localStorage.getItem("8thcircle_category");
 var current_selected_hardness = localStorage.getItem("8thcircle_hardness") || 0; 
+var length_per_view = localStorage.getItem("8thcircle_sizeperpage") || 1000;
 var all_tags = null;
 var currently_selected_tag = []; 
 
@@ -191,9 +192,14 @@ function toggle_all_tag(event) {
 	selector_update(event);
 }
 
-const length_per_view = 1000;
 const button_list = ["table_button_first", "table_button_previous", "table_button_current", "table_button_next", "table_button_last"];
 var max_question_index = 0;
+
+function select_sizeperpage(count) {
+	length_per_view = count;
+	$("#sizeperpage_dropdown").text(count.toString());
+	localStorage.setItem("8thcircle_sizeperpage", length_per_view);
+}
 
 function update_view_index(current_index, max_index) {
 	// if max_index, reupdate the bar depending on value
@@ -300,6 +306,8 @@ function build_tag_cell(tag_text) {
 }
 
 function external_update_filter(chain_to_reupdate_question=false) {
+	// also update the length item accordingly
+	$("#sizeperpage_dropdown").text(length_per_view.toString());
 	// update the category; if specific flag is enabled, also auto-select the first category and load accordingly
 	$.ajax({
 		type: "GET",

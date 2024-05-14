@@ -14,4 +14,4 @@ from src.campaign.bot import LandGrabBot, FrontlineBot, SecureFrontlineBot
 from src.campaign.bot import CoalitionAspect, IntegrityAspect, TerrainAwarenessAspect, ExplorerAspect 
 
 # FLAVOR text 
-from src.campaign.event_flavor import DefaultFlavorText
+from src.campaign.event_flavor import DefaultFlavorText, FormattedFlavorText

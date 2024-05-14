@@ -319,7 +319,7 @@ class CampaignMap:
             if pid not in self._dead and powned <= 0:
                 self._dead.add(pid)
                 if self.flavor_text:
-                    self.flavor_text.on_event_triggered("player_knockout", {"player_name": self.plname(pid), "player_id": pid, "turn": self._context["turn"]})
+                    self.flavor_text.on_event_triggered("player_knockout", {"player_name": self.plname(pid), "player_color": self.plcolor(pid), "player_id": pid, "turn": self._context["turn"]})
         self._context["turn"] += 1
 
     def biggest_player(self, use_cache: bool=True):
@@ -361,6 +361,9 @@ class CampaignMap:
 
     def plname(self, player_id: int) -> str:
         return "[P{:d}]".format(player_id)
+
+    def plcolor(self, player_id):
+        return self._setting["colorscheme"][player_id]
 
     def capital(self, plid: int) -> int:
         """Get capital of specific player id; return None if no capital"""

@@ -81,6 +81,7 @@ function _render_edit(edit_field=undefined, display=undefined, all_display_field
 	}
 }
 
+var all_display_field = [];
 function _open_edit_modal(index0, key, parent_cell) {
 	// retrieve targetted data; populate the modal with it and then pops.
 	let q = current_data[index0];
@@ -90,7 +91,6 @@ function _open_edit_modal(index0, key, parent_cell) {
 	if(full_edit) {
 		$("#edit_single_value").addClass("d-none"); $("#edit_full_question").removeClass("d-none");
 		if(!bounded_edit) {
-			var all_display_field = [];
 			console.log("1st edit modal triggered; binding function (full).");
 			["question", "answer1", "answer2", "answer3", "answer4", "answer_single_equation"].forEach(function(field) {
 				let edit_field = $("#edit_" + field);
@@ -113,6 +113,9 @@ function _open_edit_modal(index0, key, parent_cell) {
 				}
 			});
 			bounded_edit = true;
+		} else {
+			// when entering the modal, hide all display field until editing.
+			all_display_field.forEach(display => display.hide());
 		}
 		// populate
 		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation"].forEach(function(field) {
@@ -168,7 +171,7 @@ function _submit_edit_modal() {
 		// depending on which tab had been used & which values had been modified, selectively send up the rest 
 		let variant = $("#question_type_tab").find("button.active").attr("id").replace("_tab", "");
 		//console.log("variant:", variant);
-		let question = current_data[currently_edited_cell_id];
+		let question = current_data.find(q => q["id"] == currently_edited_cell_id);
 		let new_question = {};
 		["question", "answer1", "answer2", "answer3", "answer4", "variable_limitation", "hardness"].forEach(function(field) {
 			new_question[field] = $("#edit_" + field).val();

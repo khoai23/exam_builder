@@ -151,7 +151,7 @@ Winning condition is achieved by having 75% of total tile points.
 	<div id="log" style="max-height: 700px; overflow-y: scroll">
 		{% if full_action_logs %}
 			{% for log in full_action_logs %}
-			<p>{{log}}</p>
+			<p>{{ log | safe }}</p>
 			{% endfor %}
 		{% endif %}
 	</div>
