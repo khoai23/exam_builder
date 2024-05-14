@@ -130,3 +130,42 @@ class PlayerCampaign(BaseCampaign):
         # next phase
         self._current_phase = "deploy"
         return super(PlayerCampaign, self).end_turn()
+
+
+    def full_phase_attack(self, simultaneous_mode: bool=True):
+        """Upgrade over 1st variant - instead of bots making up the attack sequentially, force them to be created first and launch them with respect to their current setting.
+        Should be accompanied by IntentionRule to reward plays that resemble planning."""
+        if not simultaneous_mode:
+            # just use the old logic
+            return super(PlayerCampaign, self).full_phase_attack()
+        # receive bot actions at current situation. 
+        action_dict, direction_dict = dict(), dict()
+        mutual_attacks = set()
+        for pid in range(self._player_count):
+            if pid in self._dead:
+                continue # ignore dead ones.
+            actions = self._player_bot[pid].calculate_attacks(self._map)
+            if not actions:
+                continue 
+            target_ids = set(tid for sid, tid, rq in actions)
+            if len(target_ids) > 1:
+                # TODO allow multiple attacks if setting allows for it.
+                print("Player {} submitted multiple attack targets {}({}), ignored.".format(pid, target_ids, actions))
+                continue 
+            action_dict[pid] = actions
+            target = self._map[list(target_ids)[0]][-1]
+            target_player = target["owner"]
+            direction_dict[pid] = (target_id, target_player)
+            if direction_dict.get(target_player, None)[-1] == pid:
+                # mutual attacks detected 
+                mutual_attacks.add( (pid, target_player) )
+
+        # resolving received actions:
+        # if there are two who simultaneously attack each other, and both attacked province were mobilized for the attack, battle is fought without any terrain bonuses/penalties with the full section. This should reward the stronger player.
+        # same case, but only one attacked province is mobilized - the mobilized province's terrain bonuses/penalties are removed, and their units are halved in both attacking & defending calculation. This should reward the player who planned correctly (think something like a riposte).
+        # all other case, resolve as normal in order of initiative.
+        for p1, p2 in mutual_attacks:
+            actions1, actions2 = action_dict[p1], action_dict[p2]
+            source_1 = set(sid for sid, tid, rq in actions1)
+            source_2 = set(sid for sid, tid, rq in actions2)
+            if 
