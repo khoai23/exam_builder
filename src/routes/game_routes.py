@@ -96,6 +96,8 @@ def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tupl
                 # take & void the log after actions had been committed
                 action_logs = campaign.last_action_logs 
                 campaign.last_action_logs = []
+            else:
+                action_logs = []
             # for post, return jsonified data to update the map 
             return flask.jsonify(result=True, action_logs=action_logs, **kwargs)
 

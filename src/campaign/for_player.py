@@ -137,6 +137,8 @@ class PlayerCampaign(BaseCampaign):
         Should be accompanied by IntentionRule to reward plays that resemble planning."""
         if not simultaneous_mode:
             # just use the old logic
+            self._current_phase = "end"
+            self._player_coef = None 
             return super(PlayerCampaign, self).full_phase_attack()
         # receive bot actions at current situation. 
         action_dict, direction_dict = dict(), dict()
@@ -153,12 +155,13 @@ class PlayerCampaign(BaseCampaign):
                 print("Player {} submitted multiple attack targets {}({}), ignored.".format(pid, target_ids, actions))
                 continue 
             action_dict[pid] = actions
-            target = self._map[list(target_ids)[0]][-1]
-            target_player = target["owner"]
+            target_id = list(target_ids)[0]
+            target_player = self._map[target_id][-1]["owner"]
             direction_dict[pid] = (target_id, target_player)
-            if direction_dict.get(target_player, None)[-1] == pid:
+            if direction_dict.get(target_player, (None, ))[-1] == pid:
                 # mutual attacks detected 
                 mutual_attacks.add( (pid, target_player) )
+        logger.info("@phase_perform_attack with simultaneous_mode=True: actions: {}, mutual_attacks: {}".format(action_dict, mutual_attacks))
 
         # resolving received actions:
         # if there are two who simultaneously attack each other, and both attacked province were mobilized for the attack, battle is fought without any terrain bonuses/penalties with the full section. This should reward the stronger player.
@@ -168,4 +171,140 @@ class PlayerCampaign(BaseCampaign):
             actions1, actions2 = action_dict[p1], action_dict[p2]
             source_1 = set(sid for sid, tid, rq in actions1)
             source_2 = set(sid for sid, tid, rq in actions2)
-            if 
+            target_1, _ = direction_dict[p1]
+            target_2, _ = direction_dict[p2]
+            if target_1 in source_2 and target_2 in source_1:
+                # direct fight trigger; draw all available & meet in open combat
+                draw_1 = draw_2 = 0
+                for sid, tid, rq in actions1:
+                    source = self._map[sid][-1]
+                    can_draw = min(rq, source["units"] - 1)
+                    if can_draw:
+                        draw_1 += can_draw 
+                        source["units"] -= can_draw
+                for sid, tid, rq in actions2:
+                    source = self._map[sid][-1]
+                    can_draw = min(rq, source["units"] - 1)
+                    if can_draw:
+                        draw_2 += can_draw 
+                        source["units"] -= can_draw
+                self.perform_action_mutual_attacks(p1, draw_1, target_1, p2, draw_2, target_2)
+                # remove the resolved attacks
+                action_dict.pop(p1); action_dict.pop(p2)
+            elif target_1 in source_2 or target_2 in source_1:
+                # riposte trigger - the mobilized region will lose half of the attacking values and its terrain defensive bonuses   
+                if target_1 in source_2:
+                    p_adv, p_dav = p1, p2 # adv is for "advantage", dav is for "disadvantage"
+                    actions_adv, actions_dav, target_adv, target_dav = actions1, actions2, target_1, target_2
+                else:
+                    p_adv, p_dav = p2, p1
+                    actions_adv, actions_dav, target_adv, target_dav = actions2, actions1, target_2, target_1
+                # disadvantage side attack first with reduced values
+                draw_dav = 0
+                for sid, tid, rq in actions_dav:
+                    source = self._map[sid][-1]
+                    can_draw = min(rq, source["units"] - 1)
+                    if can_draw:
+                        if sid == target_adv:  # penalized region
+                            draw_dav += (can_draw // 2 )
+                        else:
+                            draw_dav += can_draw 
+                        source["units"] -= can_draw 
+                print("[P{}] attacking --{}--> {} (P{}, disadvantage)".format(p_dav, draw_dav, self.pname(target_dav), p_adv))
+                self.perform_action_attack(p_dav, draw_dav, target_dav)
+                # advantage side then attack; TODO invalidate the terrain in here; for now just give a bonus base attack modifier 
+                draw_adv = 0
+                for sid, tid, rq in actions_adv:
+                    source = self._map[sid][-1]
+                    can_draw = min(rq, source["units"] - 1)
+                    if can_draw:
+                        draw_adv += can_draw 
+                        source["units"] -= can_draw 
+                print("[P{}] attacking --{}--> {} (P{}, advantage)".format(p_adv, draw_adv, self.pname(target_adv), p_dav))
+                self.perform_action_attack(p_adv, draw_adv, target_adv, attack_modifier=1.5)
+                # remove the resolved attacks
+                action_dict.pop(p1); action_dict.pop(p2)
+            else:
+                continue # attacks land in different regions; resolve as normal.
+        # perform the rest as normal
+        for i in self._action_order:
+            if i not in action_dict:
+                continue # already resolved or not submitted; ignore 
+            # automatically lower the units to available & discarding those no longer owned.
+            correct_source_actions = ((sid, tid, min(rq, self._map[sid][-1]["units"]-1)) for sid, tid, rq in action_dict[i] if self._map[sid][-1]["owner"] == i)
+            correct_amount_actions = [a for a in correct_source_actions if a[-1] > 0]
+            self.phase_perform_attack(i, override_action=correct_amount_actions) 
+        
+        # after everything; reset the phase & coef
+        self._current_phase = "end"
+        self._player_coef = None 
+        return
+
+    def perform_action_mutual_attacks(self, player_1: int, force_1: int, target_1: int, player_2: int, force_2: int, target_2: int, player_1_modifier: float=1.0, player_2_modifier: float=1.0, winning_resolution="attack"):
+        """Happens when two player simultaneously launches attack into each other. This should not be affected by any terrain-related mechanism. Yet.
+        winning_resolution: depending on mode:
+            `hold` will just deposit the winning side back to their matching province. Should not happen in normal circumstances. Heavily favor the loser if this is the case.
+            `attack`/`continue` will launch an additional attack from the remaining force of the winnning side. TODO negate terrain bonus; for now, this will give the losing side a flat 0.5 defend_modifier.
+            `overrun` will automatically give the winning side the target province. TODO deposit the remaining losing side units to somewhere. Heavily favor the winner if they has small advantage."""
+        true_force_1 = force_1 * player_1_modifier
+        true_force_2 = force_2 * player_2_modifier
+        # compare  
+        if true_force_1 == true_force_2:
+            # really not supposed to happen with RandomFactorRule; but assuming it does..
+            if self.flavor_text:
+                event_text = self.flavor_text.on_event_triggered("mutual_attacks_draw", {
+                    "player_1_id": player_1, "player_1_name": self.plname(player_1), "player_1_color": self.plcolor(player_1),
+                    "player_2_id": player_2, "player_2_name": self.plname(player_2), "player_2_color": self.plcolor(player_2)
+                    })
+                if event_text:
+                    self.last_action_logs.append(event_text)
+            return
+        if true_force_1 > true_force_2:
+            winner, loser = player_1, player_2
+        else:
+            winner, loser = player_2, player_1
+        remaining_units = max(int(abs(true_force_1 - true_force_2)), 1) # should have at least 1 unit remaining 
+        # register unit casualties.
+        self._context["casualties"][player_1] += max(force_1 if winner == player_2 else force_1 - remaining_units, 0)
+        self._context["casualties"][player_2] += max(force_2 if winner == player_1 else force_2 - remaining_units, 0)
+        if winning_resolution == "hold":
+            return_province_id = target_2 if winner == player_1 else target_1 
+            self._map[return_province_id][-1]["units"] += remaining_units 
+            if self.flavor_text:
+                event_text = self.flavor_text.on_event_triggered("mutual_attack_win_hold", {
+                    "winner_id": winner, "winner_name": self.plname(winner), "winner_color": self.plcolor(winner),
+                    "loser_id": loser, "loser_name": self.plname(loser), "loser_color": self.plcolor(loser),
+                    "returning_units": remaining_units, "return_province_id": return_province_id, "return_province_name": self.pname(return_province_id)
+                    })
+                if event_text:
+                    self.last_action_logs.append(event_text)
+            return
+        elif winning_resolution == "attack" or winning_resolution == "continue":
+            winner_target = target_1 if winner == player_1 else target_2
+            if self.flavor_text:
+                event_text = self.flavor_text.on_event_triggered("mutual_attack_win_continue", {
+                    "winner_id": winner, "winner_name": self.plname(winner), "winner_color": self.plcolor(winner),
+                    "loser_id": loser, "loser_name": self.plname(loser), "loser_color": self.plcolor(loser),
+                    "remaining_units": remaining_units
+                    })
+                if event_text:
+                    self.last_action_logs.append(event_text)
+            result = self.perform_action_attack(winner, remaining_units, winner_target, defend_modifier=0.5)
+            return 
+        elif winning_resolution == "overrun":
+            winner_target = target_1 if winner == player_1 else target_2
+            target = self._map[winner_target][-1]
+            target["owner"] = winner 
+            target["units"] = remaining_units + 1
+            if self.flavor_text:
+                event_text = self.flavor_text.on_event_triggered("mutual_attack_win_overrun", {
+                    "winner_id": winner, "winner_name": self.plname(winner), "winner_color": self.plcolor(winner),
+                    "loser_id": loser, "loser_name": self.plname(loser), "loser_color": self.plcolor(loser),
+                    "occupy_units": remaining_units, "occupy_province_id": return_province_id, "occupy_province_name": self.pname(return_province_id)
+                    })
+                if event_text:
+                    self.last_action_logs.append(event_text)
+            return
+        else:
+            raise ValueError("@perform_action_mutual_attacks: winning_resolution must be hold|attack/continue|overrun; instead is {}".format(winning_resolution))
+

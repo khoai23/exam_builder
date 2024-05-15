@@ -22,6 +22,12 @@ class RandomFactorRule(Rule):
         new_preserve_modifier = preserve_modifier * RandomFactorRule._create_variable(self.deviation)
         return new_attack_modifier, new_defend_modifier, new_preserve_modifier 
 
+    def affect_mutual_combat(self, player_1_modifier: float, player_2_modifier: float, player_1_id: int, player_2_id: int, player_1_units: int, player_2_units: int, player_1_target: int, player_2_target: int):
+        new_player_1_modifier = player_1_modifier * RandomFactorRule._create_variable(self.deviation)
+        new_player_2_modifier = player_2_modifier * RandomFactorRule._create_variable(self.deviation)
+        return new_player_1_modifier, new_player_2_modifier
+
+
 class RevanchismRule(Rule):
     """Allow each player a chance for comeback.
     Player can be granted a "revanchism" status for 5 turns when (1) is smallest player in the game, (2) is under 2 provinces & 10 units, and (3) only has 20% of the total power of the largest player.
@@ -81,6 +87,15 @@ class RevanchismRule(Rule):
                 new_defend_modifier = defend_modifier * (1.0 + self.status_combat_coef)
                 return attack_modifier, new_defend_modifier, preserve_modifier 
         return attack_modifier, defend_modifier, preserve_modifier 
+
+    def affect_mutual_combat(self, player_1_modifier: float, player_2_modifier: float, player_1_id: int, player_2_id: int, player_1_units: int, player_2_units: int, player_1_target: int, player_2_target: int):
+        if player_1_id == self.current_affected_player:
+            new_player_1_modifier = player_1_modifier * (1.0 +  self.status_combat_coef)
+            return new_player_1_modifier, player_2_modifier
+        if player_1_id == self.current_affected_player:
+            new_player_2_modifier = player_2_modifier * (1.0 +  self.status_combat_coef)
+            return player_1_modifier, new_player_2_modifier
+        return player_1_modifier, player_2_modifier
 
     def affect_deployment(self, deploy_strength: int, deploy_distance_from_front: int, deployer_id: int, target_province_id: int):
         if self.current_affected_player is not None and self.current_affected_player == deployer_id:

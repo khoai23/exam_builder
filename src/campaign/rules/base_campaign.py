@@ -48,6 +48,11 @@ class Rule(ABC):
     def after_movement(self, player_id: int, result: Tuple[Any]):
         pass 
 
+    def affect_mutual_combat(self, player_1_modifier: float, player_2_modifier: float, 
+            player_1_id: int, player_2_id: int, player_1_units: int, player_2_units: int, player_1_target: int, player_2_target: int):
+        """Affecting a fight that happens when two players launch attacks into each other. Should not have terrain-type modifier until we can sort things out."""
+        return player_1_modifier, player_2_modifier
+
     # visual representation 
     def modify_draw_map(self, draw_map: List[Any]):
         return draw_map
