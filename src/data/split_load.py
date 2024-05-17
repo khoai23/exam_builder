@@ -2,6 +2,7 @@
 When used, app need a significant overhaul.
 Will replace the corresponding item in session.py"""
 import os, io, csv, sys
+import shutil
 import glob
 from collections import defaultdict
 
@@ -29,9 +30,40 @@ def filename_to_catname(fname: str):
     else:
         return fname.replace("_", " ") # use unicode name as-is (space = underscore)
 
+def try_migrate_data(from_path: str, to_path: str, copy_to_filename: bool=False):
+    """Migrating all matching items at from_path to to_path. If copy_to_filename is specified, also rename the file to matching template in to_path. (e.g from/typeA_xxx.xlsx -> to/typeB_xxx.xlsx)"""
+    from_folder, from_template = os.path.split(from_path)
+    from_suffix, ext = os.path.splitext(from_template)
+    # see all files that match this directory
+    all_from_files = ((fname, full_path) for fname, full_path in ((f, os.path.join(from_folder, f)) for f in os.listdir(from_folder)) if os.path.isfile(full_path))
+    matching_files = [(fn, fp) for fn, fp in all_from_files if fn.startswith(from_suffix) and fn.endswith(ext)]
+    if len(matching_files) > 0:
+        logger.info("@try_migrate_data: Found {} files matching template `{}`. Attempting to migrate..".format(len(matching_files), from_path))
+        to_folder, to_template = os.path.split(to_path)
+        if copy_to_filename:
+            # replace the from_suffix with to_suffix 
+            to_suffix, ext = os.path.splitext(to_template)
+        for filename, full_path in matching_files:
+            if copy_to_filename:
+                new_path = os.path.join(to_folder, to_suffix + "_" + filename.split("_", 1)[-1])
+            else:
+                new_path = os.path.join(to_folder, filename)
+            shutil.move(full_path, new_path)
+        logger.info("@try_migrate_data: Migration finished.")
+        return True 
+    return False
+
 class OnRequestData(dict):
-    def __init__(self, data_path: str="data/data.xlsx", categories: Optional[Set[str]]=None, backup_path: str="data/backup.xlsx", maximum_cached: int=5, _initiate_blank: bool=False, autotag_dict: Optional[Dict]=None, autoformat_dict: Optional[Dict]=None):
-        """Construct and check if all files is ready."""
+    def __init__(self, data_path: str="data/questions/data.xlsx", categories: Optional[Set[str]]=None, backup_path: str="data/questions/backup.xlsx", legacy_data_path: str="data/data.xlsx", maximum_cached: int=5, _initiate_blank: bool=False, autotag_dict: Optional[Dict]=None, autoformat_dict: Optional[Dict]=None):
+        """Construct and check if all files is ready.
+        If categories is specified; only load those. If not, search the dictory for all matching items accordingly.
+        `legacy_data_path`: if there are files matching in the category format; attempt to migrate into the real `data_path`. They must have matching filename to be used together.
+        `maximum_cached`: how many category can be kept in memory for quick access 
+        `_initiate_blank`: if true, allowing no-category app to be initialized. Is pretty worthless since new category creation is not allowed for now.
+        autotag/autoformat: if specified, questions will be auto-tagged & auto-formatted by specific rules. Should only be used sparringly since it incurs additional computation cost.
+        """
+        if legacy_data_path:
+            try_migrate_data(legacy_data_path, data_path)
         base, ext = os.path.splitext(data_path)
         valid_files = glob.glob(base + "*")
         raw_fcats = [os.path.splitext(f.split("_", 1)[-1])[0] for f in valid_files]

@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 DEFAULT_LEARN_XML_POSITION = "test/learn_bpmn.xml"
-def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
+def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lessons_data: dict=None) -> Flask:
     # generic section.
 
     # experiment: brainstorm-like mind map to allow running around in it?
@@ -39,6 +39,19 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f) -> Fla
             return flask.jsonify(result=True, data=data)
         except Exception as e:
             return flask.jsonify(result=False, error=str(e))
+
+    # experiment - markdown-based text lesson. Should allow jumping around 
+    @app.route("/learn", methods=["GET"])
+    def learn():
+        lesson_key = request.args.get("key", None)
+        if lesson_key is None:
+            # TODO use a default path when we has everything.
+            return flask.render_template("error.html", error="Must supply a lesson key to access.", error_traceback=None)
+        lesson_data = lessons_data.get(lesson_key)
+        if not lesson_data:
+            return flask.render_template("error.html", error="Invalid lesson key ({}). Check if you used the right link.".format(lesson_key), error_traceback=None)
+        else:
+            return flask.render_template("graph_learn.html", content=lesson_data)
 
     return app
 

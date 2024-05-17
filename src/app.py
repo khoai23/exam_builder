@@ -10,19 +10,23 @@ from src.routes import build_login_routes, build_session_routes, build_data_rout
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
+from src.data.markdown_load import MarkdownData
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
 
 import logging
 logger = logging.getLogger(__name__)
 
+# default app
 app = Flask("exam_builder")
 app.secret_key = "liars_punishment_circle_24102023"
 app.config["UPLOAD_FOLDER"] = "test"
+# related session/questions data; TODO migrate the src.session's current_data to this instead.
+lessons_data = MarkdownData()
 # bind appropriate functions
 app, login_manager, login_decorator = build_login_routes(app)
 app = build_session_routes(app, login_decorator=login_decorator)
 app = build_data_routes(app, login_decorator=login_decorator)
-app = build_learn_routes(app, login_decorator=login_decorator)
+app = build_learn_routes(app, login_decorator=login_decorator, lessons_data=lessons_data)
 _, app = build_game_routes(app, login_decorator=login_decorator) 
 ### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
@@ -35,7 +39,7 @@ def main():
 @app.route("/test")
 def test():
     """Enter the test page, to put and test new stuff"""
-    return flask.render_template("test.html")
+    return flask.render_template("test.html", content=lesson_data.get("test"))
 
 @app.route("/map")
 def map():
