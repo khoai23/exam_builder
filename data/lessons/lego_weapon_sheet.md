@@ -8,49 +8,17 @@ Still haven't found:
 
 Resources:
 
+* [BrickArms](learn?key=brickarms)
 * [BrickTactical](learn?key=bricktac)
-* TODO [BrickArms](learn?key=brickarms)
 
 Currently identified, list in order of favoritism & certainty in identification:
 
 ### Sheets
 
-1. (Favorite) K7032, Quasi Heavy Weapon Pack, altho is a bit US-centric. Has:
-    1. RPD
-    2. M60
-    3. M249 (with barrel changing handler)
-    4. MK46 aka M249-SPW 
-    5. Milkor MGL-105 (evident by the stock comparing to the RG-6)
-    6. M97 Trench Gun
-    7. Experimental AA12 that nobody buys
-    8. Unidentified single-shot shortgun thingie
-    9. Unidentified pistol.
-2. K7031, SMG Weapon Pack 
-    1. AK-74U?
-    2. M16 
-    3. SCAR
-    4. MP5A2/A3
-    5. UMP45
-    6. P90 w/ silencer
-    7. Uzi
-    8. MP9
-    9. Generic unidentified pistol
-    10. Unidentified pistol with scope 
-    11. QCW-05? (look a bit short)
-    12. Unidentified scifi thingie.
-3. K7030, Assault Rifle Pack, has some neat looking AK-74 stuff.
-    1. 2 AK variants with underbarrel handler, likely from BrickArms 
-    2. QBZ-95
-    3. M16A3 (underslung shotgun?)
-    4. Steyr AUG A3 
-    5. HK416
-    6. G36 
-    7. M4CQB (shortened?)
-    8. Something-03, likely another AK variant 
-    9. Something-CQB, likely another M4/M16 variant 
-    10. P288 Pistol?
-    11. Unidentified pistol 
-4. K7029, Sniper Rifle Pack, nobody buys since it's kinda wack. Nothing is properly identified, so not bothering to add ?.
+1. [K7016](https://shopee.vn/%C4%90%E1%BB%93-Ch%C6%A1i-V%E1%BB%89-V%C5%A9-Kh%C3%AD-K7016-D%C3%B9ng-Trong-Th%E1%BA%BF-Chi%E1%BA%BFn-2-NO.340-Ph%E1%BB%A5-Ki%E1%BB%87n-MOC-Army-i.63856987.4753786961), trade in the mine clearing stuff for bugle + sword. Called K7016 [here](https://shopee.vn/V%E1%BB%89-ph%E1%BB%A5-ki%E1%BB%87n-v%C5%A9-kh%C3%AD-th%E1%BA%BF-chi%E1%BA%BFn-2-c%E1%BB%B1c-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-X%E1%BA%BFp-h%C3%ACnh-Mini-Minifigures-l%C3%ADnh-Army-WW2-M%C3%B4-h%C3%ACnh-K7016-i.81322028.3720619582) too, so K1707 is really a misnomer.
+
+2. K7028, Dunno what it is, but mostly breacher/cutter tools
+3. [K7029](https://www.lazada.com.ph/products/k7029-lego-compatible-minifigure-accessories-i3356961709.html), Sniper Rifle Pack, looks like nobody buys since it's kinda wack. Nothing is properly identified, so not bothering to add ?.
     1. AWM, only reliable due to how ubiquitous it is in CS
     7. QBU-88, tips: chinese guns will only has number since sellers just scrub chinese texts.
     2. M14 
@@ -59,14 +27,52 @@ Currently identified, list in order of favoritism & certainty in identification:
     5. M24 
     6. M82A2
     7. XM8
-    8. Something Unidentified, likely to QBU-10 antimateriel 
-5. K7090, Quasi-Russian Pack, have a lot of AK variants. List later, but most seems to be BrickArms variants. Biggest issue is the one labelled SVD, like fking hell it is.
-6. K7061B, Heavy-Sniper Pack.
+    8. Barrett 
+4. K7030, Assault Rifle Pack, has some neat looking AK-74 stuff.
+    1. 2 AK variants with underbarrel handler, ~~likely from BrickArms~~ can't even identify; scopes are ridiculous.
+    2. QBZ-95
+    3. ~~M16A3 (underslung shotgun?)~~ [M16-DBR](learn?key=brickarms#M16-DBR)
+    4. Steyr AUG A3 ([actually ABR?](learn?key=brickarms#ABR)) 
+    5. HK416
+    6. G36 
+    7. M4CQB (shortened?)
+    8. QBZ-03; could pass as an AK variant (cause it really is)
+    9. Something-CQB, likely another M4/M16 variant 
+    10. P288 ([actually UCS?](learn?key=brickarms#UCS))
+    11. [M23](learn?key=brickarms#M23)
+5. [K7031](https://www.lazada.com.ph/products/k7031-lego-compatible-military-accessories-i3347459170.html), SMG Weapon Pack 
+    1. AK-74U? (doesnt match any brickarms item)
+    2. M16 
+    3. SCAR
+    4. MP5A2/A3
+    5. UMP45
+    6. P90 w/ silencer
+    7. Uzi
+    8. MP9
+    9. [Spy Carbine](learn?key=brickarms#SpyCarbine)
+    10. QCW-05
+    11. [Longslide](learn?key=brickarms#Longslide)
+    12. [TT-33](learn?key=brickarms#TT-33), all the gun with vertical grooves at the back should be either this or UCS
+6. **(Favorite)** K7032, Quasi Heavy Weapon Pack, altho is a bit US-centric. Has:
+    1. RPD
+    2. M60
+    3. M249 (with barrel changing handler)
+    4. MK46 aka M249-SPW 
+    5. Milkor MGL-105. Not the Brickarms's [MGL](learn?key=brickarms#MGL) or RG-6 since the stock is different
+    6. M97 Trench Gun
+    7. [Radi8 .44 RMR](learn?key=brickarms#Radi8.44RMR).
+    8. [ACS](learn?key=brickarms#ACS), aka AA12 that nobody buys IRL
+    9. Unidentified single-shot shotgun thingie
+
+7. [K7051](https://www.lazada.com.ph/products/k7051-lego-compatible-ww2-minifigure-accessories-i3283313831-s16592042154.html), WW2 Axis Pack. MG-34, MG-42, MP18-28, STG-44, MP-40 (with skeleton stock), Mauser, mashed potato grenade 
+8. K7052, WW2 Rifle Pack. A bunch of M1, 98K, Springfield etc.
+
+9. [K7061B](https://www.lazada.com.ph/products/k7061b-lego-compatible-minifigure-accessories-i3357626122-s17100208820.html), Heavy-Sniper Pack.
     1. M249/M60/MGL-105 exactly like K7032
-    2. AWM, G3, #8 exactly like K7029, one of them is not really unidentified
+    2. AWM, G3, #8 similar to barrett, but likely the QBU-10 
     3. Unidentified drum mag LMG, probably AK-family, but cannot be sure.
     4. QBZ-95 
-7. K7061A, RPG + Sniper Pack. Again, none of the rifle are identifiable.
+10. K7061A, RPG + Sniper Pack. Again, none of the rifle are identifiable.
     1. RPG-7
     2. M72-LAW 
     3. AA12 again, for some reason 
@@ -74,10 +80,31 @@ Currently identified, list in order of favoritism & certainty in identification:
     5. M4 + long scope.
     6. XM201
     7. ACE
-8. K7052, WW2 Rifle Pack. A bunch of M1, 98K, Springfield etc.
-9. K7051, WW2 Axis LMG/MG Pack. MG-34, MG-42, STG-44, Luger, mashed potato grenade 
-10. K7028, Dunno what it is, but mostly breacher/cutter tools
-11. K1707, ~~look a lot like a misnomer of K7071;~~ trade in the nmine stuff for bugle + sword
+11. K7064A, Fortnite Pack (probably). Have a lot of weird stuff. May buy 1 for the pan
+    1. 2xM4 thingie; closest match is [M4 Pro Beardo](learn?key=brickarms#M4ProBeardo)'s scope.
+    2. [XVR](learn?key=brickarms#XVR)
+    3. 2x normal pistol, 1x generic-looking revolver
+    4. A bunch of melee weaponry - crowbar, machete, pan etc.
+    5. Grenade, gas mask, laptop & accessory belt 
+12. K7064B, Mixed Pack
+    1. 3x AK, two of which has holes which suggest customizable accessory
+    2. SCAR, which also have holes.
+    3. Something AR-looking; could be a G3 variant 
+    4. AWM with bipod 
+    5. 2x Scoped Rifle, need rechecking.
+    6. MK46 
+    7. Very plain looking rifle, normal bipod, recurve crossbow in 2-3 independent parts.
+
+11. K7065, **(Almost-Favorite)** AK Pack, essentially BrickArms' set + RPG-7. Included SVD with bipod (BrickArms' [AK-SV](learn?key=brickarms#AK-SV)), 6 AK with roughly different config, RPG-7, and a nightvision thingie.
+
+12. K7090, **(Almost-Favorite)** Quasi-Russian Pack, have a lot of AK variants. List later, but most seems to be BrickArms variants. Biggest issue is the one labelled SVD, like fking hell it is.
+13. K7091, Dunno-what-is-the-goal pack.
+    1. QBZ-95 with detachable knife-bayonet 
+    2. QBU-88
+    3. Some shotgun & scifi thingie. Scifi one has 2 pieces & can mount a pistol on it 
+    4. GSH18?
+    5. Longslide? (underslung light)
+    6. Grenade, nightvision thingie, headset
 
 
 8. [PK-JX096-1](https://www.lazada.vn/products/phu-kien-moc-army-do-choi-lap-rap-minifig-va-mo-hinh-sang-tao-trang-tri-quan-doi-pk-jx096-1-i1241864408.html), Modularized AKs (can attachs aux as will), should buy if found on Shopee since it cost a lot here.
@@ -92,14 +119,14 @@ Currently identified, list in order of favoritism & certainty in identification:
     6. Milkor MGL-105, AA12, M97 as per K7032
     7. Steyr AUG A3 as per K7030 
 12. [PK-JX097-1](https://shopee.vn/Ph%E1%BB%A5-ki%E1%BB%87n-MOC-Army-V%C5%A9-Kh%C3%AD-V%E1%BB%89-S%C3%BAng--%C4%90%E1%BB%93-ch%C6%A1i-l%E1%BA%AFp-r%C3%A1p-minifig-v%C3%A0-non-lego-m%C3%B4-h%C3%ACnh-s%C3%A1ng-t%E1%BA%A1o-trang-tr%C3%AD-qu%C3%A2n-%C4%91%E1%BB%99i--PK-JX097-1-i.88822105.3681744332), Rather unidentifiable sheet.
-13. [PK-JX097-1](https://www.lazada.vn/products/phu-kien-moc-army-do-choi-lap-rap-minifig-va-non-lego-mo-hinh-sang-tao-trang-tri-quan-doi-pk-jx097-2-i1241932015.html), Same as above
+13. [PK-JX097-2](https://www.lazada.vn/products/phu-kien-moc-army-do-choi-lap-rap-minifig-va-non-lego-mo-hinh-sang-tao-trang-tri-quan-doi-pk-jx097-2-i1241932015.html), Same as above
 
 22. [Unidentified sheet](https://kukenshop.vn/vi-vu-khi-danh-cho-linh-ban-tia-no-841-phu-kien-moc-army), seems to be mostly a variant of K7029 
 23. PK-K7071, Chinese Resistance War sheet; alot of WW2 Allied weaponry plus occasional Axis
     1. Dadao, whoo
-    2. Bren LMG, Sten Gun 
+    2. Bren LMG, Sten Gun; could be chinese knockoff as per BrickArms
     4. Thompson, M3 Grease Gun (or MP-40, cant tell)
-    5. PPsh 
+    5. PPSh 
     6. Other stuff 
 24. PK208, WW2 stuff.
 25. PK0070-3, an AK + 2 sniper rifle w/ bipods.
@@ -112,7 +139,7 @@ Currently identified, list in order of favoritism & certainty in identification:
 29. PK-RPKS74 - favorite?! RPK is wack, but it has the M79 
 30. PK-SVD, SVD + 2 sniper bag
 31. PK-D212, M16 + a M249 thingie.
-32. PK-RPD - Likely the stuff that was given by 10-guy pack; AK + RPD + M72 LAW 
+32. PK-RPD - Likely the stuff that was given along the [10-guy pack](https://shopee.vn/Combo-10-Nh%C3%A2n-v%E1%BA%ADt-chi%E1%BA%BFn-s%C4%A9-B%E1%BB%99-binh-Qu%C3%A2n-%C4%91%E1%BB%99i-Nh%C3%A2n-d%C3%A2n-Vi%E1%BB%87t-Nam-v%C3%A0-trang-b%E1%BB%8B-AK-RPD-i.69962743.21692532670); AK + RPD + M72 LAW 
 33. PK-5-56, Another M16 + M249 + M79 thingie; would be a good fallback.
 34. PK006, attaches to helmet.
 35. JXX-01203, unknown.
@@ -129,7 +156,7 @@ Currently identified, list in order of favoritism & certainty in identification:
     6. M60 + MP5 
 41. JX-901-1, US weaponry - M3 Grease Gun, BAR, Springfield + some stuff 
 42. JX-901-2, Nazi weaponry - MG-42(? not sure), STG-44, Panzerfaust + some stuff 
-43. JX-901-3, Soviet weaponry - that dish-MG, PPsh, Mosin + some stuff 
+43. JX-901-3, Soviet weaponry - DP-28, PPSh, Mosin + some stuff 
 44. PK120, probably same line as PK103 with lots of bullpup
 45. PK-080, lot of rifle; it looks kinda similar 
 46. [Unidentified](https://shopee.vn/%C4%90%E1%BB%93-ch%C6%A1i-l%E1%BA%AFp-r%C3%A1p-swat-army-m%C3%B4-h%C3%ACnh-l%E1%BA%AFp-gh%C3%A9p-qu%C3%A2n-s%E1%BB%B1-V%C4%A9-trang-b%E1%BB%8B-qu%C3%A2n-s%E1%BB%B1-No.319-i.239532642.20484164813?sp_atk=0631f454-baec-4e45-87ee-a63db4d1060d&xptdk=0631f454-baec-4e45-87ee-a63db4d1060d), only know as **No.319**; only place that has PK machine gun alongside a large bunch of AKs

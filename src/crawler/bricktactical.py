@@ -1,6 +1,4 @@
 import io, json, pickle
-import requests
-from bs4 import BeautifulSoup 
 
 from src.crawler.generic import get_parsed 
 
@@ -40,14 +38,10 @@ def _safe_link(raw_link: str):
     else:
         return raw_link
 
-def generate_md(resource_dict: dict, category_cue: dict={"Packs": ["pack", "stack", "squad", "modular"], "Certain (Ruskie)": ["ak", "svd", "pk", "rpk", "rpd", "bt47", "bt74"], "Certain (US)": ["m16", "m4", "m60", "m249", "m79", "m97"], "Weird/SW": ["blaster", "energy", "beam", "space", "plasma", "zombie", "raygun"], "Melee": ["sword", "knife", "hammer", "axe", "hilt"], "Parts": ["body", "leg", "helmet", "headset", "vest"], "Others": ["lord", "overmold", "sign", "bottle", "ball", "printed", "random", "crate", "knuckle", "beaker"]}, default_category: str="Default"):
-    sections = []
-    # construct header
-    header = "# LEGO-compatible: BrickTactical\n"
-    sections.append(header)
-
+def autocategorize(base: dict, category_cue: dict={"Packs": ["pack", "stack", "squad", "modular"], "Certain (Ruskie)": ["ak", "svd", "pk", "rpk", "rpd", "bt47", "bt74"], "Certain (US)": ["m16", "m4", "m60", "m249", "m79", "m97"], "Weird/SW": ["blaster", "energy", "beam", "space", "plasma", "zombie", "raygun"], "Melee": ["sword", "knife", "hammer", "axe", "hilt"], "Parts": ["body", "leg", "helmet", "headset", "vest"], "Others": ["lord", "overmold", "sign", "bottle", "ball", "printed", "random", "crate", "knuckle", "beaker"]}, default_category: str="Default"):
+    """Split into categories to hopefully make things less bloated."""
     categorized = {default_category: dict(), **{k: dict() for k in category_cue.keys()}}
-    for item_name, item_info in resource_dict.items():
+    for item_name, item_info in base.items():
         is_default = True
         lowered_item_name = item_name.lower()
         for cat, cues in category_cue.items():
@@ -56,13 +50,20 @@ def generate_md(resource_dict: dict, category_cue: dict={"Packs": ["pack", "stac
                 categorized[cat][item_name] = item_info
                 break 
         if is_default:
-            categorized[default_category][item_name] = item_info
+            categorized[default_category][item_name] = item_info 
+    return categorized
+
+def generate_md(categorized: dict, ensure_safe_fn: callable=lambda x: x):
+    sections = []
+    # construct header
+    header = "# LEGO-compatible: BrickTactical\n"
+    sections.append(header)
     # print(categorized)
     for cat, items in categorized.items():
         category_header = "{:s}\n".format(cat)
         table_header = "|Item|Image|"
         table_separator = "|:----|:---:|"
-        rows = [r"|[{:s}]({:s})|<img src='{:s}'></src>|".format(name, _safe_link(data["link"]), _safe_link(data["base_image"])) for name, data in items.items()]
+        rows = [r"|[{:s}]({:s})|<img src='{:s}'></src>|".format(name, ensure_safe_fn(data["link"]), ensure_safe_fn(data["base_image"])) for name, data in items.items()]
         table_data = "\n".join([category_header, table_header, table_separator] + rows)
         sections.append(table_data) 
 
@@ -85,7 +86,8 @@ if __name__ == "__main__":
             data = json.load(btf)
         print("Loaded data.")
     if arg in ("full", "convert"):
-        md_text = generate_md(data)
+        categorized = autocategorize(data)
+        md_text = generate_md(categorized, ensure_safe_fn=_safe_link)
         with io.open("data/lessons/bricktac.md", "w", encoding="utf-8") as mf:
             mf.write(md_text)
         print("Formatting data to .md file.")
