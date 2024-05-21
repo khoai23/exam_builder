@@ -18,7 +18,7 @@ TODO continue later
 
 ###### It's a good pain. Proof of your brain-muscle being worked.
 
-##### Does learning math make me rich?
+##### Would learning math make me rich?
 
 ###### No. It only gives you the ego to look down even on the rich. Provided you learn it properly.
 
@@ -36,7 +36,7 @@ TODO continue later
 
 ##### Right, so how do I learn it?
 ##### Yeah yeah whatever, let me out of here.
-##### I haven't met you, and I already disliked you.
+##### The less I can hear from you, the better.
 
 ## Areas
 
@@ -51,24 +51,28 @@ Mathematics involves a variety of disciplines. The concerning ones in here are:
 
 ##### Gah, so much text. Give me a shortened version.
 
-###### Where's my please?<br>Anyway. Arithmetic is when you count, Algebra is when you do funny things around the = sign, Calculus is when you draw graphs, Discrete is when you count a lot, Statistics is when you make up stuff, and Geometry is what you doodle.
+###### Where's my "please"?<br>Anyway. Arithmetic is when you count, Algebra is when you do funny things around the = sign, Calculus is when you draw graphs, Discrete is when you count a lot, Statistics is when you make up stuff, and Geometry is what you doodle.
 
 ##### Right, so I want to learn {whatever area}. How to proceed?
 
 ###### Click the link at the area name.
 
-##### Just so you know, I already hate this stuff.
+##### I'm surprised that you can make me hate math this much.
 
-###### Then perhaps you might want to take this to your parents. They are likely to bankroll you to a real, qualified, nice teacher, as long as you legitimately want to learn.<br>If you just want to not learn, well, tough luck and well deserved.
+###### Then perhaps you might want to take this to your parents. They are likely to bankroll you to a real, qualified, nice teacher, as long as you legitimately want to learn.<br>If you just want not to, well, tough luck and well deserved.
 
-##### Anything you can offer to alleviate the headache?
+##### Will this become more interesting? It's really dull right now.
 
 ###### Go a little further. This will get less dry & more "neat" as time went on. As I said at the start, all of them are mere expression of the same thing - logic. They will find their way back to each other.
 
-##### Okay, anything extra that we should have known?
+##### The lack of professionalism kinda bother me..
+
+###### Pity. Please head down to the suggestion box in our office and make your observation heard. Don't mind the shredding sound.
+
+##### Okay, anything extra that I should know?
 
 ## Independent resources
 
-One thing I cannot recommend enough is the book of G.Polya, **Mathematics and Plausible Reasoning** ([English](https://drive.google.com/file/d/1kdD6eU1vXDPhZi5rcEBtAdZj47zkVNQM/view?usp=drive_link), [Vietnamese](https://drive.google.com/file/d/12NUBqFsvP1jWjzmsLigY3zcSQn4A3_pk/view?usp=sharing)). It was the one that showed me how math actually was done throughout history - observation, postulation, and verification - in its endless search for the truth behind nature.
+One thing I cannot recommend enough is the book of G.Polya, **Mathematics and Plausible Reasoning** ([English](https://drive.google.com/file/d/1kdD6eU1vXDPhZi5rcEBtAdZj47zkVNQM/view?usp=drive_link), [Vietnamese](https://drive.google.com/file/d/12NUBqFsvP1jWjzmsLigY3zcSQn4A3_pk/view?usp=sharing)). It was the one that showed me how math actually was done throughout history - observation, postulation, and verification.
 
 

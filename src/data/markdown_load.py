@@ -18,7 +18,7 @@ class MarkdownData(dict):
         else:
             all_files = [os.path.join(load_directory, f) for f in os.listdir()]
         valid_files = {filename_to_catname(os.path.splitext(os.path.split(f)[-1])[0]): f for f in all_files if f.endswith(load_extension)}
-        # logger.debug("All valid markdown file found: {}; all files: {}".format(valid_files, all_files))
+        logger.debug("All valid markdown file found: {}; all files: {}".format(valid_files, all_files))
         self._lazy = lazy
         if lazy:
             # keep paths of all matching items; defer to __get_item__ to do the actual loading.
@@ -28,7 +28,7 @@ class MarkdownData(dict):
             for key, full_path in valid_files.items():
                 with io.open(full_path, "r", encoding="utf-8") as rf:
                     self[key] = rf.read()
-            # print("Loaded self:", self)
+            print("Loaded self:", self.keys())
             self._all_valid_files = None
 
     def __get_item__(self, key):
