@@ -60,10 +60,10 @@ def generate_md(categorized: dict, title="Brick Tactical", ensure_safe_fn: calla
     sections.append(header)
     # print(categorized)
     for cat, items in categorized.items():
-        category_header = "###{:s}\n".format(cat)
+        category_header = "## {:s}\n".format(cat)
         table_header = "|Item|Image|"
         table_separator = "|:----|:---:|"
-        rows = [r"|[{:s}]({:s})|<img src='{:s}'></src>|".format(name, ensure_safe_fn(data["link"]), ensure_safe_fn(data["base_image"])) for name, data in items.items()]
+        rows = [r"|[{:s}]({:s})|<img src='{:s}' height=100></src>|".format(name, ensure_safe_fn(data["link"]), ensure_safe_fn(data["base_image"])) for name, data in items.items()]
         table_data = "\n".join([category_header, table_header, table_separator] + rows)
         sections.append(table_data) 
 

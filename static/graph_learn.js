@@ -1,3 +1,8 @@
+function run_lazyload() {
+	// apparently chromiums support loading=lazy; let's use that and see if it works or we need library for this.
+	$("img").each(function(i, it){ $(it).attr("loading", "lazy"); });
+}
+
 function create_accordion_section(base_item, section_tag="h2") {
 	// lesson's h2 should indicate full sections; convert all children to matching items.
 	all_data = base_item.children();
@@ -13,10 +18,14 @@ function create_accordion_section(base_item, section_tag="h2") {
 		if(current_item.is("h2")) {
 			let section_name = "section_bvkwhs_" + index.toString(); // random text to avoid collision
 			let current_section_wrapper = $("<div>").attr("class", "card");
-			let current_section_button = $("<button>").attr("class", "btn btn link").attr("data-toggle", "collapse").attr("data-target", "#" + section_name).text(current_item.text());
-			current_section = $("<div>").attr("class", "collapse").attr("id", section_name).attr("data-parent", base_item.attr("id"));
+			let current_section_button = $("<button>").attr("class", "btn btn-link").text(current_item.text());
+			current_section = $("<div>").attr("class", "collapse").attr("id", section_name);
+			let ref_current_section = current_section; // allow this variable in let to allow access from click
 			current_section_wrapper.append($("<div>").attr("class", "card-header").append(current_section_button));
 			current_section_wrapper.append(current_section);
+			current_section_button.click(function(event) { 
+				ref_current_section.collapse('toggle'); 
+			})
 			// put back 
 			base_item.append(current_section_wrapper)
 		} else {
@@ -57,4 +66,8 @@ function create_interactive_section(base_item, question_header="❔") {
 			}
 		}
 	});
+}
+
+function create_link_jump_section() {
+	// end-of-section h5 can trigger the next section for now. TODO allow triggering abitrary sections
 }

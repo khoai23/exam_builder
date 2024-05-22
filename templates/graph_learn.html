@@ -10,5 +10,7 @@
 <script>
 	$("#content").html(marked.parse($("#content_raw").text()));
 	create_interactive_section($("#content"));
+	create_accordion_section($("#content"));
+	run_lazyload();
 </script>
 {% endblock %}

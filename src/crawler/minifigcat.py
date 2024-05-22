@@ -13,9 +13,13 @@ def clear_link(link: str):
         link = link.split("#", 1)[0]
     return link
 
+def sanitize(string: str):
+    """Disallow anything that isnt alphanumeric or space"""
+    return "".join((c if c.isalnum() or c.isspace() else " " for c in string))
+
 def get_neighbor_links(soup_or_url, append_domain=APPEND_DOMAIN):
-    links = generic.get_neighbor_links(soup_or_url, append_domain=append_domain)
-    return [l.split("?", 1)[0] if "?" in l else l for l in links] # additional removal of possible redundant arguments.
+    links = [clear_link(l) for l in generic.get_neighbor_links(soup_or_url, append_domain=append_domain)]
+    return links#[l.split("?", 1)[0] if "?" in l else l for l in links] # additional removal of possible redundant arguments.
 
 def get_colors(color_url="https://www.minifigcat.com/shop/Colors/"):
     soup = generic.get_parsed(color_url)
@@ -27,8 +31,7 @@ def get_colors(color_url="https://www.minifigcat.com/shop/Colors/"):
     return list(sorted(colors_name, key=lambda x: len(x), reverse=True)) # organize from long -> short
 
 def parse_name_and_color(full_name, all_colors: list=None, rejoin: bool=False) -> tuple:
-    # substitute all non-alnum+space with space itself
-    parsed = "".join((c if c.isalnum() or c.isspace() else " " for c in full_name))
+    parsed = sanitize(full_name) #"".join((c if c.isalnum() or c.isspace() else " " for c in full_name))
     color = next((clr for clr in all_colors if clr in parsed), None)
     if color is None:
         generic.logger.info("@parse_name_and_color: Cannot parse for \"{}\". Algorithm is not good enough, or no color specified.".format(parsed))
@@ -65,39 +68,51 @@ def process_data(soup, url=None, data=None, colors=None):
         breadcrumb = soup.find("ul", class_="breadcrumb")
         categories = [t for t in (t.text.strip() for t in breadcrumb.children) if t]
         category = categories[-2]
-        if name in category:
+        if name in sanitize(category):
             # the current sub-category belong to a single type of item; discard it & use a higher one.
             category = categories[-3]
         data[full_name] = item = {"name": name, "color": color, "image": image_source, "link": url, "category": category, "description": description}
-        generic.logger.info("Link {} has item ({} - {}). Append & continuing.".format(url, name, color))
+        generic.logger.info("Link {} has item ({} | {}). Append & continuing. Total items atm [{:d}]".format(url, name, color, len(data)))
     except Exception as e:
         generic.logger.error("Parsing link {} has error: {}\n, (possible) item skipped.".format(url, traceback.format_exc()))
 
-def autocategorize(data):
+def autocategorize(data, colors: list=None):
     # convert data to matching category. This mostly help with generating md in per-category sections 
     categorized = dict()
     for k, d in data.items():
-        if d["category"] not in categorized:
-            categorized[d["category"]] = dict()
+        category = d["category"]
+        if colors and any(clr in category for clr in colors):
+            # category is wrong; and can't really be arsed to reverse-search them.
+            category = "Other"
+        if category not in categorized:
+            categorized[category] = dict()
         # convert to a name/color key pair to match associating items.
         true_name, color = new_key = d["name"], d["color"]
-        categorized[d["category"]][new_key] = d
+        categorized[category][new_key] = d
     return categorized
 
 def generate_md(data):
     """Tabled basing on color. This is exclusively a minifigcat thing, but should make viewing stuff much nicer."""
-    sections = ["#LEGO-Compatible: MinifigCat\n"]
+    sections = ["# LEGO-Compatible: MinifigCat\n"]
     def create_image_if_any(name, color, checker_dict):
         # check if (name, color) exist in checker_dict; if true, output the matching image+href; if not, leave blank
         exist_data = checker_dict.get((name, color), None)
         if exist_data:
-            image_str = "<img src='{:s}' width=100 {:s}></src>".format(exist_data["image"], "title='{:s}'".format(exist_data["description"]) if exist_data["description"] else "")
+            image = exist_data["image"]
+            if not image.startswith("http") and image.startswith("//"):
+                # special case happening to image
+                image = "https:" + image 
+            if exist_data["description"]:
+                description = "title='{:s}'".format(exist_data["description"].strip().replace("\r", "").replace("\n", " "))
+            else:
+                description = ""
+            image_str = "<img src='{:s}' width=100 {:s}></src>".format(image, description)
             linked_image_str = "<a href='{:s}'>{:s}</a>".format(exist_data["link"], image_str)
             return linked_image_str
         else:
             return "   " # blank
     for catname, catdata in data.items():
-        category_header = "###{:s}\n".format(catname)
+        category_header = "## {:s}\n".format(catname)
         rows = list(set((name for name, color in catdata.keys())))
         columns = list(set((color for name, color in catdata.keys())))
         # generate header
