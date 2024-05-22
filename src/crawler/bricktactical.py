@@ -53,14 +53,14 @@ def autocategorize(base: dict, category_cue: dict={"Packs": ["pack", "stack", "s
             categorized[default_category][item_name] = item_info 
     return categorized
 
-def generate_md(categorized: dict, ensure_safe_fn: callable=lambda x: x):
+def generate_md(categorized: dict, title="Brick Tactical", ensure_safe_fn: callable=lambda x: x):
     sections = []
     # construct header
-    header = "# LEGO-compatible: BrickTactical\n"
+    header = "# LEGO-compatible: {:s}\n".format(title)
     sections.append(header)
     # print(categorized)
     for cat, items in categorized.items():
-        category_header = "{:s}\n".format(cat)
+        category_header = "###{:s}\n".format(cat)
         table_header = "|Item|Image|"
         table_separator = "|:----|:---:|"
         rows = [r"|[{:s}]({:s})|<img src='{:s}'></src>|".format(name, ensure_safe_fn(data["link"]), ensure_safe_fn(data["base_image"])) for name, data in items.items()]

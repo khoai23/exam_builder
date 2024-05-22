@@ -10,6 +10,7 @@ from typing import Tuple
 INCLUDE_KEY = {"bai-hoc", "trac-nghiem", "de-kiem-tra", "de-thi", "tieng-anh", "cntt", "dai-hoc", "huong-nghiep"} # not used atm
 FILTER_KEY = {"..", ".jsp", "dang-nhap", "void"}
 APPEND_DOMAIN = "https://tracnghiem.net"
+DUMP_PATH = "test/tracnghiem_net.pkl"
 
 def get_neighbor_links(soup_or_url, include_key=INCLUDE_KEY, filter_key=FILTER_KEY, append_domain=APPEND_DOMAIN):
     return generic.get_neighbor_links(soup_or_url, filter_key=filter_key, append_domain=append_domain)
@@ -161,7 +162,6 @@ if __name__ == "__main__":
             for tier in range(6, 13) 
             for subject in ["toan-hoc", "vat-ly", "sinh-hoc", "tieng-anh", "lich-su", "dia-ly", "gdcd", "cong-nghe", "tin-hoc", "lich-su-va-dia-li", "khoa-hoc-tu-nhien"]
     ]
-    DUMP_PATH = "test/tracnghiem_net.pkl"
     if(len(sys.argv) > 2):
         link_location = sys.argv[1]
         assert not link_location.endswith(".csv"), "Must input link_location as not-csv (best as plaintext)"

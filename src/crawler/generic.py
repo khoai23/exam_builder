@@ -31,14 +31,23 @@ def get_neighbor_links(soup_or_url, include_key=None, filter_key=None, append_do
     included_links = (l for l in links if include_key is None or any((k in l for k in include_key)))
     filtered_links = (l for l in included_links if filter_key is None or all((k not in l for k in filter_key)))
     if(append_domain):
-        # append only when missing;
-        filtered_links = (append_domain + l if "https" not in l else l for l in filtered_links)
+        # append only when missing. TODO call this "prepend"?
+        def prepend_when_needed(link):
+            if link.startswith("http"):
+                return link 
+            elif link.startswith("/") or append_domain.endswith("/"):
+                return append_domain + link 
+            else:
+                return append_domain + "/" + link
+        filtered_links = (prepend_when_needed(l) for l in filtered_links)
         if(same_domain_only):
             # filter away all external links
             filtered_links = (l for l in filtered_links if l.startswith(append_domain))
-    return list(filtered_links)
+    result = list(filtered_links)
+    logger.debug("All links found: {}".format(result))
+    return result
 
-def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: str, process_data_fn: Optional[callable]=None, neighbor_link_fn: Optional[callable]=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: str=None, retrieve_interval: tuple=(0.75, 0.25), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0, prefer_cue: str=Optional[None]):
+def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: str, process_data_fn: Optional[callable]=None, neighbor_link_fn: Optional[callable]=get_neighbor_links, allow_keyboard_interrupt: bool=True, recovery_dump_path: Optional[str]=None, retrieve_interval: tuple=(0.75, 0.25), delete_dump_after_done: bool=True, failed_get_incremental: float=10.0, prefer_cue: Optional[str]=None):
     """The main crawling mechanism. Will start with start_url, and attempt to scan all of them until all links are exhausted.
     crawl_result_location: when process completes, this will output all the pages that had been crawled to this.
     process_data_fn: if supplied, take and parse the "soup". Since data is already downloaded, this will save additional bandwidth.
@@ -51,7 +60,7 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
     prefer_cue: if specified; crawled neighbors matching this will get prioritized to go first. Base with each question on page (e.g tracnghiem_net) can use this to minimize size of the queue 
     """
     # get_neighbor_links(start_url)
-    if(os.path.isfile(recovery_dump_path)):
+    if(recovery_dump_path and os.path.isfile(recovery_dump_path)):
         with io.open(recovery_dump_path, "rb") as df:
             passed, queue = pickle.load(df)
             passed = set(passed)
@@ -72,7 +81,7 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
             if(not failed_run):
                 current_url = queue.pop(0)
                 passed.add(current_url);
-                logger.info("Checking: " + current_url)
+                logger.debug("Checking: " + current_url)
                 #if("bai-hoc" in current_url and "trac-nghiem" in current_url):
                 # usable_links.append(current_url)
             else:
@@ -135,6 +144,7 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
                 pickle.dump((passed, queue), df)
         else:
             logger.warning("No dump path specified; this termination is NOT recoverable")
+            logger.debug("Current stack: {}".format(traceback.format_exc()))
         # exit immediately
         return 1 # use for sys exit 
     logger.info("Finished crawling.")

@@ -57,7 +57,7 @@ if __name__ == "__main__":
         print("Loaded data.")
     if arg in ("full", "convert"):
         # data should already been categorized.
-        md_text = generate_md(data, ensure_safe_fn=_safe_link)
+        md_text = generate_md(data, title="Brick Arms", ensure_safe_fn=_safe_link)
         with io.open("data/lessons/brickarms.md", "w", encoding="utf-8") as mf:
             mf.write(md_text)
         print("Formatting data to .md file.")
