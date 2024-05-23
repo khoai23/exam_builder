@@ -158,7 +158,7 @@ def perform_crawl(start_url: Union[str, Iterable[str]], crawl_result_location: s
         # this will override file 1000; but at that point it's your fault.
     with io.open(crawl_result_location, "w", encoding="utf-8") as resultfile:
         resultfile.write("\n".join(list(passed)))
-    if(delete_dump_after_done and os.path.isfile(recovery_dump_path)):
+    if(delete_dump_after_done and recovery_dump_path and os.path.isfile(recovery_dump_path)):
         # if still have the dump path, throw it away
         os.remove(recovery_dump_path)
     return 0

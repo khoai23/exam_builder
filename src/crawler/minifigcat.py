@@ -5,10 +5,18 @@ import src.crawler.generic as generic
 
 DUMP_PATH = "test/minifigcat.pkl"
 APPEND_DOMAIN = "https://www.minifigcat.com/shop/"
+FILTER_KEY = [".jpg"] # image has link for some reason; ignore.
 
 def clear_link(link: str):
     if "?" in link:
-        link = link.split("?", 1)[0]
+        # if pageId is part of the link; preserve that to allow traversing multiple-page. Otherwise just delete all 
+        if "?pageId=" in link: 
+            if "&" in link: # has additional arg behind the pageId; just drop those
+                link = link.split("&", 1)[0]
+            else 
+                pass # keep as-is
+        else:
+            link = link.split("?", 1)[0]
     if "#" in link:
         link = link.split("#", 1)[0]
     return link
@@ -17,9 +25,9 @@ def sanitize(string: str):
     """Disallow anything that isnt alphanumeric or space"""
     return "".join((c if c.isalnum() or c.isspace() else " " for c in string))
 
-def get_neighbor_links(soup_or_url, append_domain=APPEND_DOMAIN):
-    links = [clear_link(l) for l in generic.get_neighbor_links(soup_or_url, append_domain=append_domain)]
-    return links#[l.split("?", 1)[0] if "?" in l else l for l in links] # additional removal of possible redundant arguments.
+def get_neighbor_links(soup_or_url, filter_key=FILTER_KEY, append_domain=APPEND_DOMAIN):
+    links = [clear_link(l) for l in generic.get_neighbor_links(soup_or_url, filter_key=filter_key, append_domain=append_domain)]
+    return links #[l.split("?", 1)[0] if "?" in l else l for l in links] # additional removal of possible redundant arguments.
 
 def get_colors(color_url="https://www.minifigcat.com/shop/Colors/"):
     soup = generic.get_parsed(color_url)
@@ -67,16 +75,16 @@ def process_data(soup, url=None, data=None, colors=None):
         # category is the next-to-last node in breadcrumb
         breadcrumb = soup.find("ul", class_="breadcrumb")
         categories = [t for t in (t.text.strip() for t in breadcrumb.children) if t]
-        category = categories[-2]
+        category, parent_categories = categories[-2], categories[:-2]
         if name in sanitize(category):
             # the current sub-category belong to a single type of item; discard it & use a higher one.
-            category = categories[-3]
-        data[full_name] = item = {"name": name, "color": color, "image": image_source, "link": url, "category": category, "description": description}
+            category, parent_categories = categories[-3], categories[:-3]
+        data[full_name] = item = {"name": name, "color": color, "image": image_source, "link": url, "category": category, "categories": parent_categories, "description": description}
         generic.logger.info("Link {} has item ({} | {}). Append & continuing. Total items atm [{:d}]".format(url, name, color, len(data)))
     except Exception as e:
         generic.logger.error("Parsing link {} has error: {}\n, (possible) item skipped.".format(url, traceback.format_exc()))
 
-def autocategorize(data, colors: list=None):
+def autocategorize(data, colors: list=None, collapse_threshold: int=20):
     # convert data to matching category. This mostly help with generating md in per-category sections 
     categorized = dict()
     for k, d in data.items():
@@ -89,6 +97,24 @@ def autocategorize(data, colors: list=None):
         # convert to a name/color key pair to match associating items.
         true_name, color = new_key = d["name"], d["color"]
         categorized[category][new_key] = d
+    for k, length in list(sorted( ((k, len(v)) for k, v in categorized.items()), key=lambda i: i[-1]):
+        # category from low -> high; attempt to merge up to any parent section if they exists.
+        # this may automerge parent that are too small as well; but eh. 
+        if length > collapse_threshold:
+            # from here onward its more than the threshold; break out 
+            break 
+        # get a random item; traverse backward through its parent & stop at an existing category. If cannot find; either leave it as-is, or add into other. For now let's just leave it 
+        item = next(iter(categorized[k].values()))
+        parent_categories_backward = item["categories"][::-1]
+        transfered = False
+        for cat in parent_categories:
+            if cat in categorized:
+                # pop the child & add it into the parent
+                categorized[cat].update(categorized.pop(k))
+                transfered = True
+                break
+        # if want to move to other; have condition to do transfering -> Other here instead.
+
     return categorized
 
 def generate_md(data):
@@ -103,7 +129,7 @@ def generate_md(data):
                 # special case happening to image
                 image = "https:" + image 
             if exist_data["description"]:
-                description = "title='{:s}'".format(exist_data["description"].strip().replace("\r", "").replace("\n", " "))
+                description = "title='{:s}'".format(exist_data["description"].strip().replace("\r", "").replace("\n", " ").replace("'", ""))
             else:
                 description = ""
             image_str = "<img src='{:s}' width=100 {:s}></src>".format(image, description)
@@ -164,7 +190,7 @@ if __name__ == "__main__":
         print("Loaded data.")
     if arg in ("full", "convert"):
         # data should already been categorized.
-        md_text = generate_md(autocategorize(full_data))
+        md_text = generate_md(autocategorize(full_data, colors=all_colors))
         with io.open("data/lessons/minifigcat.md", "w", encoding="utf-8") as mf:
             mf.write(md_text)
         print("Formatting data to .md file.")
