@@ -13,7 +13,7 @@ def clear_link(link: str):
         if "?pageId=" in link: 
             if "&" in link: # has additional arg behind the pageId; just drop those
                 link = link.split("&", 1)[0]
-            else 
+            else:
                 pass # keep as-is
         else:
             link = link.split("?", 1)[0]
@@ -97,7 +97,7 @@ def autocategorize(data, colors: list=None, collapse_threshold: int=20):
         # convert to a name/color key pair to match associating items.
         true_name, color = new_key = d["name"], d["color"]
         categorized[category][new_key] = d
-    for k, length in list(sorted( ((k, len(v)) for k, v in categorized.items()), key=lambda i: i[-1]):
+    for k, length in list(sorted( ((k, len(v)) for k, v in categorized.items()), key=lambda i: i[-1])):
         # category from low -> high; attempt to merge up to any parent section if they exists.
         # this may automerge parent that are too small as well; but eh. 
         if length > collapse_threshold:
@@ -107,7 +107,7 @@ def autocategorize(data, colors: list=None, collapse_threshold: int=20):
         item = next(iter(categorized[k].values()))
         parent_categories_backward = item["categories"][::-1]
         transfered = False
-        for cat in parent_categories:
+        for cat in parent_categories_backward:
             if cat in categorized:
                 # pop the child & add it into the parent
                 categorized[cat].update(categorized.pop(k))

@@ -11,8 +11,9 @@ Still haven't found:
 
 Resources:
 
-* [BrickArms](learn?key=brickarms)
-* [BrickTactical](learn?key=bricktac)
+* [BrickArms](learn?key=brickarms), US custom maker, high quality + authenticity
+* [BrickTactical](learn?key=bricktac), Dunno who
+* [MinifigCat](learn?key=minifigcat), Taiwan custom maker, high quality & variants, but not necessarily named correctly. Also weebs.
 
 Currently identified, list in order of favoritism & certainty in identification:
 
@@ -20,48 +21,49 @@ Currently identified, list in order of favoritism & certainty in identification:
 
 1. [K7016](https://shopee.vn/%C4%90%E1%BB%93-Ch%C6%A1i-V%E1%BB%89-V%C5%A9-Kh%C3%AD-K7016-D%C3%B9ng-Trong-Th%E1%BA%BF-Chi%E1%BA%BFn-2-NO.340-Ph%E1%BB%A5-Ki%E1%BB%87n-MOC-Army-i.63856987.4753786961), trade in the mine clearing stuff for bugle + sword. Called K7016 [here](https://shopee.vn/V%E1%BB%89-ph%E1%BB%A5-ki%E1%BB%87n-v%C5%A9-kh%C3%AD-th%E1%BA%BF-chi%E1%BA%BFn-2-c%E1%BB%B1c-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-X%E1%BA%BFp-h%C3%ACnh-Mini-Minifigures-l%C3%ADnh-Army-WW2-M%C3%B4-h%C3%ACnh-K7016-i.81322028.3720619582) too, so K1707 is too likely a misnomer.
 
-2. K7028, Dunno what it is, but mostly breacher/cutter tools
+2. K7028, Dunno what it is, but mostly breacher/cutter tools.
+    1. [CQB RAM](learn?key=minifigcat#CQBRAM)
 3. [K7029](https://www.lazada.com.ph/products/k7029-lego-compatible-minifigure-accessories-i3356961709.html), Sniper Rifle Pack, looks like nobody buys since it's kinda wack. Nothing is properly identified, so not bothering to add ?. Is also marked as JX092 [here](https://shopee.vn/X%E1%BA%BFp-h%C3%ACnh-ph%E1%BB%A5-ki%E1%BB%87n-MOC-v%E1%BB%89-v%C5%A9-kh%C3%AD-qu%C3%A2n-s%E1%BB%B1-m%C3%A0u-%C4%91%E1%BB%8F-%C4%90%E1%BB%93-Ch%C6%A1i-L%E1%BA%AFp-Gh%C3%A9p-S%C3%A1ng-T%E1%BA%A1o-JX092-i.93677919.12289508837)
     1. AWM, only reliable due to how ubiquitous it is in CS
     7. QBU-88, tips: chinese guns will only has number since sellers just scrub chinese texts.
-    2. M14 
-    3. M110
-    4. Something-G3 
-    5. M24 
-    6. M82A2
+    2. [M14](learn?key=minifigcat#M14)
+    3. [M110](learn?key=minifigcat#M110)
+    4. ~~Something-G3~~ [G3GS1](learn?key=minifigcat#G3GS1)
+    5. M24? [Gewehr43s](learn?key=minifigcat#Gewehr43s) 
+    6. M82A2? [M802](learn?key=minifigcat#M802)
     7. XM8
-    8. Barrett (M82A1?)
+    8. Barrett (M82A1?) [M83](learn?key=minifigcat#M83)
 4. K7030, Assault Rifle Pack, has some neat looking AK-74 stuff.
     1. 2 AK variants with underbarrel handler, ~~likely from BrickArms~~ can't even identify; scopes are ridiculous.
     2. QBZ-95
-    3. ~~M16A3 (underslung shotgun?)~~ [M16-DBR](learn?key=brickarms#M16-DBR)
+    3. ~~M16A3 (underslung shotgun?)~~ [M16-DBR](learn?key=brickarms#M16-DBR) or [M16SB](learn?key=minifigcat#M16SB)
     4. Steyr AUG A3 ([actually ABR?](learn?key=brickarms#ABR)) 
     5. HK416
-    6. G36 
-    7. M4CQB (shortened?)
+    6. [G36C](learn?key=minifigcat#G36C)
+    7. M4CQB (shortened?) [actually M5CQB?](learn?key=minifigcat#M5CQB)
     8. QBZ-03; could pass as an AK variant (cause it really is)
-    9. Something-CQB, likely another M4/M16 variant 
+    9. Something-CQB, likely another M4/M16 variant. Best match is [Diplomat Rifle](learn?key=minifigcat#DiplomatRifle)
     10. P288 ([actually UCS?](learn?key=brickarms#UCS))
     11. [M23](learn?key=brickarms#M23)
 5. [K7031](https://www.lazada.com.ph/products/k7031-lego-compatible-military-accessories-i3347459170.html), SMG Weapon Pack 
     1. AK-74U? (doesnt match any brickarms item)
-    2. M16 
-    3. SCAR
-    4. MP5A2/A3
-    5. UMP45
+    2. [M16A1](learn?key=minifigcat#M16A1)
+    3. [SCAR-D](learn?key=minifigcat#SCARD)
+    4. [MP5A2](learn?key=minifigcat#MP5A2)/[A3](learn?key=minifigcat#MP5A3)
+    5. [UMP45](learn?key=minifigcat#UMP45)
     6. P90 w/ silencer
-    7. Uzi
+    7. Uzi [w/o silencer](learn?key=minifigcat#MiniUZISilencer)
     8. MP9
     9. [Spy Carbine](learn?key=brickarms#SpyCarbine)
     10. QCW-05
     11. [Longslide](learn?key=brickarms#Longslide)
-    12. [TT-33](learn?key=brickarms#TT-33), all the gun with vertical grooves at the back should be either this or UCS
+    12. [TT-33](learn?key=brickarms#TT-33), ~~all the gun with vertical grooves at the back should be either this or UCS~~ Nevermind; too many handgun at minifigcat
 6. **(Favorite)** K7032, Quasi Heavy Weapon Pack, altho is a bit US-centric. Has:
     1. **RPD**
     2. M60
     3. M249 (identifiable with barrel changing handler)
     4. MK46 aka M249-SPW 
-    5. Milkor MGL-105. Not the Brickarms's [MGL](learn?key=brickarms#MGL) or RG-6 since the stock is different
+    5. Milkor MGL-105. Not the Brickarms's [MGL](learn?key=brickarms#MGL) or RG-6 since the stock is different. Actually is [SGL10](learn?key=minifigcat#ShotgunSGL10) but honestly what the heck is that.
     6. M97 Trench Gun
     7. [Radi8 .44 RMR](learn?key=brickarms#Radi8.44RMR).
     8. [ACS](learn?key=brickarms#ACS), aka AA12 that nobody buys IRL
@@ -72,25 +74,25 @@ Currently identified, list in order of favoritism & certainty in identification:
 8. K7052, WW2 Rifle Pack. A bunch of M1, 98K, Springfield etc.
 
 9. [K7061B](https://www.lazada.com.ph/products/k7061b-lego-compatible-minifigure-accessories-i3357626122-s17100208820.html), Heavy-Sniper Pack.
-    1. M249/M60/MGL-105 exactly like K7032
+    1. M249/M60 exactly like K7032
+    2. Real BrickArms's [MGL](http://localhost:5000/learn?key=brickarms#MGL), evident by thicker stock
     2. AWM, G3, #8 similar to barrett, but likely the QBU-10 
     3. Unidentified drum mag LMG, probably AK-family. Best match is the [PKP Pecheneg](https://www.minifigures.co.uk/store/combatbrick-russian-pkp-pecheneg-machine-gun-dark-tan/) with the forced-cooling barrel, but that doesn't have drum mag. Could be a case of misputting magazine?
     4. QBZ-95 
-10. K7061A, RPG + Sniper Pack. Again, none of the rifle are identifiable.
+10. [K7061A](https://shopee.vn/V%E1%BB%89-Ph%E1%BB%A5-ki%E1%BB%87n-trang-b%E1%BB%8B-v%C5%A9-kh%C3%AD-si%C3%AAu-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-Mini-Minifigures-Army-l%C3%ADnh-M%C3%B4-h%C3%ACnh-ww2-K7061-i.81322028.18912343562?sp_atk=315e619e-4223-49ea-b09a-67822f1f16be&xptdk=315e619e-4223-49ea-b09a-67822f1f16be), RPG + Sniper Pack. Again, none of the rifle are identifiable.
     1. **RPG-7**
     2. M72-LAW 
     3. AA12 again, for some reason 
-    4. M1 (what is this even)
-    5. M4 + long scope.
-    6. XM201
-    7. ACE
-11. K7064A, Fortnite Pack (probably). Have a lot of weird stuff. ~~May buy 1 for the pan~~
-    1. 2xM4 thingie; closest match is [M4 Pro Beardo](learn?key=brickarms#M4ProBeardo)'s scope.
+    4. M110, M134, M802, duplicate from K7029
+    5. XM2010; which hold some resemblance to [PSG1](learn?key=minifigcat#PSG1), but nobody has that square stock
+    6. ACE? [M103](learn?key=minifigcat#M103)
+11. [K7064A](https://shopee.vn/V%E1%BB%89-Ph%E1%BB%A5-ki%E1%BB%87n-trang-b%E1%BB%8B-v%C5%A9-kh%C3%AD-si%C3%AAu-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-Mini-Minifigures-Army-l%C3%ADnh-M%C3%B4-h%C3%ACnh-ww2-K7064-i.81322028.18212342323), Fortnite Pack (probably). Have a lot of weird stuff. ~~May buy 1 for the pan~~
+    1. ~~2xM4 thingie; closest match is [M4 Pro Beardo](learn?key=brickarms#M4ProBeardo)'s scope.~~ [SK416](learn?key=minifigcat#SK416) and [M5](learn?key=minifigcat#M5)
     2. [XVR](learn?key=brickarms#XVR)
     3. 2x normal pistol, 1x generic-looking revolver
     4. A bunch of melee weaponry - crowbar, machete, pan etc.
     5. Grenade, gas mask, laptop & accessory belt 
-12. K7064B, Mixed Pack
+12. [K7064B](https://shopee.vn/V%E1%BB%89-Ph%E1%BB%A5-ki%E1%BB%87n-trang-b%E1%BB%8B-v%C5%A9-kh%C3%AD-si%C3%AAu-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-Mini-Minifigures-Army-l%C3%ADnh-M%C3%B4-h%C3%ACnh-ww2-K7064-i.81322028.18212342323), Mixed Pack
     1. 3x AK, two of which has holes which suggest customizable accessory
     2. SCAR, which also have holes.
     3. Something AR-looking; could be a G3 variant 
@@ -105,11 +107,12 @@ Currently identified, list in order of favoritism & certainty in identification:
 12. K7083, See **PK-G** below as possible pack.
 13. K7084, See **PK-252** below as possible pack.
 
-12. K7090, **(Almost-Favorite)** Quasi-Russian Pack, have a lot of AK variants. List later, ~~but most seems to be BrickArms variants~~ all seems to be mix-and-match version of existing BrickArms AKs. Biggest issue is the one labelled SVD, like fking hell it is.
-13. K7091, Dunno-what-is-the-goal pack.
+12. [K7090](https://shopee.vn/K7090-B%E1%BB%99-ph%E1%BB%A5-ki%E1%BB%87n-army-minifigures-c%C3%A1c-lo%E1%BA%A1i-v%C5%A9-kh%C3%AD-l%C3%ADnh-%C4%91%E1%BA%B7c-nhi%E1%BB%87m-spetsnaz-Nga-i.300855065.19857285911), **(Almost-Favorite)** Quasi-Russian Pack, have a lot of AK variants. List later, ~~but most seems to be BrickArms variants~~ all seems to be mix-and-match version of existing BrickArms AKs. Biggest issue is the one labelled SVD, like fking hell it is.
+13. [K7091](https://shopee.vn/V%E1%BB%89-Ph%E1%BB%A5-ki%E1%BB%87n-trang-b%E1%BB%8B-v%C5%A9-kh%C3%AD-si%C3%AAu-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-Mini-Minifigures-Army-l%C3%ADnh-M%C3%B4-h%C3%ACnh-ww2-K7091-i.81322028.21649362609), ~~Dunno-what-is-the-goal pack.~~ Mixed stuff
     1. QBZ-95 with detachable knife-bayonet 
     2. QBU-88
-    3. Some shotgun & scifi thingie. Scifi one has 2 pieces & can mount a pistol on it 
+    3. [scifi thingie](learn?key=minifigcat#CornershotVB10), for corner shot? dafuq?
+    4. Double-barreled shotgun?
     4. GSH18?
     5. Longslide? (underslung light)
     6. Grenade, nightvision thingie, headset
