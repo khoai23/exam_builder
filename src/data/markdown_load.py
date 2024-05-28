@@ -28,7 +28,7 @@ class MarkdownData(dict):
             for key, full_path in valid_files.items():
                 with io.open(full_path, "r", encoding="utf-8") as rf:
                     self[key] = rf.read()
-            print("Loaded self:", self.keys())
+            #print("Loaded self:", self.keys())
             self._all_valid_files = None
 
     def __get_item__(self, key):

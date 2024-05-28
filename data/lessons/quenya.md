@@ -12,7 +12,7 @@ Anyway. One of the language invented is [Quenya](https://tolkiengateway.net/wiki
 
 ##### {Latin} Highly inflected?
 
-###### Like you wouldn't believe. Nouns are inflected for number (singular, plural), but also for case (is sentence subject, object, ownership, etc.) and usually belong to one of the three genders; Pronouns/Adjectives are inflected with matching nouns properties above; and verbs inflected the same plus tense (+ aspect), voice and mood. In order to learn Latin, you would need to know the words (in the case of noun, also know the gender/rule to infer gender), and know all the rules to properly inflect them into the context you need it in. This make a very compact language with flexible word order, but likely a hard-to-learn language; and all of its successor tend to lessen the amount of inflection needed.<br>For more information, go to [Latin](learn?key=latin).
+###### Like you wouldn't believe. In Latin, nouns are inflected for number (singular, plural), but also for case (is sentence subject, object, ownership, etc.) and usually belong to one of the three genders; Pronouns/Adjectives are inflected with matching nouns properties above; and verbs inflected the same plus tense (+ aspect), voice and mood. In order to learn Latin, you would need to know the words (in the case of noun, also know the gender/rule to infer gender), and know all the rules to properly inflect them into the context you need it in. This make a very compact language with flexible word order, but likely a hard-to-learn language; and all of its successor tend to lessen the amount of inflection needed.<br>For more information, go to [Latin](learn?key=latin).
 
 ##### {Lazy} I just want to spout some trendy phases..
 

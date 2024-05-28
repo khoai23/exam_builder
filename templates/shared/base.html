@@ -18,11 +18,11 @@
 		{% endif  %}
 		{% with messages = get_flashed_messages(with_categories=True) %}
 			{% if messages %}
-				<ol class=flashes>
+				<ul class=flashes>
 					{% for category, message in messages %}
 						<li class="text-{{ category }}"> {{message}} </li>
 					{% endfor %}
-				</ol>
+				</ul>
 			{% endif %}
 		{% endwith %}
 		{% block content %}

@@ -1,7 +1,7 @@
 {% extends 'shared/base.html' %}
 {% block content %}
 <nav class="navbar navbar-expand-md bg-dark navbar-dark">
-	<a class="navbar-brand" href="#">Identify</a>
+	<a class="navbar-brand" href="#"> {{ title if title is defined else "Identify"}}</a>
 </nav> 
 <div class="container-fluid">
 	<h1>{{title}}</h1>
@@ -9,12 +9,20 @@
 	{% if error is defined %}
 	<span class="text-danger">Error: {{error}}</span>
 	{% endif %}
-	<form id="generic_form" enctype="multipart/form-data" method="POST" action="generic_submit">
+	<form id="generic_form" enctype="multipart/form-data" method="POST" action="{{submit_route}}">
 		<input id="id" name="id" value={{submit_key}} readonly hidden></input>
 		{% for field in input_fields %}
 			<div class="form-group">
 				<label for="{{field["id"]}}"> {{field["name"]}} </label>
-				<input type="{{field["type"]}}" class="form-control" id="{{field["id"]}}" name="{{field["id"]}}"></input>
+				{% if field["type"] == "dropdown" %}
+					<select class="form-select form-control" id="{{field["id"]}}" name="{{field["id"]}}" aria-label="{{field["id"]}}">
+						{% for value, display in field["options"] %}
+							<option value="{{value}}" {% if loop.index0 == 0 %} selected {%endif%}> {{display}} </option>
+						{% endfor %}
+					</select>
+				{% else %}
+					<input type="{{field["type"]}}" class="form-control" id="{{field["id"]}}" name="{{field["id"]}}"></input>
+				{% endif %}
 				{% if "help_msg" in field %}
 					<small id="{{field["id"]}}_help" class="form-text text-muted"> {{field["help_msg"]}} </small>
 				{% endif %}

@@ -1,5 +1,6 @@
 """Manage current session here.
 Migrate the code from app.py to debloat it"""
+from functools import wraps
 import time, os, sys, random
 import traceback
 import flask 
@@ -26,6 +27,75 @@ data = current_data = OnRequestData() #autotag_dict={"Toán": AUTOTAG_MATH}, aut
 data["session"] = session = dict()
 data["submit_route"] = submit_route = dict()
 student_belong_to_session = dict()
+
+def wrap_try_catch(fn, error_as_str: bool=False) ->:
+    # function is wrapped in a try-catch; and output the result in either (True, correct_result) or (False, error)
+    @wraps(fn)
+    def wrapper_fn(*args, **kwargs):
+        try:
+            result = fn(*args, **kwargs)
+        except Exception as e:
+            if error_as_str: # might be useful when directly feed to flask
+                return (False, str(e))
+            else:
+                return (False, e)
+        return (True, result)
+
+class SessionError(Exception):
+    pass
+
+class ExamManager:
+    """Contain & manage all the necessary properties for exams across all version.
+    This is slated to update into a version which will support the Classroom object & tailor alongside it need"""
+    def __init__(self, quiz_data: OnRequestData):
+        self._quiz_data = quiz_data
+        self._session = dict()
+        self._submit_route = dict()
+        self._entry_key_to_session = dict()
+
+    def generate_unique_str(self, length: int=8, collision_check: Optional[set]=None):
+        # create an unique str; if collision_check & the key already exist (VERY unlikely), check & generate a different one 
+        key = secrets.token_hex(length)
+        if collision_check and key in collision_check:
+            return self.generate_unique_str(length, collision_check=collision_check)
+        return key
+
+    """Creating, processing & finishing each exam session"""
+    @wrap_try_catch
+    def create_new_session(self, data: Dict, category: str, check_template: bool=True):
+        """Create the session with a normal id key & admin key in the session """
+        # format setting: cleaning dates; voiding nulled fields
+        setting = convert_template_setting(data["setting"], allow_student_list=True)
+        
+        if(check_template):
+            result, error_type = test_template_validity(data["template"], category, _current_data=self._quiz_data)
+            if(not result):
+                logger.info("Failed validation test. TODO find specific failure row")
+                raise SessionError(error_type)
+        # generate a random unique key for this session; plus a key to restrict peer access.
+        session_key = self.generate_unique_str(collision_check=self._session)
+        admin_key = self.generate_unique_str()
+        max_score = sum((count * score for count, score, ids in data["template"]))
+        self._session[key] = new_exam_session = {"category": category, "template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": dict(), "maximum_score": max_score}
+        logger.debug("New exam session with template: {}".format(new_exam_session))
+        return (key, admin_key)
+
+    @wrap_try_catch
+    def student_enter_session(self, access_info: dict):
+        """Student can access by either first-access, which generate an unique key; or reaccess, which must be reached with this unique key already pre-generated.
+        first-access can only be reached in anonymous (no-student-list) mode.
+        if first-access; the access_info will be something like {{name:..., id:..., properties etc.}, session_key:..., first_access=True}
+        if reaccess/restricted: the access_info should only have {key:..., first_access=False}"""
+        first_access = access_info.pop("first_access")
+        if first_access:
+            session_key = access_info.pop("session_key")
+            session = self._session[session_key]
+            if False:
+                # TODO if the session is restricted; kick out 
+                raise SessionError("Session {} is restricted; cannot use first_access mode.".format(session_key))
+            # granting new key if allowed 
+            entry_key = self.generate_unique_str(collision_check=self._entry_key_to_session)
+            self._entry_key_to_session[entry_key] = session_key
 
 def wipe_session(for_categories: Optional[List[str]]=None):
     """Wipe all sessions. If specifying category, keep the sessions that are not related to the wipe."""
@@ -86,7 +156,7 @@ def time_limit(seconds):
         else:
             signal.alarm(0)
 
-def test_template_validity(template: List[Tuple[int, float, List]], category: str):
+def test_template_validity(template: List[Tuple[int, float, List]], category: str, _current_data=current_data):
     """Code to test if a template is valid or not. Generate all equations in the template within a specific timeframe; if that fail, return appropriate problem"""
     question_id = 0
     try:
@@ -94,7 +164,7 @@ def test_template_validity(template: List[Tuple[int, float, List]], category: st
         full_count = sum((num for num, _, _ in full_test_template))
         with time_limit(full_count * 0.25):
             # maximum 0.25s for every question 
-            shuffle(current_data.load_category(category), full_test_template)
+            shuffle(_current_data.load_category(category), full_test_template)
             return True, None
     except Exception as e:
         logger.error("Template test failed for question {}: {}\n{}".format(getattr(e, "wrong_question_id", "N/A"), e, traceback.format_exc()))
@@ -201,6 +271,7 @@ def retrieve_submit_route_anonymous(template_key: str):
     return flask.render_template("generic_input.html", 
             title="Enter Exam",
             message="Enter name & submit to start your exam.", 
+            submit_route="generic_submit",
             submit_key=template_key,
             custom_navbar=True,
             # TODO make this dependent on session setting
