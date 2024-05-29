@@ -10,7 +10,7 @@
 	<span class="text-danger">Error: {{error}}</span>
 	{% endif %}
 	<form id="generic_form" enctype="multipart/form-data" method="POST" action="{{submit_route}}">
-		<input id="id" name="id" value={{submit_key}} readonly hidden></input>
+		<input id="submit_key" name="submit_key" value={{submit_key}} readonly hidden></input>
 		{% for field in input_fields %}
 			<div class="form-group">
 				<label for="{{field["id"]}}"> {{field["name"]}} </label>

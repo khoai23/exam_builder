@@ -6,15 +6,15 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.campaign import * # clamp down later
-from src.session import current_data
-from src.session import create_campaign_session, build_order_quiz, access_order_quiz, submit_order_quiz_result
+from src.session import ExamManager, create_campaign_session, build_order_quiz, access_order_quiz, submit_order_quiz_result
 
 import logging 
 logger = logging.getLogger(__name__)
 
 from typing import Optional, List, Tuple, Any, Union, Dict 
 
-def build_game_routes(app: Flask, login_decorator: callable=lambda f: f) -> Tuple[Dict, Flask]:
+def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: callable=lambda f: f) -> Tuple[Dict, Flask]:
+    current_data = exam_manager._quiz_data
     # campaign management here 
     campaign_data = {}
     @app.route("/play", methods=["GET", "POST"])

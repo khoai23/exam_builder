@@ -4,14 +4,14 @@ from flask import Flask, request, url_for
 import os, time
 import traceback 
 
-from src.session import current_data, TEMPORARY_FILE_DIR
-from src.session import wipe_session # migrate to external module
+from src.session import ExamManager, TEMPORARY_FILE_DIR
 
 import logging 
 logger = logging.getLogger(__name__)
 
-def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
-    # prerequisite sass; TODO later when I'm less lazy
+def build_data_routes(app: Flask, exam_manager: ExamManager, login_decorator: callable=lambda f: f) -> Flask:
+    # prerequisite sass; TODO later when I'm less lazy 
+    current_data = exam_manager._quiz_data
     ### For generic data table ###
     @app.route("/filtered_questions", methods=["GET"])
     @login_decorator
@@ -216,7 +216,7 @@ def build_data_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flas
             file.save(temporary_filename)
             # performing the importing procedure; ALWAYS creating backup to be used with rollback
             current_data.update_data_from_file(temporary_filename, replacement_mode=is_replace_mode)
-            wipe_session()
+            exam_manager.wipe_session()
             return flask.jsonify(result=True)
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))

@@ -3,13 +3,13 @@ import flask
 from flask import Flask, request, url_for
 import traceback 
 
-from src.session import session
-from src.session import load_template, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, convert_template_setting
+from src.session import ExamManager, convert_template_setting
+#from src.session import load_template, student_reaccess_session, retrieve_submit_route_anonymous, retrieve_submit_route_restricted, submit_exam_result, remove_session, convert_template_setting
 
 import logging 
 logger = logging.getLogger(__name__)
 
-def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> Flask:
+def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator: callable=lambda f: f) -> Flask:
     ### SECTION FOR MAKER ###
     @app.route("/build")
     @login_decorator
@@ -29,13 +29,15 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         if(category is None):
             raise NotImplementedError
         logger.info("@build_template: Received template data: {}".format(data))
-        result, (arg1, arg2) = load_template(data, category)
+        result, args = exam_manager.create_new_session(data, category)
         if(result):
-            # return the key to be accessed by the browser
-            return flask.jsonify(result=True, session_key=arg1, admin_key=arg2)
+            # return the key to be accessed by the browser 
+            session_key, admin_key = args
+            return flask.jsonify(result=True, session_key=session_key, admin_key=admin_key)
         else:
-            # return the error and concerning traceback
-            return flask.jsonify(result=False, error=str(arg1), error_traceback=str(arg2))
+            # return the error and concerning traceback 
+            error_traceback = "\n".join(traceback.format_exception(args))
+            return flask.jsonify(result=False, error=str(args), error_traceback=error_traceback)
     
     @app.route("/single_manager")
     @login_decorator
@@ -50,30 +52,34 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
                 return flask.render_template("error.html", error="Missing session key and/or template key", error_traceback=None)
             # TODO allow a box to supplement key to manage 
             # TODO listing all running templates
-            session_data = session[template_key]
-            logger.debug("Access session data: {}".format(session_data))
-            if(admin_key == session_data["admin_key"]):
-                return flask.render_template("single_manager.html", session_data=session_data, template_key=template_key)
+            session = exam_manager.get_session(template_key)
+            logger.debug("Access session data: {} by key {}".format(session, template_key))
+            if not session:
+                return flask.render_template("error.html", error="Invalid session key.", error_traceback=None)
+            if(admin_key == session["admin_key"]):
+                return flask.render_template("single_manager.html", session_data=session, template_key=template_key)
             else:
-                return flask.render_template("error.html", error="Invalid admin key", error_traceback=None)
+                return flask.render_template("error.html", error="Invalid admin key.", error_traceback=None)
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
     
-    @app.route("/single_session_data", methods=["GET"])
+    @app.route("/single_session", methods=["GET"])
     @login_decorator
-    def single_session_data():
+    def single_session():
         """Retrieving the exact same data being ran on single_manager.
         TODO use this to autoupdate result."""
         template_key = request.args.get("template_key")
         admin_key = request.args.get("key")
         if(template_key is None or admin_key is None):
             return flask.jsonify(result=False, error="Missing key, data cannot be retrieved.")
-        session_data = session[template_key]
-        if(admin_key == session_data["admin_key"]):
-            return flask.jsonify(result=True, data=session_data)
+        session = exam_manager.get_session(template_key)
+        if session is None:
+            return flask.jsonify(result=False, error="Invalid key {:s}, session not found.".format(template_key))
+        if(admin_key == session["admin_key"]):
+            return flask.jsonify(result=True, data=session)
         else:
-            return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
+            return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved.")
     
     @app.route("/update_setting_session", methods=["POST"])
     @login_decorator
@@ -85,13 +91,15 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
             return flask.jsonify(result=False, error="Missing key, modification failed.")
         data = request.get_json()
         # TODO safe-check important setting argument later 
-        session_data = session[template_key]
-        if(admin_key == session_data["admin_key"]):
+        session = exam_manager.get_session(template_key, None)
+        if session is None:
+            return flask.jsonify(result=False, error="Invalid key {:s}, session not found.".format(template_key))
+        if(admin_key == session["admin_key"]):
             # reconvert appropriate setting
-            session_data["setting"].update(convert_template_setting(data, allow_student_list=False))
+            session["setting"].update(convert_template_setting(data, allow_student_list=False))
             return flask.jsonify(result=True)
         else:
-            return flask.jsonify(result=False, error="Admin key incorrect, data cannot be retrieved")
+            return flask.jsonify(result=False, error="Admin key incorrect, setting cannot be changed.")
         
 
 
@@ -99,7 +107,7 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
     @login_decorator
     def session_manager():
         """Manage all sessions created here."""
-        return flask.render_template("session_manager.html", all_session_data=session)
+        return flask.render_template("session_manager.html", all_session_data=exam_manager._session)
     
     @app.route("/delete_session", methods=["DELETE"])
     @login_decorator
@@ -108,41 +116,62 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         try:
             template_key = request.args.get("template_key")
             admin_key = request.args.get("key")
-            return remove_session(template_key, verify=True, verify_admin_key=admin_key)
+            return exam_manager.delete_session(template_key, verify=True, verify_admin_key=admin_key)
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
      
     ### SECTION FOR TAKER ### 
-    @app.route("/identify")
+    @app.route("/identify", methods=["GET", "POST"])
     def identify():
         """First part of entering the exam; this link will allow student to input necessary info to be monitored by /manage
         The form should trigger the generic_submit redirect and go to /enter after it."""
         template_key = request.args.get("template_key", None)
         if(template_key is None):
-            return flask.render_template("error.html", error="No session key specified; please use one to identify yourself.", error_traceback=None)
+            return flask.render_template("error.html", error="No session key specified. You need one to enter the correct test/exam.", error_traceback=None)
         else:
-            # with a template key; try to format properly
-            try:
-                session_data = session.get(template_key, None)
-                if(session_data is None):
-                    return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
-                student_list = session_data["setting"].get("student_list", None)
-                logger.info("Checking against student list: {}".format(student_list))
-                if(student_list is not None):
-                    if(isinstance(student_list, dict) and len(student_list) > 0):
-                        # a valid student list; use restricted access 
-                        return retrieve_submit_route_restricted(template_key, student_list)
+            if request.method == "GET":
+                # with a template key, trying access - render generic_input that send POST to itself with all the necessary identifier
+                try:
+                    session = exam_manager.get_session(template_key)
+                    if(session is None):
+                        return flask.render_template("error.html", error="Invalid session key; the session might be expired or deleted.")
+                    student_list = session["setting"].get("student_list", None)
+                    logger.info("Checking against student list: {}".format(student_list))
+                    if(student_list is not None):
+                        if(isinstance(student_list, dict) and len(student_list) > 0):
+                            # a valid student list; use restricted access 
+                            # TODO autologin when UserRole.Student matured
+                            return flask.render_template("generic_input.html", title="Enter Exam", message="The exam is restricted to specific students. Enter provided key to access the exam.", submit_route="identify?template_key={:s}".format(template_key), submit_key=template_key, custom_navbar=True, input_fields=[{"id": "key", "type": "text", "name": "Entry Key"}])
+                        else:
+                            # invalid student list; voiding 
+                            logger.error("Invalid student list found: {}; voiding".format(student_list))
+                            session["setting"].pop("student_list", None)
+                    # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
+                    # use sorta anonymous access here 
+                    # TODO use what the session requests instead.
+                    return flask.render_template("generic_input.html", title="Enter Exam", message="The exam is unrestricted. Make sure to keep the link after identifying yourself - multiple submissions may be penalized.", submit_route="identify?template_key={:s}".format(template_key), submit_key=template_key, custom_navbar=True, input_fields=[
+                        {"id": "id", "type": "text", "name": "Student ID"},
+                        {"id": "student_name", "type": "text", "name": "Student Name"}])
+                except Exception as e:
+                    logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
+                    return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+            else:
+                # POST mode; if anonymous, create the new entry key here.
+                # either way, redirect to /enter subsection with it.
+                data = request.form.to_dict()
+                if "key" in data:
+                    # restricted mode
+                    # result, page_or_error = exam_manager.student_enter_session(first_access=False, key=data["key"])
+                    return flask.redirect(url_for("enter", key=data["key"]))
+                else:
+                    # anonymous mode, generate a matching key & redirect to enter
+                    result, page_or_error = exam_manager.student_enter_session(first_access=True, session_key=template_key, id=data["id"], student_name=data["student_name"])
+                    if result:
+                        key, page_props = page_or_error
+                        return flask.redirect(url_for("enter", key=key)) 
                     else:
-                        # invalid student list; voiding 
-                        logger.error("Invalid student list found: {}; voiding".format(student_list))
-                        session_data["setting"].pop("student_list", None)
-                # once reached here, the submit_route should have a valid dict ready; redirect to the generic_input html 
-                # use sorta anonymous access here
-                return retrieve_submit_route_anonymous(template_key)
-            except Exception as e:
-                logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
-                return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
+                        return flask.render_template("error.html", error=page_or_error, error_traceback=None)
     
     @app.route("/enter")
     def enter():
@@ -152,11 +181,16 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         TODO disallow entering when not in start_exam_date -> end_exam_date; or time had ran out."""
         student_key = request.args.get("key", None)
         if(student_key):
-            return student_reaccess_session(student_key)
+            result, page_or_error = exam_manager.student_enter_session(first_access=False, key=student_key)
+            if result:
+                key, page_props = page_or_error # this return the formatting used for the page; TODO verify student_key = key
+                return flask.render_template("exam.html", **page_props)
+            else:
+                return flask.render_template("error.html", error=page_or_error, error_traceback=None) # something failed; use generic
         else:
             # no longer allowed - anonymous or restricted must both redirect to here with a key
 #            raise NotImplementedError
-            return render_template("error.html", error="Keyless access to exam is prohibited.", error_traceback=None)
+            return flask.render_template("error.html", error="Keyless access to exam is prohibited.", error_traceback=None)
 #            template_key = request.args.get("template_key", None)
 #            return student_first_access_session(template_key)
     
@@ -168,7 +202,11 @@ def build_session_routes(app: Flask, login_decorator: callable=lambda f: f) -> F
         try:
             student_key  = request.args.get("key")
             submitted_answers = request.get_json()
-            return submit_exam_result(submitted_answers, student_key)
+            result, page_or_error = exam_manager.student_submit_answers(submitted_answers, student_key)
+            if result:
+                return page_or_error
+            else:
+                return flask.jsonify(result=False, error=str(page_or_error), error_traceback=None)
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())

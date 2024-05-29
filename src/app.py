@@ -5,7 +5,7 @@ import os, time, re, sys
 import traceback 
 import shutil
 
-from src.session import current_data, submit_route 
+from src.session import ExamManager, OnRequestData 
 from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes, build_learn_routes
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
@@ -20,14 +20,16 @@ logger = logging.getLogger(__name__)
 app = Flask("exam_builder")
 app.secret_key = "liars_punishment_circle_24102023"
 app.config["UPLOAD_FOLDER"] = "test"
-# related session/questions data; TODO migrate the src.session's current_data to this instead.
+# related session/questions data; 
+quiz_data = OnRequestData()
 lessons_data = MarkdownData()
+exam_manager = ExamManager(quiz_data)
 # bind appropriate functions
 app, login_manager, login_decorator = build_login_routes(app)
-app = build_session_routes(app, login_decorator=login_decorator)
-app = build_data_routes(app, login_decorator=login_decorator)
+app = build_session_routes(app, exam_manager, login_decorator=login_decorator)
+app = build_data_routes(app, exam_manager, login_decorator=login_decorator)
 app = build_learn_routes(app, login_decorator=login_decorator, lessons_data=lessons_data)
-_, app = build_game_routes(app, login_decorator=login_decorator) 
+_, app = build_game_routes(app, exam_manager, login_decorator=login_decorator) 
 ### TODO The import flow will be split in two parts, modifying and committing
 app._is_in_commit = False
 
@@ -112,6 +114,7 @@ def generic_submit():
     arguments/keys are supplied by the form construction; 
     returning a redirect blob if handled by the string; or returning a true/false json block for further guidance
     """
+    raise NotImplementedError("Dont need this level of complexity yet")
     try:
         logger.info("Entering generic_submit...")
         form = request.form.to_dict()
