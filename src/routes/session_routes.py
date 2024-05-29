@@ -139,10 +139,18 @@ def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator:
                     student_list = session["setting"].get("student_list", None)
                     logger.info("Checking against student list: {}".format(student_list))
                     if(student_list is not None):
-                        if(isinstance(student_list, dict) and len(student_list) > 0):
-                            # a valid student list; use restricted access 
-                            # TODO autologin when UserRole.Student matured
-                            return flask.render_template("generic_input.html", title="Enter Exam", message="The exam is restricted to specific students. Enter provided key to access the exam.", submit_route="identify?template_key={:s}".format(template_key), submit_key=template_key, custom_navbar=True, input_fields=[{"id": "key", "type": "text", "name": "Entry Key"}])
+                        if(isinstance(student_list, list) and len(student_list) > 0):
+                            # a valid student list; use restricted access
+                            if current_user:
+                                # search for the user in the list; if cannot found, throw error
+                                entry_key = next((key for key, stdinfo in session["student"].items() if stdinfo.id == current_user.id), None)
+                                if entry_key is None:
+                                    raise SessionError("User of id \"{:s}\" is not part of the exam, access not granted")
+                                return flask.redirect(url_for("enter", key=entry_key)) #
+                            else:
+                                raise SessionError("Exam in restricted access mode; unsigned access is not allowed. For now.")
+                            # 
+#                            return flask.render_template("generic_input.html", title="Enter Exam", message="The exam is restricted to specific students. Enter provided key to access the exam.", submit_route="identify?template_key={:s}".format(template_key), submit_key=template_key, custom_navbar=True, input_fields=[{"id": "key", "type": "text", "name": "Entry Key"}])
                         else:
                             # invalid student list; voiding 
                             logger.error("Invalid student list found: {}; voiding".format(student_list))

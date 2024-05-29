@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def build_data_routes(app: Flask, exam_manager: ExamManager, login_decorator: callable=lambda f: f) -> Flask:
     # prerequisite sass; TODO later when I'm less lazy 
-    current_data = exam_manager._quiz_data
+    current_data = exam_manager.quiz_data
     ### For generic data table ###
     @app.route("/filtered_questions", methods=["GET"])
     @login_decorator

@@ -50,6 +50,10 @@ class ExamManager:
         self._submit_route = dict()
         self._entry_key_to_session = dict()
 
+    @property
+    def quiz_data(self):
+        return self._quiz_data
+
     def generate_unique_str(self, length: int=8, collision_check: Optional[set]=None):
         # create an unique str; if collision_check & the key already exist (VERY unlikely), check & generate a different one 
         key = secrets.token_hex(length)
@@ -89,7 +93,10 @@ class ExamManager:
 
     def generate_new_student_entrance(self, session: dict, session_key: str, student_data: dict, convert_embedded_image: bool=True) -> str:
         """Universal fn to generate a new student's quiz, timestamp etc. when they enter the exam.
-        Need direct access to session; as it might be triggered before being put into the _session referrer."""
+        Need direct access to session; as it might be triggered before being put into the _session referrer.
+
+        A session's `template` consist of a list of (actual_question, score_per_question, total_question_bank); this should theoretically has unlimited amount of section; but realistically it's 4-5 at most. 
+        """
         entry_key = self.generate_unique_str(collision_check=self._entry_key_to_session)
         self._entry_key_to_session[entry_key] = session_key 
         # generate the quiz basing on the template
