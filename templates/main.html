@@ -1,11 +1,14 @@
 {% extends 'shared/base.html' %}
 {% block content %}
 <div class="container-fluid">
-	{% if current_user.is_authenticated %}
+	{% if authenticated %}
 		<h2>Entry Point</h2>
 		<p>You has successfully authorized as <b>{{current_user.name}}</b>. Your role is <b>{{current_user.getRole()}}</b></p>
 		<p>Your id is <b>{{current_user.id}}</b>. If you have problem with your account, contact us with this value.</p>
-		<p>Please use the above navigation bar to build and/or edit the quizzes</p>
+		<p>Please use the above navigation bar to build and/or edit the quizzes.</p>
+		{% if additional_info %}
+			<p>{{additional_info | safe}}</p>
+		{% endif %}
 	{% else %}
 		<h2>Login</h2>
 		<p>You must login to start building/editing quizzes</p>

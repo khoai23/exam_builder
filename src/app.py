@@ -1,10 +1,12 @@
 import flask
 from flask import Flask, request, url_for 
+from flask_login import current_user
 # from werkzeug.utils import secure_filename
-import os, time, re, sys
+import os, time, re, sys, random
 import traceback 
 import shutil
 
+from src.authenticate.user import UserRole
 from src.session import ExamManager, OnRequestData 
 from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes, build_learn_routes
 from src.parser.convert_file import read_and_convert
@@ -38,8 +40,24 @@ app._is_in_commit = False
 
 @app.route("/")
 def main():
-    """Enter the index page"""
-    return flask.render_template("main.html")
+    """Enter the main page. Either enforce login if not authenticated; or showing a little splash page if do.
+    Should show the classes that you are attending/teaching/managing etc."""
+    authenticated = current_user.is_authenticated 
+    if authenticated:
+        action = "attending" if current_user.role == UserRole.Student \
+            else "teaching"  if current_user.role == UserRole.Teacher else "managing"
+        if current_user.classes:
+            classes_link = ["<b><a href=\"class/{:s}\">{:s}</a></b>".format(cls.id, cls.name) for cls in current_user.classes.values()]
+            if len(classes_link) <= 2:
+                classes_link_full = "and".join(classes_link)
+            else:
+                classes_link_full = ", ".join(classes_link[:-1]) + " and " + classes_link[-1]
+            additional_info = "You are {:s} <b>{:d}</b> classes. Those are: {:s}".format(action, len(current_user.classes),  classes_link_full)
+        else:
+            additional_info = "You are not {:s} any classes.".format(action)
+    else:
+        additional_info = None
+    return flask.render_template("main.html", authenticated=authenticated, additional_info=additional_info)
 
 @app.route("/test")
 def test():
@@ -145,7 +163,7 @@ def generic_submit():
         return flask.redirect(request.referrer)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     if "log" in sys.argv:
         loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
         for logger in loggers:

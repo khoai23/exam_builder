@@ -10,17 +10,23 @@ logger = logging.getLogger(__name__)
 
 class Classroom:
     """A generic class. Should be created & geared toward a single category to make quizzing & teaching simpler."""
-    def __init__(self, 
+    def __init__(self, class_id: str, class_name: str,
             creator: User, teacher: User, students: List[User], 
             category: str=None, tags: Optional[List[str]]=None,
             strict: bool=True):
+        self.id = class_id 
+        self.name = class_name
         # generic data
-        self.creator = creator 
         assert creator.role <= UserRole.Admin, "@Classroom: can only be created with Admin user & above."
-        self.teacher = teacher  # TODO allow multiple teachers.
+        self.creator = creator
+        creator.classes[class_id] = self
         assert teacher.role <= UserRole.Teacher, "@Classroom: can only be taught with Teacher user & above."
-        self.students = students 
+        self.teacher = teacher  # TODO allow multiple teachers.
+        teacher.classes[class_id] = self
         assert all(s.role == UserRole.Student for s in students), "@Classroom: can only be created with Student user."
+        self.students = students 
+        for s in students:
+            s.classes[class_id] = self
         self.category = category 
         self.tags = tags
         # learning data - should track the learning progress & result of students. TODO also create appropriate statistic about tags so can concentrate on badly performed subjects
@@ -46,7 +52,7 @@ class Classroom:
                 else:
                     self.students.append(sa)
 
-    def create_exam(self, exam_manager, category: Optional[str]=None, tags: Optional[str]=None, use_unrated: bool=True):
+    def create_exam(self, exam_manager, category: Optional[str]=None, tags: Optional[str]=None, use_unrated: bool=False):
         # create a randomized exam on specific category & tag. 
         # TODO report back to the original result once exam closes. Probably need upgrading the "session"
         category = category or self.category
@@ -74,10 +80,10 @@ class Classroom:
         # if 1 cat, 5q of 2p; if 2cat, 3q of easy 3p + 1q of hard 1p; if 3cat, 2q of easy 4p + 1q of harder 1p each; if 4cat, 4q of 4-3-2-1
         qcount_and_score = {1: [(5, 2)], 2: [(3, 3), (1, 1)], 3: [(2, 4), (1, 1), (1, 1)], 4: [(4, 1), (3, 1), (2, 1), (1, 1)]}
         template = [
-            (qcount, score, list(all_qids))
+            (min(qcount, len(all_qids)), score, list(all_qids))
             for (qcount, score), (hardness, all_qids) in zip(qcount_and_score[len(selected)], sorted(selected, key=lambda x: x[0] or 4.5))
         ]
-        logger.info("Generated template on current data: selected-hardness: {}; generated template {}".format(list(zip(*selected))[0], template))
+        logger.info("Generated template on current data: selected-hardness: {}; generated template {}".format(list(zip(*selected))[0], [(c, s, "({:d} questions)".format(len(q))) for c, s, q in template]))
         # create the appropriate setting object. For now just make it 
         setting = dict(session_name="Generic Exam #{:04d}".format(int(random.random() * 10000)), allow_score=True, allow_result=True, student_list=[std.getUserInfo(internal_use=True) for std in self.students])
         return exam_manager.create_new_session({"template": template, "setting": setting}, category)
@@ -93,13 +99,15 @@ def test_autogen_test_classroom(exam_manager, add_user):
     for u in [example_teacher, example_user_1, example_user_2]:
         add_user(u)
     
-    classroom = Classroom(example_teacher, example_teacher, [example_user_1, example_user_2], "GDCD", None)
+    category = random.choice(exam_manager.quiz_data.categories) # choose a random category
 
-    result, args = classroom.create_exam(exam_manager)
+    classroom = Classroom("test_classroom", "Test Classroom (For Autogen Exam)", example_teacher, example_teacher, [example_user_1, example_user_2], category, None)
+    result, args = classroom.create_exam(exam_manager, use_unrated=True) # cause we has no data now.
+
     if result:
         logger.info("Successfully created the exam; session key {}, admin key {}".format(*args))
         return classroom, args
     else:
         logger.error("Cannot create the exam; make sure to check the traceback.")
-        logger.error("Error: {}\nTraceback: {}".format(args))
+        logger.error("Error (could be tuple): {}".format(args))
         return classroom, None

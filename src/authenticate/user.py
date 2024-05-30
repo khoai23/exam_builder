@@ -9,9 +9,10 @@ class UserRole(IntEnum):
     # decreasing in order of rights
     Creator = 1
     Maintainer = 2
-    Admin = 3
-    Teacher = 4 
-    Student = 5 
+    # leave gaps in case there is a mixed role 
+    Admin = 4
+    Teacher = 8
+    Student = 12
     
     @staticmethod
     def requiresGrant(role: int):
@@ -29,6 +30,9 @@ class User(UserMixin):
         self.username = username 
         self.password = password
         self.role = role 
+        # operation info 
+        # For admin+, classes is what they administors; for teacher, classes is what they teach; for student, classes is what they attend
+        self.classes = dict()
         # non-critical-to-operation info.
         self.name = name 
         self.info = info or dict()

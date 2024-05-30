@@ -53,5 +53,11 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
         else:
             return flask.render_template("graph_learn.html", content=lesson_data)
 
+    @app.route("/class/<class_id>", methods=["GET"])
+    @login_decorator
+    def enter_class(class_id: str):
+        # retrieving & entering the classes interface; should allow access only when it's admin/teacher/student of the class, or 
+        raise NotImplementedError
+
     return app
 
