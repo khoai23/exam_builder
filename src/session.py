@@ -101,10 +101,7 @@ class ExamManager:
         entry_key = self.generate_unique_str(collision_check=self._entry_key_to_session)
         self._entry_key_to_session[entry_key] = session_key 
         # generate the quiz basing on the template
-        selected, correct = shuffle(self._quiz_data.load_category(session["category"]), session["template"])
-        if convert_embedded_image:
-            # run a function to convert text + inline image into list of options 
-            selected = convert_text_with_image(selected)
+        selected, correct = self.generate_quiz(session["category"], session["template"], convert_embedded_image=convert_embedded_image)
         session["student"][entry_key] = {
                 "exam_data": selected,
                 "correct": correct,
@@ -114,7 +111,7 @@ class ExamManager:
         return entry_key
 
     @wrap_try_catch
-    def student_enter_session(self, access_info: dict=None, convert_embedded_image: bool=True, **access_info_expanded):
+    def student_enter_session(self, access_info: dict=None, **access_info_expanded):
         """Student can access by either first-access, which generate an unique key; or reaccess, which must be reached with this unique key already pre-generated.
         first-access can only be reached in anonymous (no-student-list) mode.
         if first-access; the access_info will be something like {{name:..., id:..., properties etc.}, session_key:..., first_access=True}
@@ -249,6 +246,18 @@ class ExamManager:
             for sid in targetted:
                 self.delete_session(sid) 
 
+
+    """Code to generate a formatted quiz from specific category. Should be used everywhere that involves making tests."""
+    def generate_quiz(self, category: str, template: List[Tuple[int, float, list]], convert_embedded_image: bool=True, **kwargs):
+        if not template:
+            # when given no template, TODO make its own.
+            raise NotImplementedError
+        questions, correct = shuffle(self._quiz_data.load_category(category), template, **kwargs)
+        if convert_embedded_image:
+            # run a function to convert text + inline image into list of options 
+            questions = convert_text_with_image(questions)
+        return questions, correct
+
 """Useful helpers that we retains."""
 
 # from https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call
@@ -267,7 +276,7 @@ def time_limit(seconds):
         timer.start()
     else:
         signal.signal(signal.SIGALRM, signal_handler)
-        signal.alarm(seconds) # send signal after seconds
+        signal.alarm(int(seconds)+1) # send signal after seconds; has to convert to int for mac/linux
     try:
         yield
     except KeyboardInterrupt:
@@ -320,84 +329,3 @@ def convert_template_setting(setting: Dict, allow_student_list: bool=True, allow
         # void the student list if no entry available 
         setting.pop("student_list", None)
     return setting
-
-
-"""This is for a special campaign session. Instead of student id, this session object receives a specific player order and shuffle an appropriate quiz for that."""
-
-def create_campaign_session(campaign, categories: List[str]):
-    # select specific quiz range for campaign 
-#    print([c not in current_data.categories for c in categories])
-    assert isinstance(categories, list) and len(categories) > 0 and all((c in current_data.categories for c in categories)), "Invalid category selected: {} (available {})".format(categories, data.categories)
-    session = {"categories": categories, "orders": dict()}
-    return session 
-
-_default_coefficient_calculator = lambda c, t: 0.5 + (2.0 * c / t) * 0.5 # worst at 0.5, break even (1.0) at 50%, and best at 1.5
-def build_order_quiz(session: dict, quiz_count: int=10, duration_min: int=15, select_category: Optional[str]=None, coefficient_calculator: callable=_default_coefficient_calculator, convert_embedded_image: bool=True) -> Tuple[bool, str]:
-    # attempt to build a quiz for the order, returning a referring key to be re-accessed if necessary 
-    # get a random key
-    key = secrets.token_hex(8)
-    if select_category:
-        # if there is a valid select_category, use that 
-        if select_category not in session["categories"]:
-            # invalid category, break out 
-            return False, "Invalid category {} (possible: {})".format(select_category, session["categories"])
-    else:
-        # if not, select one of the category randomly
-        select_category = random.choice(session["categories"])
-    # with a valid category, generate appropriate quiz on range of that category
-    # TODO deeper selection mode (e.g by tag)
-    available = current_data.load_category(select_category)
-    if len(available) < quiz_count:
-        # not enough question to load, throw a warning 
-        logger.warning("Category \"{}\" only has {} question, while requiring {}. Trimming requirement.".format(select_category, len(available), quiz_count))
-        quiz_count = len(available)
-    question_ids = random.sample(range(len(available)), k=quiz_count)
-    questions, correct = shuffle(available, [(len(question_ids), 0.0, question_ids)])
-    if convert_embedded_image:
-        # run a function to convert text + inline image into list of options 
-        questions = convert_text_with_image(questions)
-    # write it into the "orders" section 
-    start_time = time.time()
-    end_time = time.time() + duration_min * 60
-    session["orders"][key] = {"category": select_category, "exam_data": questions, "correct": correct, "start_time": start_time, "end_time": end_time, "coefficient_calculator": coefficient_calculator}
-    # return appropriate data to access
-    return True, key
-
-def access_order_quiz(session: dict, key: str):
-    order_data = session["orders"][key]
-    # calculate the remaining time
-    start_time, end_time = order_data["start_time"], order_data["end_time"]
-    exam_duration = end_time - start_time
-    elapsed = min(time.time() - start_time, exam_duration)
-    remaining = exam_duration - elapsed 
-    exam_duration_min = int(exam_duration) // 60
-    # convert the exam_data into image-compatible version
-    exam_data = order_data["exam_data"]
-    if(time.time() > end_time):
-        # render the error when timer is exceeded
-        return flask.render_template("error.html", error="Order quiz over; cannot submit", error_traceback=None)
-    else:
-        # render normally
-        return flask.render_template("exam.html", student_name="Player 0", exam_data=exam_data, submitted=("answers" in order_data), elapsed=elapsed, remaining=remaining, exam_setting={"session_name": "Quiz Session", "exam_duration": exam_duration_min}, custom_navbar=True, score=None, submit_route="campaign_quiz_submit")
-
-def submit_order_quiz_result(campaign, session: dict, submitted_answers: Dict, key: str):
-    # simplified variant of the order quiz; 
-    order_data = session["orders"][key]
-    if("answers" in order_data):
-        return flask.jsonify(result=False, error="Already have an submitted answer.")
-    else:
-        # record to the student info
-        order_data["answers"] = submitted_answers 
-        # extract the correct vs total; session will create appropriate coefficient by its function
-        coefficient_calculator = order_data["coefficient_calculator"]
-        correct = 0
-        for sub, crt in zip(submitted_answers, order_data["correct"]):
-            if sub == crt:
-                correct += 1
-        total = len(order_data["correct"])
-        order_data["order_coef"] = order_coef = coefficient_calculator(correct, total)
-        # use the localstorage to trigger update from the campaign map 
-        # do not send it over through localstorage; since such data could be tampered with 
-        session["orders"].pop(key) # TODO perform cleanups when end turn instead; allowing revisit to see the correct section
-        campaign.set_player_coef(order_coef)
-        return flask.jsonify(result=True, correct=order_data["correct"], score=order_coef, coef=order_coef, trigger_campaign_update=True)
