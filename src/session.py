@@ -84,6 +84,7 @@ class ExamManager:
         # if has student_list in setting; pre-generate all the entry key beforehand & disallow student_enter_session from using anonymous mode.
         if setting.get("student_list", None):
             for student_info in setting["student_list"]:
+                #print("Adding student: {}".format(student_info))
                 entry_key = self.generate_new_student_entrance(new_exam_session, session_key, student_info)
         logger.debug("New exam session with template: {}".format(new_exam_session))
         return (session_key, admin_key)
@@ -120,7 +121,7 @@ class ExamManager:
         if reaccess/restricted: the access_info should only have {key:..., first_access=False}"""
         if access_info is None and access_info_expanded:
             # is in expanded mode; use it instead.
-            # expanded mode will be smth like student_enter_session(first_access=True, student_name=..)
+            # expanded mode will be smth like student_enter_session(first_access=True, name=..)
             access_info = dict(access_info_expanded)
         logger.debug("@student_enter_session: received access_info object: {}".format(access_info))
 
@@ -160,7 +161,7 @@ class ExamManager:
             raise SessionError("Exam over; you can no longer enter.")
         else:
             # return all the necessary info to populate the exam.html; the real populating is 
-            return entry_key, dict(student_name=student_data["student_name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=setting, custom_navbar=True, score=student_score)
+            return entry_key, dict(student_name=student_data["name"], exam_data=student_data["exam_data"], submitted=("answers" in student_data), elapsed=elapsed, remaining=remaining, exam_setting=setting, custom_navbar=True, score=student_score)
         
     def calculate_score(self, student_data: Dict, partial_score: bool=False) -> Tuple[int, List]:
         """Calculate basing on the submitted answers. 

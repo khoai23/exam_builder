@@ -5,7 +5,8 @@ import flask
 from flask import Flask, request, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 
-from src.authenticate.user import User, UserRole
+from src.authenticate.user import User, UserRole 
+from src.authenticate.classroom import Classroom
 
 from typing import Tuple, List, Optional, Union
 
@@ -130,5 +131,8 @@ def build_login_routes(app: Flask) -> Tuple[Flask, LoginManager, callable]:
     # auto-redirect to the main login page
     manager.login_view = "main"
     manager.init_app(app)
+    # bind directly to the app object; TODO generalize & not rely on ducttaping?
+    app.add_user = add_user
+    app.remove_user = remove_user
 
-    return app, manager, login_required
+    return app, manager, login_required 

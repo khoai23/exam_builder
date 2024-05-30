@@ -11,7 +11,9 @@ from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
 from src.data.markdown_load import MarkdownData
-from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow
+from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow 
+
+from src.authenticate.classroom import test_autogen_test_classroom
 
 import logging
 logger = logging.getLogger(__name__)
@@ -30,7 +32,8 @@ app = build_session_routes(app, exam_manager, login_decorator=login_decorator)
 app = build_data_routes(app, exam_manager, login_decorator=login_decorator)
 app = build_learn_routes(app, login_decorator=login_decorator, lessons_data=lessons_data)
 _, app = build_game_routes(app, exam_manager, login_decorator=login_decorator) 
-### TODO The import flow will be split in two parts, modifying and committing
+
+### TODO The import flow will be split in two parts, modifying and committing. right now modifying + commiting is one action
 app._is_in_commit = False
 
 @app.route("/")
@@ -147,4 +150,10 @@ if __name__ == "__main__":
         loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
         for logger in loggers:
             logger.setLevel(logging.DEBUG)
+    if "test" in sys.argv:
+        # Autogen for specific 
+        classroom, keys_if_any = test_autogen_test_classroom(exam_manager, app.add_user)
+        if keys_if_any:
+            test_exam_key, test_admin_key = keys_if_any
+            print("Created classroom {} with test exam {}(adminkey {})".format(classroom, test_exam_key, test_admin_key))
     app.run(debug=True)

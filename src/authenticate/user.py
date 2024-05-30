@@ -40,3 +40,10 @@ class User(UserMixin):
     def updateUserInfo(self, **kwargs):
         # update all whatever non-critical stuff we want.
         self.info.update(**kwargs)
+
+    def getUserInfo(self, internal_use: bool=False):
+        # if internal_use; also return specifics that is only relevant to internal logic (e.g user id)
+        if internal_use:
+            return {"id": self.id, "name": self.name, **self.info}
+        else:
+            return dict(self.info)

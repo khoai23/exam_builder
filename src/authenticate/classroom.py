@@ -1,8 +1,12 @@
-from collections import defaultdict
+from collections import defaultdict 
+import random
 
 from src.authenticate.user import User, UserRole
 
 from typing import Tuple, List, Optional, Union
+
+import logging 
+logger = logging.getLogger(__name__)
 
 class Classroom:
     """A generic class. Should be created & geared toward a single category to make quizzing & teaching simpler."""
@@ -42,7 +46,7 @@ class Classroom:
                 else:
                     self.students.append(sa)
 
-    def create_exam(self, exam_manager, category: Optional[str]=None, tags: Optional[str]=None, use_unrated: bool=False):
+    def create_exam(self, exam_manager, category: Optional[str]=None, tags: Optional[str]=None, use_unrated: bool=True):
         # create a randomized exam on specific category & tag. 
         # TODO report back to the original result once exam closes. Probably need upgrading the "session"
         category = category or self.category
@@ -56,7 +60,10 @@ class Classroom:
         # TODO automatically compose by hardness.
         split_by_hardness = defaultdict(set)
         for i in matched:
-            split_by_hardness[questions[i].get("hardness", None)].add(i)
+            hardness = questions[i].get("hardness", None)
+            if not isinstance(hardness, int) or 0 >= hardness or 10 < hardness:
+                hardness = None # voiding invalid hardness values
+            split_by_hardness[hardness].add(i)
         if not use_unrated:
             del split_by_hardness[None] # do not allow any non-rated question 
         # TODO option to specialize the exam for each student, basing on their prior result. This can't use the template variant ofc.
@@ -70,8 +77,29 @@ class Classroom:
             (qcount, score, list(all_qids))
             for (qcount, score), (hardness, all_qids) in zip(qcount_and_score[len(selected)], sorted(selected, key=lambda x: x[0] or 4.5))
         ]
-        logger.info("Generated template on current data: selected-hardness: {}; generated template {}".format(list(zip(*selected)[0]), template))
+        logger.info("Generated template on current data: selected-hardness: {}; generated template {}".format(list(zip(*selected))[0], template))
         # create the appropriate setting object. For now just make it 
-        setting = dict(session_name="Generic Exam #{:04d}".format(int(random.random() * 10000)), allow_score=True, allow_result=True, student_list=[{"name": std.name, **std.info} for std in self.students])
+        setting = dict(session_name="Generic Exam #{:04d}".format(int(random.random() * 10000)), allow_score=True, allow_result=True, student_list=[std.getUserInfo(internal_use=True) for std in self.students])
         return exam_manager.create_new_session({"template": template, "setting": setting}, category)
 
+
+def test_autogen_test_classroom(exam_manager, add_user):
+    # creating a sample classroom & autogenerate using it.
+    example_user_1 = User("test_1", "testpwd", "test_student_1", name="Test Student 1", role=UserRole.Student)
+    example_user_2 = User("test_2", "testpwd", "test_student_2", name="Test Student 2", role=UserRole.Student)
+
+    example_teacher = User("test_0", "testpwd", "test_teacher", name="Test Teacher", role=UserRole.Admin)
+    
+    for u in [example_teacher, example_user_1, example_user_2]:
+        add_user(u)
+    
+    classroom = Classroom(example_teacher, example_teacher, [example_user_1, example_user_2], "GDCD", None)
+
+    result, args = classroom.create_exam(exam_manager)
+    if result:
+        logger.info("Successfully created the exam; session key {}, admin key {}".format(*args))
+        return classroom, args
+    else:
+        logger.error("Cannot create the exam; make sure to check the traceback.")
+        logger.error("Error: {}\nTraceback: {}".format(args))
+        return classroom, None

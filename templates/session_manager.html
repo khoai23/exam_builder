@@ -27,7 +27,7 @@
 					<td rowspan="{{srs if srs > 0 else 1}}" id="session_name">{{session["setting"].get("session_name", "-")}}</td>
 					{% if srs > 0 %}
 						{% set std = student_list[0][1] %}
-						<td>{{"{:s}, enter at {}, result {}".format(std["student_name"], std["start_time"], std.get("score", "N/A"))}}</td>
+						<td>{{"{:s}, enter at {}, result {}".format(std["name"], std["start_time"], std.get("score", "N/A"))}}</td>
 					{% else %}
 						<td></td>
 					{% endif %}
@@ -41,7 +41,7 @@
 				</tr>
 				{% for k, std in student_list[1:] %}
 				<tr class="session_{{key}}">
-					<td> {{"{:s}, enter at {}, result {}".format(std["student_name"], std["start_time"], std.get("score", "N/A"))}}</td>
+					<td> {{"{:s}, enter at {}, result {}".format(std["name"], std["start_time"], std.get("score", "N/A"))}}</td>
 				</tr>
 				{% endfor %}
 			{% endfor %}

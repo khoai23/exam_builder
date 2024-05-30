@@ -1,6 +1,7 @@
 """Routes strictly for creation & management of exam sessions. Note that the build page will have to use the data table in the data_routes, but this should not affect anything here."""
 import flask
 from flask import Flask, request, url_for
+from flask_login import current_user
 import traceback 
 
 from src.session import ExamManager, convert_template_setting
@@ -143,7 +144,7 @@ def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator:
                             # a valid student list; use restricted access
                             if current_user:
                                 # search for the user in the list; if cannot found, throw error
-                                entry_key = next((key for key, stdinfo in session["student"].items() if stdinfo.id == current_user.id), None)
+                                entry_key = next((key for key, stdinfo in session["student"].items() if stdinfo["id"] == current_user.id), None)
                                 if entry_key is None:
                                     raise SessionError("User of id \"{:s}\" is not part of the exam, access not granted")
                                 return flask.redirect(url_for("enter", key=entry_key)) #
@@ -160,7 +161,7 @@ def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator:
                     # TODO use what the session requests instead.
                     return flask.render_template("generic_input.html", title="Enter Exam", message="The exam is unrestricted. Make sure to keep the link after identifying yourself - multiple submissions may be penalized.", submit_route="identify?template_key={:s}".format(template_key), submit_key=template_key, custom_navbar=True, input_fields=[
                         {"id": "id", "type": "text", "name": "Student ID"},
-                        {"id": "student_name", "type": "text", "name": "Student Name"}])
+                        {"id": "name", "type": "text", "name": "Student Name"}])
                 except Exception as e:
                     logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
                     return flask.render_template("error.html", error=str(e), error_traceback=traceback.format_exc())
@@ -174,7 +175,7 @@ def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator:
                     return flask.redirect(url_for("enter", key=data["key"]))
                 else:
                     # anonymous mode, generate a matching key & redirect to enter
-                    result, page_or_error = exam_manager.student_enter_session(first_access=True, session_key=template_key, id=data["id"], student_name=data["student_name"])
+                    result, page_or_error = exam_manager.student_enter_session(first_access=True, session_key=template_key, id=data["id"], name=data["name"])
                     if result:
                         key, page_props = page_or_error
                         return flask.redirect(url_for("enter", key=key)) 
