@@ -68,6 +68,9 @@ class ExamManager:
         # format setting: cleaning dates; voiding nulled fields
         setting = convert_template_setting(data["setting"], allow_student_list=True)
         
+        if check_template and sys.platform != "win32":
+            logger.warning("@create_new_session: currently force disable check_template for unix platform. Return when this error is resolved.")
+            check_template = False
         if(check_template):
             result, error_type = test_template_validity(data["template"], category, _current_data=self._quiz_data)
             if(not result):
