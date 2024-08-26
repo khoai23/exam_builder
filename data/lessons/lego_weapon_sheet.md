@@ -176,6 +176,21 @@ Currently identified, list in order of favoritism & certainty in identification:
     2. Tomahawk Pack (M2): **RPG-7**, M72 LAW, **M79**, MP5, 3x unidentified rifle. Would have been lovely if found cheap elsewhere.
     3. AK Pack (M3): 3x AK, 1 antimateriel rifle, MGL-105, Uzi, some weird scope-rifle thing with very short barrel.
     4. Accessory Pack (M4): 1xAK, 1xAK in SMG config (note the thin pistol-caliber mag), M249 variant, MGL-105. Mostly has accessory, like an axe, hatchet & walkie-talkie thingie.
+48. From [here](https://shopee.vn/%C4%90%E1%BB%93-ch%C6%A1i-l%E1%BA%AFp-r%C3%A1p-army-logo-ph%E1%BB%A5-ki%E1%BB%87n-v%C4%A9-th%E1%BA%BF-chi%E1%BA%BFn-2-world-war-II-x%E1%BA%BFp-m%C3%B4-h%C3%ACnh-nh%E1%BB%B1a-ABS-cao-c%E1%BA%A5p-x%C3%A1m-%C4%91en-i.45300498.24331403294), a lot of cool stuff for WW2/Cold War era.
+    1. PJ-A-09: Mini variant of the DP-27, axe, flask, 3x "potato masher", knife 
+    2. PJ-A-10: PPSh with both drum + sickle mag, pistol, flask, potato masher, binoc and a stick?
+    3. PJ-A-11: Some MG; could be a Bren with detachable mag. Same setup otherwise
+    3. PJ-A-12: A stick + 3 package?
+    4. PJ-A-13: M3 Grease Gun, M79, M72 LAW 
+    5. PJ-A-14: Likely a H2 Browning
+    6. PJ-A-15: M60, M16 and a shovel 
+    7. PJ-A-16: M249?, M16, M79 
+    8. PJ-A-17: RPD, M72 LAW, AK 
+    9. PJ-A-18: RPG, AK, M60 
+    10. PJ-A-19: 2x sniper briefcase, SVD 
+    11. PJ-A-20: Tooling pack; except have an explosive  
+    12. PJ-A-21: M14, M16, shovel and explosive 
+    13. PJ-A-22: SVD (with two bipod type?), AK, M79
 
 
 ### Single buildable 
@@ -189,7 +204,7 @@ Currently identified, list in order of favoritism & certainty in identification:
 7. PK-71009-31: MG M1919 
 8. DP-27: Same name Soviet MG. Somebody got lazy, probs.
 9. E459A?: Suspect, MG M1921, dunno what it really is; plus binoc, pistol and shovel 
-10. E459D?: Suspect, MP40 + Luger + some MG. Named ZB-37 in image 
+10. E459D?: Suspect, MP40 + Luger + some MG. Named [ZB-37](https://vi.wikipedia.org/wiki/ZB_vz._37) in image 
 11. RP54??: Suspect, Bazooka w/ blast shield + Panzerfaust, plus binoc. Image too grainy to get serial
 12. MP40??: Not-MP40, a very unique looking MG on bow mount.
 13. PK205/PK206: Both unidentified looking HMG in a heavy-looking mount 

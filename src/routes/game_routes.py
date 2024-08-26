@@ -108,7 +108,8 @@ def submit_order_quiz_result(campaign_data: dict, submitted_answers: Dict, key: 
         # use the localstorage to trigger update from the campaign map 
         # do not send it over through localstorage; since such data could be tampered with 
         campaign_data["exam"].pop(key) # TODO perform cleanups when end turn instead; allowing revisit to see the correct section
-        campaign.set_player_coef(order_coef)
+        # TODO allow exam bonus to last depending on how many questions attempted.
+        campaign.set_player_coef(order_coef, duration=5)
         return flask.jsonify(result=True, correct=order_data["correct"], score=order_coef, coef=order_coef, trigger_campaign_update=True)
 
 
@@ -250,7 +251,8 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
         if campaign is None:
             return flask.jsonify(result=False, error="No campaign available")
         coef = float(request.args.get("coef", 2.0))
-        campaign.set_player_coef(coef)
+        duration = int(request.args.get("duration", 1))
+        campaign.set_player_coef(coef, duration=duration)
         return flask.jsonify(result=True)
         
 

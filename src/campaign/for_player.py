@@ -38,21 +38,27 @@ class PlayerCampaign(BaseCampaign):
     def current_phase(self):
         return self._current_phase 
 
-    def set_player_coef(self, value: float):
-        # this should be result of a randomly generated quiz; detailing the coef going to be used in the next offense/defense phase.
-        # TODO set different values for different phase? 
-        self._player_coef = value
-        logger.info("PlayerCampaign: p-coef is set as {}".format(self._player_coef))
+    def set_player_coef(self, value: float, duration: int=1):
+        """Will now support for a length of duration instead. Should make exams much less of a punishment."""
+        self._player_coef = (value, self._context["turn"] + duration)
+        logger.info("PlayerCampaign: (p-coef, expire_at) is set as {}".format(self._player_coef))
+        if self.flavor_text:
+            # TODO allow setting independent value for each player character instead 
+            player_id = list(self._is_players)[0]
+            event_text = self.flavor_text.on_event_triggered("player_coef_start", {"player_id": player_id, "player_name": self.plname(player_id), "player_color": self.plcolor(player_id), "modifier": value, "duration": duration, "turn": self._context["turn"]})
+            if event_text:
+                self.last_action_logs.append(event_text)
 
     def perform_action_attack(self, player_id: int, attacking: int, target_id: int, attack_modifier: float=1.0, defend_modifier: float=1.0, preserve_modifier: float=2.0):
         target = self._map[target_id][-1]
         if self._player_coef:
+            modifier, expiration = self._player_coef
             if player_id in self._is_players:
-                logger.info("Attack initiated by player with completed quiz; modifier: {}".format(self._player_coef))
-                attack_modifier = self._player_coef
+                logger.info("Attack initiated by player with completed quiz; modifier: {}".format(modifier))
+                attack_modifier = modifier
             if target["owner"] in self._is_players:
-                logger.info("Defend done by player with completed quiz; modifier: {}".format(self._player_coef))
-                defend_modifier = self._player_coef 
+                logger.info("Defend done by player with completed quiz; modifier: {}".format(modifier))
+                defend_modifier = modifier 
         target_player_id = target["owner"] # save it here before the action to allow flavor_text to pick up the original owner.
         full_result = result, target, casualty = super(PlayerCampaign, self).perform_action_attack(player_id, attacking, target_id, attack_modifier=attack_modifier, defend_modifier=defend_modifier, preserve_modifier=preserve_modifier)
         if self.flavor_text:
@@ -126,6 +132,13 @@ class PlayerCampaign(BaseCampaign):
     def end_turn(self):
         # also wipe the action dict 
         self._action_dict.clear() 
+        if self._player_coef and self._context["turn"] >= self._player_coef[-1]:
+            # expired, clear the variable; this will also trigger the appropriate text when necessary
+            self._player_coef = None
+            if self.flavor_text:
+                event_text = self.flavor_text.on_event_triggered("player_coef_end", {"player_id": player_id, "player_name": self.plname(player_id), "player_color": self.plcolor(player_id), "turn": self._context["turn"]})
+                if event_text:
+                    self.last_action_logs.append(event_text)
 #        self._player_coef = None
         # next phase
         self._current_phase = "deploy"

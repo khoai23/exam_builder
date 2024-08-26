@@ -11,6 +11,23 @@
 			<div id="blackboard" />
 		</div>
 		<div id="class">
+			<!-- TODO highlight the student in question -->
+			{% for student in classroom.students %}
+				<div class="seat"> 
+					<span id="student_icon_{{student.id}}" class="bi bi-person-exclamation" />
+					<span id="student_name_{{student.id}}" class="text-wrap text-capitalized">{{student.name}}</span>
+				</div>
+			{% endfor %}
+		</div>
+	{% else %}
+		<div id="platform">
+			<div id="teacher_booth">
+				<span id="teacher_icon" class="bi bi-person-check" />
+				<span id="teacher_title" class="text-wrap text-capitalized">{{classroom.teacher.name}}</span>
+			</div>
+			<div id="blackboard" />
+		</div>
+		<div id="class">
 			{% for student in classroom.students %}
 				<div class="seat">
 					<span id="student_icon_{{student.id}}" class="bi bi-person-exclamation" />
@@ -18,9 +35,9 @@
 				</div>
 			{% endfor %}
 		</div>
-	{% else %}
-	
 	{% endif %}
+	<div id="statistic">
+	</div>
 </div>
 {% endblock %}}
 
