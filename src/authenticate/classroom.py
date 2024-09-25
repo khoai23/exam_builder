@@ -86,8 +86,12 @@ class Classroom:
         logger.info("Generated template on current data: selected-hardness: {}; generated template {}".format(list(zip(*selected))[0], [(c, s, "({:d} questions)".format(len(q))) for c, s, q in template]))
         # create the appropriate setting object. For now just make it 
         setting = dict(session_name="Generic Exam #{:04d}".format(int(random.random() * 10000)), allow_score=True, allow_result=True, student_list=[std.getUserInfo(internal_use=True) for std in self.students])
-        return exam_manager.create_new_session({"template": template, "setting": setting}, category)
+        return exam_manager.create_new_session({"template": template, "setting": setting}, category, on_finish_callback=self.on_exam_finishes)
 
+    def on_exam_finishes(self, exam_key: str, full_exam_data: dict):
+        """When an exam finish, by default this should update the classroom interface and all the data that comes with it.
+        TODO compile actual statistics that are relevant to the class itself."""
+        self._result[exam_key] = full_exam_data["student"]
 
 def test_autogen_test_classroom(exam_manager, add_user):
     # creating a sample classroom & autogenerate using it.

@@ -13,7 +13,8 @@ from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
 from src.data.reader import TEMPORARY_FILE_DIR 
 from src.data.markdown_load import MarkdownData
-from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow 
+from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow  
+from src.generator.scheduler import initiate_scheduler
 
 from src.authenticate.classroom import test_autogen_test_classroom
 
@@ -24,15 +25,17 @@ logger = logging.getLogger(__name__)
 app = Flask("exam_builder")
 app.secret_key = "liars_punishment_circle_24102023"
 app.config["UPLOAD_FOLDER"] = "test"
+app.scheduler = scheduler = initiate_scheduler()
 # related session/questions data; 
 quiz_data = OnRequestData()
 lessons_data = MarkdownData()
-exam_manager = ExamManager(quiz_data)
+classroom_data = dict()
+exam_manager = ExamManager(quiz_data, scheduler)
 # bind appropriate functions
 app, login_manager, login_decorator = build_login_routes(app)
 app = build_session_routes(app, exam_manager, login_decorator=login_decorator)
 app = build_data_routes(app, exam_manager, login_decorator=login_decorator)
-app = build_learn_routes(app, login_decorator=login_decorator, lessons_data=lessons_data)
+app = build_learn_routes(app, login_decorator=login_decorator, lessons_data=lessons_data, classroom_data=classroom_data)
 _, app = build_game_routes(app, exam_manager, login_decorator=login_decorator) 
 
 ### TODO The import flow will be split in two parts, modifying and committing. right now modifying + commiting is one action
@@ -174,4 +177,5 @@ if __name__ == "__main__":
         if keys_if_any:
             test_exam_key, test_admin_key = keys_if_any
             print("Created classroom {} with test exam {}(adminkey {})".format(classroom, test_exam_key, test_admin_key))
+            classroom_data[classroom.id] = classroom
     app.run(debug=True)

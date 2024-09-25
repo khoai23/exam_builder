@@ -44,11 +44,15 @@ def wrap_try_catch(fn, error_as_str: bool=False) -> callable:
 class ExamManager:
     """Contain & manage all the necessary properties for exams across all version.
     This is slated to update into a version which will support the Classroom object & tailor alongside it need"""
-    def __init__(self, quiz_data: OnRequestData):
+    def __init__(self, quiz_data: OnRequestData, scheduler):
+        """Args:
+        quiz_data: the full database to construct the quiz with.
+        """
         self._quiz_data = quiz_data
         self._session = dict()
         self._submit_route = dict()
         self._entry_key_to_session = dict()
+        self._scheduler = scheduler
 
     @property
     def quiz_data(self):
@@ -63,7 +67,7 @@ class ExamManager:
 
     """Creating, processing & finishing each exam session"""
     @wrap_try_catch
-    def create_new_session(self, data: Dict, category: str, check_template: bool=True):
+    def create_new_session(self, data: Dict, category: str, check_template: bool=True, on_finish_callback: Optional[callable]=None):
         """Create the session with a normal id key & admin key in the session """
         # format setting: cleaning dates; voiding nulled fields
         setting = convert_template_setting(data["setting"], allow_student_list=True)
@@ -83,12 +87,26 @@ class ExamManager:
         max_score = sum((count * score for count, score, ids in data["template"]))
         # put everything to the _session dict
         session_student_record = dict()
-        self._session[session_key] = new_exam_session = {"category": category, "template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": session_student_record, "maximum_score": max_score}
+        self._session[session_key] = new_exam_session = {"category": category, "template": data["template"], "setting": setting, "admin_key": admin_key, "expire": None, "student": session_student_record, "maximum_score": max_score, "on_finish_callback": on_finish_callback}
         # if has student_list in setting; pre-generate all the entry key beforehand & disallow student_enter_session from using anonymous mode.
         if setting.get("student_list", None):
             for student_info in setting["student_list"]:
                 #print("Adding student: {}".format(student_info))
                 entry_key = self.generate_new_student_entrance(new_exam_session, session_key, student_info)
+        if on_finish_callback and setting.get("true_session_end", None):
+            # finish callback will be triggered on either 1. all students had submitted their stuff, or 2. time had ran out. Scheduler will be relevantly initiated if 2 condition happened, and 1. has not 
+            exam_end_time = setting["true_session_end"]
+            if setting.get("grace_duration", None):
+                # grace_duration exist; convert to delta and append to the end
+                exam_end_time += datetime.timedelta(minutes=int(setting["grace_duration"]))
+            def check_and_execute_finishing(exam_key=session_key, exam=new_exam_session):
+                # if the exam still have the callback (it's unexecuted), pop it and run it.
+                if exam.get("on_finish_callback", None):
+                    exam.pop("on_finish_callback")(exam_key, exam) # execute with the full data flow 
+                else:
+                    logger.info("@check_and_execute_finishing: exam \"{}\" either has no callback or have been preemptively executed; this will not update the result.".format(exam_key))
+            scheduler.add_job(check_and_execute_finishing, "date", run_date=exam_end_time)
+
         logger.debug("New exam session with template: {}".format(new_exam_session))
         return (session_key, admin_key)
 

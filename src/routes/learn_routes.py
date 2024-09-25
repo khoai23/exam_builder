@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 DEFAULT_LEARN_XML_POSITION = "test/learn_bpmn.xml"
-def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lessons_data: dict=None) -> Flask:
+def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lessons_data: dict=None, classroom_data: dict=None) -> Flask:
     # generic section.
 
     # experiment: brainstorm-like mind map to allow running around in it?
@@ -57,7 +57,11 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
     @login_decorator
     def enter_class(class_id: str):
         # retrieving & entering the classes interface; should allow access only when it's admin/teacher/student of the class, or 
-        raise NotImplementedError
+#        raise NotImplementedError
+        classroom = classroom_data.get(class_id, None)
+        if classroom is None:
+            return flask.render_template("error.html", error="Trying to access an invalid classroom key (\"{}\").".format(class_id))
+        return flask.render_template("classroom.html", is_student=False, classroom=classroom)
 
     return app
 

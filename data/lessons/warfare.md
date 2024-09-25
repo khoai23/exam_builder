@@ -11,6 +11,13 @@ War.
 ##### {History} Boo. I want muskets and artillery. Lot of them.
 ###### Head to [Napoleonic Warfare](learn?key=napoleonic_warfare) section.
 
+### WW2
+
+One of the Werhmarcht general that is largely undervalued in media was Walter Model. It's clear that his Nazi membership was just the formality he needed to be where he wanted to be; and his capability to use ad-hoc elements to temporary stem disasters is second to none in the period. Maybe
+
+Eastern front:
+- A [good read](https://bigserge.substack.com/p/mechanized-stalinism) for not only post-Bagration ops but also how Warsaw Pact so easily formed in traditionally anti-Communist East. Also why Soviet watched Warsaw burn, they just got beat quite badly right next to the river.
+
 ### Current Russian-Ukraine War 
 Fundamentally, the Russian had no choice if they want to live securely - Ukraine was an important march of it for the vast majority of its imperial existence, and unlike the Chinese they do not have the weight of 1+ billion populace to fall upon. Facing a larger and more resourceful alliance of US+NATO, with its population entering the same issue of decadence and declining core population, it has to make sure its allies function properly as buffer zone, or else.
 See their concept of [Total War](https://simplicius76.substack.com/p/in-the-spirit-of-russian-total-war).
@@ -48,27 +55,50 @@ The true fighting started with 2014; but the seed of the conflict were sowed muc
     - 2nd phase is Russia consolidating its occupation and Ukraine attacking to reclaim territory.
         - Ukraine retook Kharkov with rather light casualty - Russian source claim they were conducting an orderly retreat, Ukraine source claim it took it fair and square. Later performance suggest the former.
         - Zapzap NPP is being shelled; which Ukraine accuse Russian doing, which means.. Russian were shelling its own occupied 
-        - Ukraine "counteroffensive" was launched with a lot of propaganda, utterly compromising OPSEC. This coupled with Russian superiority in artillery means a horrid disasters, with a lot of casualty and Western equipment burning
+        - Ukraine "counteroffensive" was launched with a lot of propaganda, utterly compromising OPSEC. This coupled with Russian superiority in artillery means a horrid disasters, with Western equipment burning and [lots of casualty](https://simplicius76.substack.com/p/sitrep-9423-first-challengers-burn). Not necessarily in that order. 
         - Ukraine's Patriot system stationed in Kiev was allegedly struck by Russian's hypersonic SCBM Kh-22 Kinzhal.
-        - Russian steadily continued to push through the Donbas region; some important fortress-city continue to fall - Bakhmut, Ugledar, 
+        - Russian steadily continued to push through the Donbas region; some important fortress-city continue to fall - Lysychansk, [Bakhmut](https://bigserge.substack.com/p/the-battle-of-bakhmut-postmortem)
         - Prigozhin and his Wagner PMC seized Rostov-on-Don and demanded a change in the Russian cabinet. This fails, and a plane carrying him _mysteriously_ fell off the sky killing everybody on board.
     - 3rd phase is currently happening, with allegedly overwhelmingly Russian overmatch of manpower and material on the Donbas front and Ukraine currently attempting another offensive.
-        - Ukraine losing more fortified towns and cities earlier in the year: Avdevka
+        - Ukraine losing more fortified towns and cities as time progressed: [Avdevka](https://simplicius76.substack.com/p/battle-for-avdeevka-close-study), 
         - Ukraine launching an offensive at Kursk, capturing Sudha and making good headway in the 1st week; subsequent fighting suggesting that Ukraine were aiming for the NPP in the region or a PR victory, both essentially not achieved at the time of writing
-        - Russian forces in Donbas reporting "unpredecented" success in taking territory.
+        - Russian forces in Donbas reporting "unpredecented" success in taking territory; edging toward Provorsk, capturing Ukrainsk, almost completely encircled Ugledar, and more as Ukraine continue to pour effort into Kursk.
 
 Bottom line - do not believe in anybody's promise. Our nation's security must rely on itself.
 
+### Propaganda
+
+I'm biased, so be careful.
+That being said, it's rather obvious that the US and its puppets do best at _projection_. The rule of thumb is that anything heinous reported by the US or its allies is something __they__ did and then blame the other. Case in point:
+    - Claiming [massive Russian casualties](https://www.moonofalabama.org/2023/03/ukraine-is-lying-about-casualty-ratios-to-justify-holding-of-bakhmut.html) and [attrition in their favor](https://simplicius76.substack.com/p/bombshell-report-claims-russian-casualties)
+    - Russia is running out of [Shells](https://www.rferl.org/a/ukraine-weapons-shells-european-union-eu-war-russia-investigation/33025300.html)/[Missiles](?)/[Air Defense](?)
+    - So called "independent" counter has essentially inflated all kind of vehicle losses, as it conflicted directly with [Ukraine source](https://simplicius76.substack.com/p/more-afu-downers-from-the-press-mill)
+    - Guess who violated truces and [shot surrendering soldiers](https://odysee.com/@Overthrown:6/x2mate_com-Combat_GoPro_of_Foreign_Fighter_Destroying_Russian_BMP-_1080p60__AdobeExpress:e) dead?
+    - Bucha, Kramatorsk, etc. [here](https://peaceinitiative.substack.com/p/russia-did-it-narrative). Note that the source is clearly pro-Russian and so need cherry-picking (e.g MH17 was flying over war-heated Donbas, a Buk hitting it due to no IFF is a completely valid accident)
+
+
 ### Military Hardware
 
-The biggest winner of the recent war has been drone - mass proliteration of cheap electronics and insufficient EW on both side mean drone are an ever-present tool for accurate strike comparable to conventional artillery, greatly limiting the strength of conventional armored/mechanized divisions.
-That being said, a lot of things has come to light, namely how fundamentally screwed Western system are.
+The biggest winner of the recent war has been drone - mass proliferation of cheap electronics and insufficient EW on both side mean drone are an ever-present tool for accurate strike comparable to conventional artillery, greatly limiting the strength of conventional armored/mechanized divisions.
+That being said, a lot of things has come to light, namely how fundamentally screwed Western system are at a design level. Nevertheless, it's not all sunshine in the Russian side either - their lack of counterbattery, EW and integrated communication are serious and not necessarily been solved at the point of writing.
+Related articles in no particular order:
+    - Challenger 2 [destruction](https://simplicius76.substack.com/p/sitrep-9423-first-challengers-burn); with relevant articles of Britain essentially saying that they expect Ukraine to [never use them in risky situation](https://www.thesun.co.uk/news/21191872/army-emergency-secret-british-armour-tanks-war-ukraine/). Something else [aged like milk](https://www.telegraph.co.uk/news/2023/06/09/british-made-tanks-about-to-sweep-putins-conscripts-aside/).
+    - Patriot destruction covered [here](https://simplicius76.substack.com/p/anatomy-of-mim-104-patriot-destruction); that being said, Patriot has been shown to have excellent AA capability seeing from the run-in with a Su-34/A-50 AWACS combo [here](https://simplicius76.substack.com/p/powerful-russian-strikes-usher-in)
+    - Ugledar fiasco with commentary [here](https://simplicius76.substack.com/p/mines-depleted-uranium-and-important) on the behavior exhibited by both side when their advance column comes under fire within a minefield. The equivalent in the "counteroffensive" is [here](https://simplicius76.substack.com/p/anatomy-of-a-nato-planned-trained)
+    - The West in general and US in particular still [hold a visible advantage](https://simplicius76.substack.com/p/all-seeing-eye-can-russia-break-through) in intelligence gathering via satellite/AWACS
+    - [Guesswork](https://simplicius76.substack.com/p/3m22-zircon-debunking-misconceptions) on how the hypersonic 3M22 Zircon would perform.
+    - [Storm Shadow](https://simplicius76.substack.com/p/anatomy-of-storm-shadow-interception) successes, which slowly faded into obscurity either due to Russian countermeasure or a lack of munitions
+    - KA-52 had been performing excellently in a mobile defense role, sitting in its own AA net and [launching ATGM](https://simplicius76.substack.com/p/sitrep-61123-ukraine-reorients-and) on identified armors.
+    - Early war losses of entire Russian Air Force strike group [here](https://simplicius76.substack.com/p/black-day-for-russian-vvs-as-special)
 
+This will be migrated to [Military Hardware](learn?key=military_warfare) if that's available and not too bloated.
 
 ### Useful links 
 
 Since I'm an obvious sovietboo, links will predominantly revolve around Soviet weaponry, tests & tactics pertaining to them.
 
+- [Simplicus](https://simplicius76.substack.com) is a very detailed, if Russian-biased side. So am I so not complaining.
+- [Big Serge](https://bigserge.substack.com/) is much more historical oriented and speak much more after my own heart regarding Soviet operations. Too bad so much quality posts are in Paid.
 - [Forum](https://sturgeonshouse.ipbhost.com/forum/1-the-outer-rim/) for a lot of images & some really good read. Contain lots of link going outside as well.
 - [Outdated Link](http://sovietguns.blogspot.com/) or [Link](https://www.tankarchives.ca/) to a lot of testing source regarding soviet firearms.
 - [Link](https://thesovietarmourblog.blogspot.com/p/home.html) to Tankograd blog with very high quality post of Soviet armoured vehicles.
