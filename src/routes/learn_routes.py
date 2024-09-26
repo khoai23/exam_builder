@@ -3,6 +3,7 @@ Should also helps with proper implementation of roles (Teacher / Student should 
 import io
 import flask
 from flask import Flask, request, url_for
+from flask_login import current_user
 
 import logging 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,8 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
         classroom = classroom_data.get(class_id, None)
         if classroom is None:
             return flask.render_template("error.html", error="Trying to access an invalid classroom key (\"{}\").".format(class_id))
-        return flask.render_template("classroom.html", is_student=False, classroom=classroom)
+        display_data = classroom.get_classroom_data(current_user.id)
+        return flask.render_template("classroom.html", class_id=class_id, user_id=current_user.id, **display_data)
 
     return app
 

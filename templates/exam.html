@@ -8,6 +8,9 @@
 	<div class="progress container" id="timer_wrapper">
 		<div id="timer" class="row progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">00h00s</div>
 	</div>
+	{% if return_page %}
+	<a class="navbar-brand ml-auto" href="{{return_page}}">Return <span class="bi bi-arrow-return-left"></span></a>
+	{% endif %}
 </nav> 
 <div class="container-fluid">
 	<h1>Exam Page</h1>

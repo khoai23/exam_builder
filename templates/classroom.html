@@ -1,45 +1,46 @@
 {% extends 'shared/base.html' %}
 
 {% block content %}
-<div id="classroom">
-	{% if is_student %}
-		<div id="platform">
-			<div id="teacher_booth">
-				<span id="teacher_icon" class="bi bi-person-check" />
-				<span id="teacher_title" class="text-wrap text-capitalized">{{classroom.teacher.name}}</span>
-			</div>
-			<div id="blackboard" />
+<div id="classroom" class="container-fluid">
+	{% set is_teacher = user_id == teacher.id %}
+	<div id="platform" class="row m-2">
+		{% set teacher_color = "success" if is_teacher else "primary" %}
+		<div id="teacher_booth" class="col-sm-6 col-md-2 border border-{{teacher_color}} rounded p-2">
+			<i id="teacher_icon" class="d-block bi-person-check text-{{teacher_color}}" style="font-size: 2rem;"></i>
+			<span id="teacher_title" class="d-block text-wrap text-capitalized text-{{teacher_color}}">{{teacher.name}}</span>
 		</div>
-		<div id="class">
-			<!-- TODO highlight the student in question -->
-			{% for student in classroom.students %}
-				<div class="seat"> 
-					<span id="student_icon_{{student.id}}" class="bi bi-person-exclamation" />
-					<span id="student_name_{{student.id}}" class="text-wrap text-capitalized">{{student.name}}</span>
-				</div>
+		<div id="blackboard" class="p-2"> 
+			<span id="class_info"> {{class_info | safe}} </span>
+			{% for exam in exams %}
+				{% if is_teacher %}
+					{# For teacher, the data will be (exam_key, name, state, admin_key) #}
+					<p> Exam <a href="single_manager?template_key={{exam[0]}}&key={{exam[2]}}">exam[1]</a> is {{exam[3]}} </p> 
+				{% else %}
+					{# For student, the data will be (entry_key, name, state); if done, entry_key may be nulled #}
+					{% if exam[2] == "available" %} 
+						<p> Exam <a href={{url_for("enter", key=exam[0], class_id=class_id)}}>{{exam[1]}}</a> is <b>available</b>.</p>
+					{% else %}
+						<p> Exam <u>{{exam[1]}}</u> is <i>{{exam[2]}}</i>. </p>
+					{% endif %}
+				{% endif %}
 			{% endfor %}
 		</div>
-	{% else %}
-		<div id="platform">
-			<div id="teacher_booth">
-				<span id="teacher_icon" class="bi bi-person-check" />
-				<span id="teacher_title" class="text-wrap text-capitalized">{{classroom.teacher.name}}</span>
-			</div>
-			<div id="blackboard" />
-		</div>
-		<div id="class">
-			{% for student in classroom.students %}
-				<div class="seat">
-					<span id="student_icon_{{student.id}}" class="bi bi-person-exclamation" />
-					<span id="student_name_{{student.id}}" class="text-wrap text-capitalized">{{student.name}}</span>
+	</div>
+	<div id="class" class="row m-1">
+		{% for student in students %}
+			{% set student_color = "success" if user_id == student.id else "secondary" %}
+			<div id="seat" class="col-sm-6 col-md-3 p-2"> 
+				<div id="seat_wrapper" class="border border-{{student_color}} rounded p-2">
+					<i id="student_icon_{{student.id}}" class="bi-person-exclamation text-{{student_color}}" style="font-size: 2rem;"></i>
+					<span id="student_name_{{student.id}}" class="text-wrap text-capitalized text-{{student_color}}">{{student.name}}</span>
 				</div>
-			{% endfor %}
-		</div>
-	{% endif %}
+			</div>
+		{% endfor %}
+	</div>
 	<div id="statistic">
 	</div>
 </div>
-{% endblock %}}
+{% endblock %}
 
 {% block script %}
 {% endblock %}

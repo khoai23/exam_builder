@@ -24,6 +24,16 @@ class UserRole(IntEnum):
         # check if initiator can grant the specified role. For now each can grant all below.
         return initiator_role < role
 
+    @staticmethod
+    def allowModifyExamData(role: int):
+        # check if role can modify data; for now restrict to Admin 
+        return role <= UserRole.Admin 
+
+    @staticmethod
+    def allowCreateExam(role: int):
+        # check if role allow creating & managing exams 
+        return role <= UserRole.Teacher
+
 class User(UserMixin):
     def __init__(self, username, password, user_id: Optional[str]=None, name: str="N/A", role: UserRole=None, info: Optional[dict]=None):
         self.id = user_id or secrets.token_hex(8)
@@ -51,3 +61,12 @@ class User(UserMixin):
             return {"id": self.id, "name": self.name, **self.info}
         else:
             return dict(self.info)
+
+    def can_do(self, task: str):
+        # shortcut to check with userrole 
+        if task == "modify":
+            return UserRole.allowModifyExamData(self.role)
+        elif task == "create_exam":
+            return UserRole.allowCreateExam(self.role)
+        else:
+            raise ValueError("Invalid query, cannot find required task \"{}\" of the system.".format(task))

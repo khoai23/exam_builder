@@ -193,7 +193,11 @@ def build_session_routes(app: Flask, exam_manager: ExamManager, login_decorator:
             result, page_or_error = exam_manager.student_enter_session(first_access=False, key=student_key)
             if result:
                 key, page_props = page_or_error # this return the formatting used for the page; TODO verify student_key = key
-                return flask.render_template("exam.html", **page_props)
+                return_page = request.args.get("class_id", None)
+                if return_page is not None:
+                    # if bounded with specific classroom_id; this will give an additional hyperlink to allow returning after finishing. TODO maybe set up logic to disable this during test?
+                    return_page = "class/{:s}".format(return_page)
+                return flask.render_template("exam.html", return_page=return_page, **page_props)
             else:
                 return flask.render_template("error.html", error=page_or_error, error_traceback=None) # something failed; use generic
         else:
