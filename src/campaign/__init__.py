@@ -15,3 +15,6 @@ from src.campaign.bot import CoalitionAspect, IntegrityAspect, TerrainAwarenessA
 
 # FLAVOR text 
 from src.campaign.event_flavor import DefaultFlavorText, FormattedFlavorText
+
+# TACTICAL map & scenario 
+from src.campaign.tactical import HardcodedScenario

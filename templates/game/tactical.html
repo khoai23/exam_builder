@@ -1,0 +1,32 @@
+{% extends 'shared/base.html' %}
+
+{% block content %}
+<div class="container-fluid width-100 height-100" style="position: relative">
+	{# For now use fixed icons name & coloring for the scenario #}
+	{% if background_image %}
+		<img id="background" src="data:image/jpeg;base64, {{ background_image | safe }}" style="position: absolute">
+	{% endif %}
+	{% for ou in offensive_units %}
+	<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}">
+		<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		</i>
+	</i>
+	{% endfor %}
+	{% for du in defensive_units %}
+	<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}">
+		<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		</i>
+	</i>
+	{% endfor %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script src={{ url_for('static', filename="game/tactical.js") }}></script>
+{% if railroad_script %}
+	{# the hardcoded script is supplied from server; convert it into the run data #}
+	<script type="text/javascript">
+		var railroad_script = {{ railroad_script | safe }}
+	</script>
+{% endif %}
+{% endblock %}

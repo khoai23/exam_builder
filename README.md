@@ -1,10 +1,11 @@
-Ideal plan for the main system is just to be fool-proof exam tool (e.g generating problem so that learning the thing is the simpler way to do exams).
+Ideal plan for the main system is just to be fool-proof exam tool (e.g generating problem so that learning the thing is the simpler than cheating).
 Ideal plan for the game is to get kids to run on faction-styled meritocratic game board. Great kids should learn that they can't be everywhere at one; Mediocre kids should see how fun it is to be great; Bad kids would be somewhat demoralized I guess, but at least they should be "contributing" e.g intrinsically better than a bot.
 
 All possible extension regard the builder:
 - [ ] \(Exam) Procedurally generated problems (~~algebraic~~ and geometric)
 - [ ] \(Study) Mouse-driven, or later touch-driven geometric drawer (drawing parallel line, same length, perpendicular, etc.)
 - [ ] \(Study) Option to show relevant solution with wrong answers
+- [ ] \(System) Classroom default operation - creating, archiving, adding exams, adding lessons etc.
 - [ ] \(System) Drag-n-drop categorizer
 - [ ] \(System) User management (add, delete, change roles etc.)
 - [ ] \(Game) Appropriate adjustable botting options

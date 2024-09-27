@@ -65,31 +65,11 @@ def main():
 @app.route("/test")
 def test():
     """Enter the test page, to put and test new stuff"""
-    return flask.render_template("test.html", content=lesson_data.get("test"))
-
-@app.route("/map")
-def map():
-    """Test the draw map. 
-    This will be base for us to show a little game board representing progress."""
-#    polygons = [(0, 0, 200, 200, [(30, 30), (150, 80), (170, 170), (80, 150)], {"bg": "lime", "fg": "green"})]
-    # for now create fake data-region to make map
-    reduce_fn = lambda s: "".join([c for c in s if c.isupper() or c.isnumeric()])
-    fake_data = [dict(category=reduce_fn(cat), tag=str(i)) for cat in current_data.categories for i in range(6)]
-    polygons = generate_map_by_subregion(fake_data, bundled_by_category=False, do_recenter=True, do_shrink=0.98, return_connections=True)
-    # testing fake arrow 
-#    arrow = format_arrow( ((100, 100), (300, 100)), control_offset=(0, -50), thickness=10)
-    arrow_fn = lambda a: (0, 0, 1000, 1000, format_arrow(a, control_offset=(0, -0.5), thickness=10, offset_in_ratio_mode=True))
-    # take a random polygon regions and draw all associating arrows 
-    target = polygons[-4]
-    def get_true_center(region):
-        center_x, center_y = region[-1]["center"]
-        bound_x, bound_y = region[:2]
-        return (bound_x+center_x, bound_y+center_y)
-    arrows = [arrow_fn((get_true_center(target), get_true_center(polygons[i]))) for i in target[-1]["connection"] if i != len(polygons)-4]
-    # temporary de-clutter all texts
-    for p in polygons:
-        p[-1].pop("text")
-    return flask.render_template("map.html", polygons=polygons, arrows=arrows)
+    offensive_units = [{"id": 1}]
+    defensive_units = [{"id": 2}, {"id": 3}]
+    offensive_color = "red"
+    defensive_color = "blue"
+    return flask.render_template("game/tactical.html", offensive_units=offensive_units, defensive_units=defensive_units, offensive_color=offensive_color, defensive_color=defensive_color)
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():

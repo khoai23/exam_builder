@@ -6,7 +6,7 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.campaign import * # clamp down later
-from src.session import ExamManager
+from src.session import ExamManager 
 
 import logging 
 logger = logging.getLogger(__name__)
@@ -173,7 +173,7 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
             if campaign.flavor_text:
                 full_action_logs = list(campaign.flavor_text.get_full_logs(text_mode=False))
             # for get, return whole page to read
-            return flask.render_template("campaign.html", full_action_logs=full_action_logs, **kwargs)
+            return flask.render_template("game/strategic.html", full_action_logs=full_action_logs, **kwargs)
         else:
             if campaign.flavor_text and campaign.last_action_logs:
                 # take & void the log after actions had been committed
@@ -274,5 +274,12 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
         except Exception as e:
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
+
+    @app.route("/scenario", methods=["GET"])
+    def tactical_scenario():
+        # Displaying a battalion level scenario that run automatically as-is.
+        # get the hardcoded one for now
+        scenario = HardcodedScenario()
+        return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
 
     return campaign_data, app

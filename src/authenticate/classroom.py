@@ -89,6 +89,10 @@ class Classroom:
         setting = dict(session_name="Generic Exam #{:04d}".format(int(random.random() * 10000)), allow_score=True, allow_result=True, student_list=[std.getUserInfo(internal_use=True) for std in self.students])
         result = exam_manager.create_new_session({"template": template, "setting": setting}, category, on_finish_callback=self.on_exam_finishes)
         if add_to_class: # if enabled (default); keep a reference in the classroom roster
+            if not result[0] or isinstance(result[-1], Exception):
+                # the exam creation failed; TODO choose between ironing out or retry until it works.
+                logger.warning("@Classroom's create_exam: there has been an error when creating the exam. Check your sources.")
+                return result
             success_state, (exam_key, admin_key) = result 
             self._exams[exam_key] = session = exam_manager.get_session(exam_key)
         return result
