@@ -102,6 +102,11 @@ class Classroom:
         TODO compile actual statistics that are relevant to the class itself."""
         self._result[exam_key] = full_exam_data["student"]
 
+
+    def get_classroom_html_template(self):
+        """Give the necessary template to display the data. Unless requiring a specialized template, this shouldn't need overriding"""
+        return "classroom.html"
+
     def get_classroom_data(self, user_id, observer_mode: bool=False):
         """Give the necessary data depending on teacher or student (e.g if teacher, links to exams will target the manager page whereas student will be either to the test page or greyed)"""
         # same data 

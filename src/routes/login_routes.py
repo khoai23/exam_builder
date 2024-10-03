@@ -6,7 +6,6 @@ from flask import Flask, request, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 
 from src.authenticate.user import User, UserRole 
-from src.authenticate.classroom import Classroom
 
 from typing import Tuple, List, Optional, Union
 

@@ -63,7 +63,8 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
         if classroom is None:
             return flask.render_template("error.html", error="Trying to access an invalid classroom key (\"{}\").".format(class_id))
         display_data = classroom.get_classroom_data(current_user.id)
-        return flask.render_template("classroom.html", class_id=class_id, user_id=current_user.id, **display_data)
+        classroom_template = classroom.get_classroom_html_template()
+        return flask.render_template(classroom_template, class_id=class_id, user_id=current_user.id, **display_data)
 
     return app
 

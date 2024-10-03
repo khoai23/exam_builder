@@ -1,0 +1,70 @@
+{# This construct a base question from relevant data #}
+{% macro exam_question(question_index0, item) %} 
+<div class="container-fluid m-2">
+	<div class="row">
+		<div class="col-sm-12">
+			<b>{{"Multiple choice" if item["is_multiple_choice"] else "Single choice"}} question {{question_index0+1}}:</b>
+			<p> 
+				{% if item["question"] is not string %}
+					{% for is_image, section in item["question"] %}
+						{% if is_image %} 
+							<img src="{{section}}" class="img-thumbnail"></img>
+						{% else %}
+							{{section}}
+						{% endif %} 
+					{% endfor %}
+				{% else %}
+					{{item["question"]}}
+				{% endif %} 
+			</p>
+		</div>
+	</div>
+
+	<div class="row">
+		{% for answer in item["answers"] %}
+		<div class="col-sm-12 col-md-6 col-lg-3">
+			{% if item["is_multiple_choice"] %}
+				<input class="form-check-input" type="checkbox" name="q_{{question_index0}}" id="qc_{{question_index0}}_{{loop.index0}}" />
+				{% if answer is string %}
+					{% if "|||" in answer %}
+						<img src="{{answer | replace("|||", "")}}" class="img-thumbnail" for="qc_{{question_index0}}_{{loop.index0}}"></img>
+					{% else %}
+						<label class="form-check-label" for="qc_{{question_index0}}_{{loop.index0}}"> {{answer}} </label>
+					{% endif %}
+				{% else %} 
+					<p class="form-check-label" for="qc_{{question_index0}}_{{loop.index0}}">
+					{% for is_image, section in answer %}
+						{% if is_image %} 
+							<img src="{{section}}" class="img-thumbnail"></img>
+						{% else %}
+							{{section}}
+						{% endif %} 
+					{% endfor %}
+					</p>
+				{% endif %}
+			{% else %}
+				<input class="form-check-input" type="radio" name="q_{{question_index0}}" id="qr_{{question_index0}}_{{loop.index0}}" />
+				{% if answer is string %}
+					{% if "|||" in answer %}
+						<img src="{{answer | replace("|||", "")}}" class="img-thumbnail" for="qr_{{question_index0}}_{{loop.index0}}"></img>
+					{% else %}
+						<label class="form-check-label" for="qr_{{question_index0}}_{{loop.index0}}"> {{answer}} </label>
+					{% endif %}
+				{% else %} 
+					<p class="form-check-label" for="qr_{{question_index0}}_{{loop.index0}}">
+					{% for is_image, section in answer %}
+						{% if is_image %} 
+							<img src="{{section}}" class="img-thumbnail"></img>
+						{% else %}
+							{{section}}
+						{% endif %} 
+					{% endfor %}
+					</p>
+				{% endif %}
+			{% endif %}
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endmacro %}
+

@@ -30,8 +30,14 @@ class Scenario:
             for script_raw_step in self.script]
         data["railroad_script"] = json.dumps(steps)
         # rest is given as-is
-        for attr in ["offensive_color", "defensive_color"]:
-            data[attr] = getattr(self, attr)
+        for attr in ["offensive_color", "defensive_color", "narration"]:
+            data[attr] = getattr(self, attr) # TODO designate some as optional 
+        # if no map & svg path/regions are available & 
+        if not data["map"]:
+            paths = getattr(self, "paths", None)
+            regions = getattr(self, "regions", None)
+            if paths or regions:
+                data.update(paths=paths, regions=regions, svg_scene=True, size=self.size)
         return data
 
 
@@ -39,6 +45,12 @@ class HardcodedScenario(Scenario):
     # hardcoding a simple ambush
     def __init__(self):
         self.size = (600, 600)
+        self.narration = [
+            "This is an example scenario detailing a simple ambush.",
+            "The ambushed side (red) was known to patrol along a known path, and the ambushers hid in nearby terrain waiting to strike.",
+            "Surprised by the sudden contact, the following red unit retreated, leaving its sibling exposed to enemy attack",
+            "Further indecision from this unit means it did not mount an effective defense to the ambusher onslaught, who circled around and outflanked it during subsequent combat."
+        ]
         self.offensive_units = {"attacking_unit_1": 0, "attacking_unit_2": 1}
         self.defensive_units = {"defending_unit_1": 2, "defending_unit_2": 3}
         self.offensive_color = "red"
@@ -59,3 +71,19 @@ class HardcodedScenario(Scenario):
             {0: (275, 300, "rout"), 1: (None, None, "rout"), 2: (310, 300, "attack"), 3: (250, 310, "attack")},
             {0: (None, None, "rout"), 1: (None, None, "rout"), 2: (310, 300, "hold"), 3: (250, 310, "hold")}
         ]
+
+        self.paths = [
+            {"path": "M300 0 L300 300 L600 300", "color": "brown", "width": "2"} # road
+        ]
+        self.regions = [
+            {"path": "M425 310 L310 320 L225 225 L200 350 L210 400 L425 400 L425 310 Z", "fill": "green", "border": "green"} # ambush region A
+        ]
+
+class WrittenScenario(Scenario):
+    # scenario that is written in a json file and needed to be loaded in.
+    def __init__(self, file_path: str):
+        with io.open(file_path, "r", encoding="utf-8") as jf:
+            data = json.load(jf)
+        # TODO enforcing necessary checks?
+        for k, v in data.items():
+            setattr(self, k, v)

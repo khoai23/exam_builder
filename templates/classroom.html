@@ -9,21 +9,38 @@
 			<i id="teacher_icon" class="d-block bi-person-check text-{{teacher_color}}" style="font-size: 2rem;"></i>
 			<span id="teacher_title" class="d-block text-wrap text-capitalized text-{{teacher_color}}">{{teacher.name}}</span>
 		</div>
-		<div id="blackboard" class="p-2"> 
+		<div id="blackboard" class="col-sm-6 col-md-10 p-2 border border-dark rounded"> 
 			<span id="class_info"> {{class_info | safe}} </span>
-			{% for exam in exams %}
-				{% if is_teacher %}
-					{# For teacher, the data will be (exam_key, name, state, admin_key) #}
-					<p> Exam <a href="single_manager?template_key={{exam[0]}}&key={{exam[2]}}">exam[1]</a> is {{exam[3]}} </p> 
-				{% else %}
-					{# For student, the data will be (entry_key, name, state); if done, entry_key may be nulled #}
-					{% if exam[2] == "available" %} 
-						<p> Exam <a href={{url_for("enter", key=exam[0], class_id=class_id)}}>{{exam[1]}}</a> is <b>available</b>.</p>
+			<nav>
+				<div class="nav nav-tabs" id="nav-tab" role="tablist">
+					<button class="nav-link active" id="nav-exam-tab" data-bs-toggle="tab" data-bs-target="#nav-exam" type="button" role="tab" aria-controls="nav-exam" aria-selected="true">Exam</button>
+					<button class="nav-link" id="nav-lessons-tab" data-bs-toggle="tab" data-bs-target="#nav-lessons" type="button" role="tab" aria-controls="nav-lessons" aria-selected="false">Lessons</button>
+				</div>
+			</nav>
+			<div class="tab-content" id="nav-tabContent">
+				<div class="tab-pane fade show active" id="nav-exam" role="tabpanel" aria-labelledby="nav-exam-tab">
+					{% if exams %}
+						{% for exam in exams %}
+							{% if is_teacher %}
+								{# For teacher, the data will be (exam_key, name, state, admin_key) #}
+								<p> Exam <a href="single_manager?template_key={{exam[0]}}&key={{exam[2]}}">exam[1]</a> is {{exam[3]}} </p> 
+							{% else %}
+								{# For student, the data will be (entry_key, name, state); if done, entry_key may be nulled #}
+								{% if exam[2] == "available" %} 
+									<p> Exam <a href={{url_for("enter", key=exam[0], class_id=class_id)}}>{{exam[1]}}</a> is <b>available</b>.</p>
+								{% else %}
+									<p> Exam <u>{{exam[1]}}</u> is <i>{{exam[2]}}</i>. </p>
+								{% endif %}
+							{% endif %}
+						{% endfor %}
 					{% else %}
-						<p> Exam <u>{{exam[1]}}</u> is <i>{{exam[2]}}</i>. </p>
+						<p>The class currently has no exam.</p>
 					{% endif %}
-				{% endif %}
-			{% endfor %}
+				</div>
+				<div class="tab-pane fade" id="nav-lessons" role="tabpanel" aria-labelledby="nav-lessons-tab">
+					<p>The class currently has no lesson.</p>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div id="class" class="row m-1">

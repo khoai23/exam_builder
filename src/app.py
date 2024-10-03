@@ -8,6 +8,7 @@ import shutil
 
 from src.authenticate.user import UserRole
 from src.session import ExamManager, OnRequestData 
+from src.course.classroom import test_autogen_test_classroom
 from src.routes import build_login_routes, build_session_routes, build_data_routes, build_game_routes, build_learn_routes
 from src.parser.convert_file import read_and_convert
 from src.crawler.generic import get_text_from_url
@@ -15,8 +16,6 @@ from src.data.reader import TEMPORARY_FILE_DIR
 from src.data.markdown_load import MarkdownData
 from src.map import generate_map_by_region, generate_map_by_subregion, format_arrow  
 from src.generator.scheduler import initiate_scheduler
-
-from src.authenticate.classroom import test_autogen_test_classroom
 
 import logging
 logger = logging.getLogger(__name__)

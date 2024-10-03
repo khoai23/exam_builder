@@ -277,9 +277,20 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
 
     @app.route("/scenario", methods=["GET"])
     def tactical_scenario():
+        identifier = request.args.get("key", None)
         # Displaying a battalion level scenario that run automatically as-is.
         # get the hardcoded one for now
-        scenario = HardcodedScenario()
-        return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
+        if identifier is None:
+            scenario = HardcodedScenario()
+            interactive = False 
+        else:
+            raise NotImplementedError
+        return flask.render_template("game/tactical.html", interactive=interactive, **scenario.convert_to_template_data())
+
+    @app.route("/interact_scenario", methods=["GET"])
+    def interact_scenario():
+        # sibling of the above tactical_scenario; this hardpoint is used for interaction (sending quiz result, rolling for transitions etc.)
+        # TODO construct appropriate paths 
+        raise NotImplementedError
 
     return campaign_data, app

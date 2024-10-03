@@ -20,6 +20,8 @@ Remaining bugfix/missing features:
 - [ ] \(System) Loading icon while performing modifying action e.g import/rollback 
 - [ ] \(System) Commit-type import to prevent stupidity
 - [ ] \(System) Mechanism to notify and show appropriate logs when failure/wrong format etc. happens
+- [ ] \(System) Modifiable class with associating template to allow easy duplication/manipulation
+- [ ] \(Exam) Implementing vetted resources to prevent wrong data
 - [ ] \(Exam) Single manager capable of modifying score composition & recalculate for all students
 - [ ] \(Game) Game board invalid connection at edge; likely leftover from the extended 4-corner
 - [ ] \(Game) Occasional failure when creating a map (invalid polygon)

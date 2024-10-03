@@ -1,23 +1,81 @@
 {% extends 'shared/base.html' %}
 
 {% block content %}
-<div class="container-fluid width-100 height-100" style="position: relative">
+<div class="container-fluid width-100 height-100 d-flex flex-column" style="position: relative">
+	<div class="d-flex flex-row">
 	{# For now use fixed icons name & coloring for the scenario #}
-	{% if background_image %}
+	{% if background_image %} 
+		{# If has a base64 image, use that #}
 		<img id="background" src="data:image/jpeg;base64, {{ background_image | safe }}" style="position: absolute">
 	{% endif %}
+	{% if svg_scene %}
+		{# if enable svg-related image, construct it instead #}
+		<div id="svg_scene">
+			<svg height={{size[0]}} width={{size[1]}}>
+			{% if paths %}
+				{# each road/river instance will actually be a svg path. Construction can then choose whatever properties it wanted to. Road/river junctions will need to be constructed in multiple paths. TODO investigate stroke properties? #}
+				{% for p in paths %}
+					<path d="{{p["path"]}}" style="fill: none; stroke: {{p["color"]}}; stroke-width: {{p["width"]}}">
+					</path>
+				{% endfor %}
+			{% endif %}
+			{% if regions %}
+				{# each region instance must be a closed path; it will be filled with designated color.#}
+				{% for r in regions %}
+					<path d="{{r["path"]}}" style="fill: {{r["fill"]}}; stroke: {{r["border"]}}">
+					</path>
+				{% endfor %}
+			{% endif %}
+			</svg>
+		</div>
+	{% endif %}
 	{% for ou in offensive_units %}
-	<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}">
-		<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}; transform: translateY(-50%)">
+			<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+			</i>
 		</i>
-	</i>
 	{% endfor %}
 	{% for du in defensive_units %}
-	<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}">
-		<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}; transform: translateY(-50%)">
+			<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+			</i>
 		</i>
-	</i>
 	{% endfor %}
+		<div id="narration_panel" class="container-fluid m-2">
+			{# This will contain description for the scenario.#}
+			{% if narration %}
+				{% for paragraph in narration %}
+					{# allow formatted. TODO allow markdown? #}
+					<p> {{ paragraph | safe }}
+				{% endfor %}
+			{% endif %}
+		</div>
+	</div>
+	<div id="interactive_options" class="container-fluid">
+		{# This will contain options for interactive novel option. TODO translate Antal's book to this as proof of concept #}
+		{% if interactive and interactive_options %}
+			{% for option in interactive_options %}
+				<button class="btn btn-primary m-2" id={{option["id"]}} onclick="choose_option(event, {{option["id"]}})">
+					{{option["name"]}}
+				</button>
+			{% endfor %}
+		{% endif %}
+	</div>
+	<div id="roll_option" class="container-fluid d-flex flex-row">
+		{# This will contain option for chance. Depending on mode; this will be a simple dice roll (unsanctioned - roll directly, sanctioned - roll on server) or 1-2 question miniquiz.#}
+		{% if interactive and quiz %}
+			{# Use quiz; item data will be provided accordingly #}
+			{% from 'shared/exam_question.html' import exam_question %}
+			{% for item in quiz %}
+				{{ exam_question(loop.index0, item) }}
+			{% endfor %}
+		{% elif interactive and allow_roll %}
+			{# Use dice roll; for now use sanctioned variant #}
+			<button class="btn btn-primary m-2" id="roll" onclick="roll(event)">
+				Roll
+			</button>
+		{% endif %}
+	</div>
 </div>
 {% endblock %}
 
