@@ -6,6 +6,7 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.campaign import * # clamp down later
+from src.campaign.tactical import HardcodedScenario, HardcodedChoiceScenario
 from src.session import ExamManager 
 
 import logging 
@@ -282,10 +283,11 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
         # get the hardcoded one for now
         if identifier is None:
             scenario = HardcodedScenario()
-            interactive = False 
+        elif identifier == "example_choice":
+            scenario = HardcodedChoiceScenario()
         else:
             raise NotImplementedError
-        return flask.render_template("game/tactical.html", interactive=interactive, **scenario.convert_to_template_data())
+        return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
 
     @app.route("/interact_scenario", methods=["GET"])
     def interact_scenario():

@@ -20,30 +20,40 @@ class Scenario:
         # no map for now.
         data["map"] = None 
         # script is converted to json to be given to javascript hardcoded 
-        # TODO properly assign necessary health 
         offensive_ids, defensive_ids = set(self.offensive_units.values()), set(self.defensive_units.values())
-        steps = [
-            {
-                "offensive": {i: [x, y, 100.0, action] for i, (x, y, action) in script_raw_step.items() if i in offensive_ids},
-                "defensive": {i: [x, y, 100.0, action] for i, (x, y, action) in script_raw_step.items() if i in defensive_ids}
-            }
-            for script_raw_step in self.script]
-        data["railroad_script"] = json.dumps(steps)
+        # TODO properly assign necessary health for all three scenario types.
+        if self.scenario_type == "static":
+            railroad_script = [
+                {i: [x, y, 100.0, action] for i, (x, y, action) in script_step.items()}
+                for script_step in self.script]
+            data["railroad_script"] = json.dumps(railroad_script)
+        elif self.scenario_type == "choice":
+            data["choices"] = self.choices
+            choice_script = dict()
+            for choice, script_sequence in self.script.items():
+                script_sequence_with_health = []
+                for i in range(len(script_sequence)):
+                    script_sequence_with_health.append({i: [x, y, 100.0, action] for i, (x, y, action) in script_sequence[i].items()})
+                choice_script[choice] = script_sequence_with_health
+            data["choice_script"] = json.dumps(choice_script)
+        else:
+            raise NotImplementedError
         # rest is given as-is
-        for attr in ["offensive_color", "defensive_color", "narration"]:
+        for attr in ["scenario_type", "size", "offensive_color", "defensive_color", "narration"]:
             data[attr] = getattr(self, attr) # TODO designate some as optional 
         # if no map & svg path/regions are available & 
         if not data["map"]:
             paths = getattr(self, "paths", None)
             regions = getattr(self, "regions", None)
             if paths or regions:
-                data.update(paths=paths, regions=regions, svg_scene=True, size=self.size)
+                data.update(paths=paths, regions=regions, svg_scene=True)
         return data
 
 
 class HardcodedScenario(Scenario):
-    # hardcoding a simple ambush
+    # hardcoding a simple static ambush
     def __init__(self):
+        self.scenario_type = "static"
         self.size = (600, 600)
         self.narration = [
             "This is an example scenario detailing a simple ambush.",
@@ -78,6 +88,59 @@ class HardcodedScenario(Scenario):
         self.regions = [
             {"path": "M425 310 L310 320 L225 225 L200 350 L210 400 L425 400 L425 310 Z", "fill": "green", "border": "green"} # ambush region A
         ]
+
+class HardcodedChoiceScenario(Scenario):
+    # hardcoding a simple interactive multi-choice scenario. The received HTML should link to appropriate consequence.
+    def __init__(self):
+        self.scenario_type = "choice"
+        self.size = (600, 600)
+        self.narration = [
+            "This is an example scenario detailing a simple choice.",
+            "You are in control of an unit conducting assault on known enemy defense.",
+            "Opposing you are two enemy units which are stationed a distance apart. They may come to each other's aid. One unit (1) is closer and only slightly weaker than you, the other (2) was badly mauled in a prior engagement, but is stationed deeper inward.",
+            "Do you launch your first attack on (1) or (2)?"
+        ]
+        self.offensive_units = {"attacking_unit_1": 0}
+        self.defensive_units = {"defending_unit_1": 1, "defending_unit_2": 2}
+        self.offensive_color = "red"
+        self.defensive_color = "blue"
+        self.script = {
+            "initial":
+                [{0: (300, 0, "hold"), 1: (300, 100, "hold"), 2: (400, 275, "hold")}],
+            "choice_1": 
+                [
+                    {0: (300, 75, "attack"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
+                    {0: (300, 75, "attack"), 1: (300, 100, "defend"), 2: (375, 250, "move")},
+                    {0: (300, 80, "attack"), 1: (300, 105, "defend"), 2: (350, 225, "move")},
+                    {0: (300, 85, "attack"), 1: (300, 105, "rout"), 2: (350, 150, "move")},
+                    {0: (325, 100, "move"), 1: (275, 125, "rout"), 2: (350, 150, "move")},
+                    {0: (325, 115, "attack"), 1: (None, None, "rout"), 2: (330, 130, "attack")},
+                    {0: (335, 125, "attack"), 1: (None, None, "rout"), 2: (350, 120, "defend")},
+                    {0: (345, 125, "attack"), 1: (None, None, "rout"), 2: (380, 115, "rout")},
+                    {0: (345, 125, "hold"), 1: (None, None, "rout"), 2: (None, None, "rout")},
+                ],
+            "choice_2": 
+                [
+                    {0: (400, 0, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
+                    {0: (450, 50, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
+                    {0: (450, 150, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
+                    {0: (450, 250, "attack"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
+                    {0: (445, 255, "attack"), 1: (350, 100, "move"), 2: (400, 275, "defend")},
+                    {0: (425, 265, "attack"), 1: (400, 100, "move"), 2: (390, 285, "rout")},
+                    {0: (425, 265, "hold"), 1: (400, 150, "move"), 2: (365, 310, "rout")},
+                    {0: (400, 250, "hold"), 1: (400, 200, "move"), 2: (None, None, "rout")},
+                    {0: (400, 250, "attack"), 1: (400, 230, "attack"), 2: (None, None, "rout")},
+                    {0: (400, 260, "attack"), 1: (400, 235, "attack"), 2: (None, None, "rout")},
+                    {0: (400, 240, "attack"), 1: (400, 215, "defend"), 2: (None, None, "rout")},
+                    {0: (400, 215, "attack"), 1: (400, 185, "rout"), 2: (None, None, "rout")},
+                    {0: (400, 215, "hold"), 1: (400, 135, "rout"), 2: (None, None, "rout")},
+                    {0: (400, 215, "hold"), 1: (None, None, "rout"), 2: (None, None, "rout")},
+                ]
+        }
+        self.choices = {
+            "choice_1": "Attack (1)",
+            "choice_2": "Go around and attack (2)"
+        }
 
 class WrittenScenario(Scenario):
     # scenario that is written in a json file and needed to be loaded in.

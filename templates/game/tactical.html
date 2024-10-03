@@ -7,6 +7,7 @@
 	{% if background_image %} 
 		{# If has a base64 image, use that #}
 		<img id="background" src="data:image/jpeg;base64, {{ background_image | safe }}" style="position: absolute">
+		</img>
 	{% endif %}
 	{% if svg_scene %}
 		{# if enable svg-related image, construct it instead #}
@@ -29,18 +30,20 @@
 			</svg>
 		</div>
 	{% endif %}
-	{% for ou in offensive_units %}
-		<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}; transform: translateY(-50%)">
-			<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		<svg height={{size[0]}} width={{size[1]}}>
+		{% for ou in offensive_units %}
+			<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}; transform: translateY(-50%)">
+				<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+				</i>
 			</i>
-		</i>
-	{% endfor %}
-	{% for du in defensive_units %}
-		<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}; transform: translateY(-50%)">
-			<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+		{% endfor %}
+		{% for du in defensive_units %}
+			<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}; transform: translateY(-50%)">
+				<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
+				</i>
 			</i>
-		</i>
-	{% endfor %}
+		{% endfor %}
+		</svg>
 		<div id="narration_panel" class="container-fluid m-2">
 			{# This will contain description for the scenario.#}
 			{% if narration %}
@@ -53,23 +56,23 @@
 	</div>
 	<div id="interactive_options" class="container-fluid">
 		{# This will contain options for interactive novel option. TODO translate Antal's book to this as proof of concept #}
-		{% if interactive and interactive_options %}
-			{% for option in interactive_options %}
-				<button class="btn btn-primary m-2" id={{option["id"]}} onclick="choose_option(event, {{option["id"]}})">
-					{{option["name"]}}
+		{% if scenario_type == 'choice' %}
+			{% for option_key, option_name in choices.items() %}
+				<button class="btn btn-primary m-2" id="btn_select_{{option_key}}" onmouseover="switch_script_choice_preview(event, '{{option_key}}')" onclick="choose_option(event, '{{option_key}}')">
+					{{option_name}}
 				</button>
 			{% endfor %}
 		{% endif %}
 	</div>
 	<div id="roll_option" class="container-fluid d-flex flex-row">
 		{# This will contain option for chance. Depending on mode; this will be a simple dice roll (unsanctioned - roll directly, sanctioned - roll on server) or 1-2 question miniquiz.#}
-		{% if interactive and quiz %}
+		{% if scenario_type == 'random' and quiz %}
 			{# Use quiz; item data will be provided accordingly #}
 			{% from 'shared/exam_question.html' import exam_question %}
 			{% for item in quiz %}
 				{{ exam_question(loop.index0, item) }}
 			{% endfor %}
-		{% elif interactive and allow_roll %}
+		{% elif scenario_type == 'random' %}
 			{# Use dice roll; for now use sanctioned variant #}
 			<button class="btn btn-primary m-2" id="roll" onclick="roll(event)">
 				Roll
@@ -85,6 +88,13 @@
 	{# the hardcoded script is supplied from server; convert it into the run data #}
 	<script type="text/javascript">
 		var railroad_script = {{ railroad_script | safe }}
+		$(document).ready(toggle_railroad_script);
+	</script>
+{% endif %}
+{% if choice_script %}
+	{# the hardcoded script is supplied from server; convert it into the run data #}
+	<script type="text/javascript">
+		var choice_script = {{ choice_script | safe }}
 	</script>
 {% endif %}
 {% endblock %}
