@@ -108,6 +108,13 @@ Currently identified, list in order of favoritism & certainty in identification:
 13. K7084, See **PK-252** below as possible pack.
 
 12. [K7090](https://shopee.vn/K7090-B%E1%BB%99-ph%E1%BB%A5-ki%E1%BB%87n-army-minifigures-c%C3%A1c-lo%E1%BA%A1i-v%C5%A9-kh%C3%AD-l%C3%ADnh-%C4%91%E1%BA%B7c-nhi%E1%BB%87m-spetsnaz-Nga-i.300855065.19857285911), **(Almost-Favorite)** Quasi-Russian Pack, have a lot of AK variants. List later, ~~but most seems to be BrickArms variants~~ all seems to be mix-and-match version of existing BrickArms AKs. Biggest issue is the one labelled SVD, like fking hell it is.
+    1. L-shaped stock AK with double sight & ribbed curved mag - likely ARMY-2020 decked out AK-15 with 1P87+ACOG as in [here](https://en.wikipedia.org/wiki/AK-12#/media/File:Army-2020-303.JPG). It's AK-15 since mag of 7.62 have a lot more pronounced curve
+    2. Bottom left AK - likely AK-15 as well with the mag; unidentified sight for now
+    3. Short AK - likely AK-74U, as per significantly shorter barrel of a carbine (so U), only slightly curved mag of 5.45 (so not AK-47U), and wooden furniture (so not AK-12K) 
+    4. Long scope AK-74 - note the wooden foregrip furniture of AKM/AK-74M and only slightly curved mag 
+    5. Drum RPK - Stock doesn't quite match and sight look kinda stupid, but RPK/RPK-74's wooden furniture directly touch the receiver instead of slightly forwarded like in AKs.
+    6. SVD?? The stock+grip is a dead giveaway, in SVDs they are merged into one block. Scope is double stupid as it look mounted backward (the flanged part is supposed to face the user). Technically this can still pass as SVDS/SVDM.
+
 13. [K7091](https://shopee.vn/V%E1%BB%89-Ph%E1%BB%A5-ki%E1%BB%87n-trang-b%E1%BB%8B-v%C5%A9-kh%C3%AD-si%C3%AAu-ch%E1%BA%A5t-%C4%90%E1%BB%93-ch%C6%A1i-L%E1%BA%AFp-gh%C3%A9p-Mini-Minifigures-Army-l%C3%ADnh-M%C3%B4-h%C3%ACnh-ww2-K7091-i.81322028.21649362609), ~~Dunno-what-is-the-goal pack.~~ Mixed stuff
     1. QBZ-95 with detachable knife-bayonet 
     2. QBU-88

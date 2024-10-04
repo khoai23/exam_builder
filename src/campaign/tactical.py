@@ -1,7 +1,9 @@
 """Tactical (battalion-level) map/scenario. For now we will have railroaded scenarios basing on result of a test.
 Goal is for this to be updated to have interactable impact."""
 
-import json
+import random, json
+
+from typing import Dict, List, Optional
 
 class Scenario:
     """A scenario should consist of a terrain map, a list of offensive/defensive units and for now, the script that it'll adhere to. Upon requested, the scenario will play out as scripted."""
@@ -15,8 +17,9 @@ class Scenario:
                 - script: list of positions & states of each unit per phase."""
         data = {}
         # converting units to dict 
-        data["offensive_units"] = [{"id": v, "name": k} for k, v in self.offensive_units.items()]
-        data["defensive_units"] = [{"id": v, "name": k} for k, v in self.defensive_units.items()]
+        data["offensive_units"] = [{"id": v, "name": k, "icon": "{:d}-circle".format(i % 10)} for i, (k, v) in enumerate(self.offensive_units.items())]
+        data["defensive_units"] = [{"id": v, "name": k, "icon": "{:d}-circle".format(i % 10)} for i, (k, v) in enumerate(self.defensive_units.items())]
+        data["neutrals"]   = [{"id": v, "name": k, "icon": "question-circle"} for k, v in getattr(self, "neutrals", dict()).items()] # could be object or unrelated units. use generic icon for now
         # no map for now.
         data["map"] = None 
         # script is converted to json to be given to javascript hardcoded 
@@ -36,6 +39,11 @@ class Scenario:
                     script_sequence_with_health.append({i: [x, y, 100.0, action] for i, (x, y, action) in script_sequence[i].items()})
                 choice_script[choice] = script_sequence_with_health
             data["choice_script"] = json.dumps(choice_script)
+        elif self.scenario_type == "random":
+            railroad_script = [
+                {i: [x, y, 100.0, action] for i, (x, y, action) in script_step.items()}
+                for script_step in self.script]
+            data["railroad_script"] = json.dumps(railroad_script)
         else:
             raise NotImplementedError
         # rest is given as-is
@@ -49,6 +57,31 @@ class Scenario:
                 data.update(paths=paths, regions=regions, svg_scene=True)
         return data
 
+    def return_next_result(self) -> Optional[str]:
+        """This will trigger for scenario_type == static. If can lead outward to a different scenario, this will return the appropriate key. If cannot, this return None. Ideally returning that (None) should never happens, but who knows."""
+        assert self.scenario_type == "static", "@return_next_result: cannot get a static result from scenario_type != static. ({})".format(self.scenario_type)
+        return getattr(self, "outcome", None)
+
+    def return_choice_result(self, choice: str) -> str:
+        """This will trigger for scenario_type == choice. Go to the appropriate outcome depending on the choice taken"""
+        assert self.scenario_type == "choice", "@return_choice_result: cannot get a choice result from scenario_type != choice. ({})".format(self.scenario_type)
+        return self.outcome[choice]
+
+    def return_specific_result(self, result: float) -> str:
+        """This will trigger for scenario_type == random, or its quiz mode. Quiz mode will come up to a value between 0-100; while choices MUST be limited to 100 roll range, sorted from bad -> good as well."""
+        assert self.scenario_type == "random", "@retrieve_specific_result: cannot get a randomized/quized result from scenario_type != random. ({})".format(self.scenario_type)
+        assert 0 <= result <= 100.0, "@retrieve_specific_result: result cannot be outside of [0-100] range"
+        current_upper_bound = 0
+        for chance, outcome_str in self.choices:
+            current_upper_bound += chance 
+            if result < current_upper_bound:
+                return self.outcome[outcome_str]
+        raise ValueError("If reach here, choices' collective chance does not reach 100 (only {}). Fix the scenario.".format(current_upper_bound))
+
+    def roll_for_result(self) -> str:
+        """The above but randomly roll for a result."""
+        return self.return_specific_result(random.random() * 100.0)
+
 
 class HardcodedScenario(Scenario):
     # hardcoding a simple static ambush
@@ -57,7 +90,7 @@ class HardcodedScenario(Scenario):
         self.size = (600, 600)
         self.narration = [
             "This is an example scenario detailing a simple ambush.",
-            "The ambushed side (red) was known to patrol along a known path, and the ambushers hid in nearby terrain waiting to strike.",
+            "The ambushed side (red) was known to patrol along a known path, and the ambushers (blue) hid in nearby terrain waiting to strike.",
             "Surprised by the sudden contact, the following red unit retreated, leaving its sibling exposed to enemy attack",
             "Further indecision from this unit means it did not mount an effective defense to the ambusher onslaught, who circled around and outflanked it during subsequent combat."
         ]
@@ -88,6 +121,8 @@ class HardcodedScenario(Scenario):
         self.regions = [
             {"path": "M425 310 L310 320 L225 225 L200 350 L210 400 L425 400 L425 310 Z", "fill": "green", "border": "green"} # ambush region A
         ]
+
+        self.outcome = None
 
 class HardcodedChoiceScenario(Scenario):
     # hardcoding a simple interactive multi-choice scenario. The received HTML should link to appropriate consequence.
@@ -142,6 +177,31 @@ class HardcodedChoiceScenario(Scenario):
             "choice_2": "Go around and attack (2)"
         }
 
+class HardcodedRollScenario(Scenario):
+    # hardcoding a simple multi-result scenario decided by a dice roll/exam question. The received HTML should link to appropriate consequence.
+    def __init__(self):
+        self.scenario_type = "random"
+        self.size = (600, 600)
+        self.narration = [
+            "This is an example scenario; which will have different possible result depending on either a dice roll, or a mini-exam.",
+            "You are being pounded by enemy artillery prefacing an enemy assault. You have done all you could to reinforce your position, but, sometimes, fate will get you anyway",
+            "If you believe in any god, start praying."
+        ]
+        self.defensive_units = {"defending_unit_1": 0, "defending_unit_2": 1}
+        self.offensive_units = {"attacking_unit_1": 2, "attacking_unit_2": 3, "attacking_unit_4": 4, "attacking_unit_3": 5}
+        self.neutrals = {"artillery_marker_1": 101, "artillery_marker_2": 102, "artillery_marker_3": 103, "artillery_marker_4": 104}
+        self.script = [
+                {0: (325, 0, "defend"), 1: (275, 25, "defend"), 101: (315, 15, "blink"), 102: (340, 5, "inactive"), 103: (285, 15, "active"), 104: (260, 25, "inactive"), 2: (150, 600, "move"), 3: (300, 600, "move"), 4: (450, 600, "move"), 5: (300, 550, "move")},
+                {0: (325, 0, "defend"), 1: (275, 25, "defend"), 101: (315, 15, "inactive"), 102: (340, 5, "blink"), 103: (285, 15, "inactive"), 104: (260, 25, "blink"), 2: (150, 600, "move"), 3: (300, 600, "move"), 4: (450, 600, "move"), 5: (300, 550, "move")}
+        ]
+        self.defensive_color = "blue"
+        self.offensive_color = "red"
+        
+        self.choices = [
+            (25, "result_dead"),
+            (75, "result_unscathed")
+        ]
+
 class WrittenScenario(Scenario):
     # scenario that is written in a json file and needed to be loaded in.
     def __init__(self, file_path: str):
@@ -150,3 +210,43 @@ class WrittenScenario(Scenario):
         # TODO enforcing necessary checks?
         for k, v in data.items():
             setattr(self, k, v)
+
+class Narrative:
+    """A narrative has the same structure as an interactive novel, linking multiple scenarios together depending on choices.This should handle the above at the minimum."""
+    def __init__(self, narrative_graph: Dict[str, Scenario]):
+        # for now, graph must be pre-constructed with all scenarios 
+        self.graph = narrative_graph
+
+    def get_scenario(self, scenario_key: str) -> Scenario:
+        return self.graph[scenario_key]
+
+    def handle_scenario_choice(self, src_scenario_key: str, choice: Optional[str]=None, quiz_result: Optional[float]=None) -> str:
+        """Default, book-like variant. Simply handle going forward and backward. There is no blocking element yet. (e.g if somebody go directly to one section, they can just go from there)."""
+        src_scenario = self.graph[src_scenario_key]
+        if src_scenario.scenario_type == "static":
+            # When encountering this, the scenario only has one choice (a narrative section), or no choice at all.
+            # TODO let static have an option to continue if possible 
+            next_scenario_key = src_scenario.return_next_result()
+        elif src_scenario.scenario_type == "choice":
+            # When encountering this, the scenario will have choice selectable by player 
+            next_scenario_key = src_scenario.return_choice_result(choice)
+        elif src_scenario.scenario_type == "random":
+            # When encountering this, depending on if quiz_result is available, either perform a roll to determine the outcome or use that as direct outcome 
+            if(quiz_result):
+                next_scenario_key = src_scenario.return_specific_result(quiz_result)
+            else:
+                next_scenario_key = src_scenario.roll_for_result() 
+        else:
+            raise NotImplementedError("Invalid source scenario {} of type {}".format(src_scenario, src_scenario.scenario_type))
+        return next_scenario_key
+
+class HardcodedNarrative(Narrative):
+    # hardcoded variant. Doesn't quite make sense yet; and it's ok.
+    def __init__(self):
+        # build the scenario 
+        end_key, end_sc = "example_static", HardcodedScenario()
+        roll_key, roll_sc = "example_roll", HardcodedRollScenario()
+        choice_key, choice_sc = "example_choice", HardcodedChoiceScenario()
+        roll_sc.outcome = {"result_unscathed": choice_key, "result_dead": end_key}
+        choice_sc.outcome = {"choice_1": roll_key, "choice_2": end_key}
+        super(HardcodedNarrative, self).__init__({end_key: end_sc, roll_key: roll_sc, choice_key: choice_sc})

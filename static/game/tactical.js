@@ -19,9 +19,32 @@ var action_icons = {
 	"hold": "hourglass"
 }
 
-function update_action_icon(item, action) {
-	// depending on specific action, give the item appropriate icon 
-	item.removeClass().addClass("bi bi-" + action_icons[action]);
+function update_action_icon(core_icon, action_icon, action) {
+	// depending on specific action, give the core_icon appropriate opacity.
+	// TODO streamline it like `action_icons` above 
+	if(action == "blink") {
+		core_icon.addClass("animate-blink");
+	} else {
+		core_icon.removeClass("animate-blink");
+		if(action == "inactive") {
+			core_icon.css("opacity", "0.0"); // effectively hiding it
+		} else if(action == "rout") {
+			core_icon.css("opacity", "0.2")
+		} else if(action == "hide") {
+			core_icon.css("opacity", "0.5")
+		} else {
+			core_icon.css("opacity", "1.0")
+		}
+	}
+	// depending on specific action, give the action_icon appropriate visual
+	if(action_icons[action]) {
+		// have associating action icon; the actual element should be swapped
+		action_icon.removeClass().addClass("bi bi-" + action_icons[action]);
+		action_icon.show()
+	} else {
+		// have no associating action icon, the element will be hidden 
+		action_icon.hide()
+	}
 }
 
 function nextScriptStep(script, loopback=true, animation=true) {
@@ -45,7 +68,6 @@ function nextScriptStep(script, loopback=true, animation=true) {
 			// unit is still active; move to necessary positions. TODO strength indicator. TODO action indicator. TODO movement animation
 			unit.show();
 			// when hiding, set opacity to 50%; else it's 100%
-			unit.css("opacity", action == "rout" ? "0.2" : action == "rout" ? "0.5" : "1.0" )
 			if(!animation || current_script_step == 0) {
 				unit.css("left", x);
 				unit.css("top", y);
@@ -54,7 +76,7 @@ function nextScriptStep(script, loopback=true, animation=true) {
 			}
 		}
 		// update action accordingly
-		update_action_icon($("#" + unit_id + "_action"), action);
+		update_action_icon(unit, $("#" + unit_id + "_action"), action);
 	}
 }
 
@@ -97,6 +119,24 @@ function switch_script_choice_preview(event, option_key, interval=1000) {
 	}
 }
 
-function choose_option(event, option_key) {
-	alert("TODO implement. Chose option: '" + option_key + "'.");
+function choose_option(event, choice_str) {
+	//alert("TODO implement. Chose option: '" + option_key + "'. Key to back-access: " + getUrlParameter("key"));
+	let current_scenario_key = getUrlParameter("key");
+	perform_get("interact_scenario?key=" + current_scenario_key + "&choice=" + choice_str, (data, textStatus, jqXHR) => {
+		// on receiving data, redirect to the new scenario by appropriate response 
+		redirect_link = data["link"];
+		console.log("Received link, attempt to redirect to: ", redirect_link);
+		window.location.href = redirect_link;
+	})
+}
+
+function roll(event) {
+	// alert("TODO implement. Must get roll result from the server." + "'. Key to back-access: " + getUrlParameter("key"))
+	let current_scenario_key = getUrlParameter("key");
+	perform_get("interact_scenario?key=" + current_scenario_key, (data, textStatus, jqXHR) => {
+		// on receiving data, redirect to the new scenario by appropriate response 
+		redirect_link = data["link"];
+		console.log("Received link, attempt to redirect to: ", redirect_link);
+		window.location.href = redirect_link;
+	})
 }

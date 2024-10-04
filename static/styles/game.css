@@ -1,0 +1,9 @@
+.animate-blink {
+	animation: blink 0.5s infinite alternate;
+	animation-fill-mode: both;
+}
+
+@keyframes blink {
+	0%		{ opacity: 0 }
+	100%	{ opacity: 1 }
+}

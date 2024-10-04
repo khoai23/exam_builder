@@ -1,5 +1,9 @@
 {% extends 'shared/base.html' %}
 
+{% block stylesheet %}
+	<link rel="stylesheet" href={{ url_for('static', filename="styles/game.css") }}>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid width-100 height-100 d-flex flex-column" style="position: relative">
 	<div class="d-flex flex-row">
@@ -32,15 +36,19 @@
 	{% endif %}
 		<svg height={{size[0]}} width={{size[1]}}>
 		{% for ou in offensive_units %}
-			<i id="{{ou["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{offensive_color}}; transform: translateY(-50%)">
+			<i id="{{ou["id"]}}" class="bi bi-{{ou["icon"]}}" style="position: absolute; font-size: 2rem; color: {{offensive_color}}; transform: translateY(-50%)">
 				<i id="{{ou["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
 				</i>
 			</i>
 		{% endfor %}
 		{% for du in defensive_units %}
-			<i id="{{du["id"]}}" class="bi bi-{{loop.index0}}-circle" style="position: absolute; font-size: 2rem; color: {{defensive_color}}; transform: translateY(-50%)">
+			<i id="{{du["id"]}}" class="bi bi-{{du["icon"]}}" style="position: absolute; font-size: 2rem; color: {{defensive_color}}; transform: translateY(-50%)">
 				<i id="{{du["id"]}}_action" class="bi bi-crosshair" style="position: absolute; font-size: 1rem; color: red">
 				</i>
+			</i>
+		{% endfor %}
+		{% for n in neutrals %}
+			<i id="{{n["id"]}}" class="bi bi-{{n["icon"]}}" style="position: absolute; font-size: 2rem; color: brown; transform: translateY(-50%)">
 			</i>
 		{% endfor %}
 		</svg>
@@ -72,6 +80,9 @@
 			{% for item in quiz %}
 				{{ exam_question(loop.index0, item) }}
 			{% endfor %}
+			<button class="btn btn-primary m-2" id="submit" onclick="submit_roll(event)">
+				Submit
+			</button>
 		{% elif scenario_type == 'random' %}
 			{# Use dice roll; for now use sanctioned variant #}
 			<button class="btn btn-primary m-2" id="roll" onclick="roll(event)">
@@ -83,6 +94,7 @@
 {% endblock %}
 
 {% block script %}
+<script src={{ url_for('static', filename="utils.js") }}></script>
 <script src={{ url_for('static', filename="game/tactical.js") }}></script>
 {% if railroad_script %}
 	{# the hardcoded script is supplied from server; convert it into the run data #}

@@ -6,7 +6,7 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.campaign import * # clamp down later
-from src.campaign.tactical import HardcodedScenario, HardcodedChoiceScenario
+from src.campaign.tactical import HardcodedNarrative
 from src.session import ExamManager 
 
 import logging 
@@ -276,23 +276,30 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
             logger.error("Error: {}; Traceback:\n{}".format(e, traceback.format_exc()))
             return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 
+    # for now use the exact same narrative obj 
+    narration = HardcodedNarrative()
+
     @app.route("/scenario", methods=["GET"])
     def tactical_scenario():
         identifier = request.args.get("key", None)
-        # Displaying a battalion level scenario that run automatically as-is.
+        # Displaying a battalion level scenario.
+        # TODO allow customization based on user
         # get the hardcoded one for now
         if identifier is None:
             scenario = HardcodedScenario()
-        elif identifier == "example_choice":
-            scenario = HardcodedChoiceScenario()
-        else:
-            raise NotImplementedError
+        else: 
+            scenario = narration.get_scenario(identifier)
         return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
 
     @app.route("/interact_scenario", methods=["GET"])
     def interact_scenario():
-        # sibling of the above tactical_scenario; this hardpoint is used for interaction (sending quiz result, rolling for transitions etc.)
-        # TODO construct appropriate paths 
-        raise NotImplementedError
+        # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
+        # TODO receive quiz result, checkup and process forward accordingly
+        identifier = request.args.get("key", None)
+        choice = request.args.get("choice", None)
+        next_scenario_key = narration.handle_scenario_choice(identifier, choice=choice)
+        # TODO redirect directly to the next scenario?
+        # TODO handle error due to wrong data?
+        return flask.jsonify(result=True, link="scenario?key="+next_scenario_key)
 
     return campaign_data, app
