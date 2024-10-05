@@ -1,0 +1,32 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"The enemy column reached the tank ditch. Special dozer tanks led the way, easily pushing through the barbed wire and filling the tank ditch with dirt.",
+			"Davis could barely discern the outlines of the dark enemy vehicles in the thick white smoke. The BMPs and tanks set up a firing line west of the ditch and opened up on BP Alamo with concentrated main gun and machine-gun fire.",
+			"The platoon's return fire was minuscule. The soldiers of 1st Platoon who had not been killed by enemy artillery fire were pinned at the bottom of their fighting positions by flying shrapnel and direct fires.",
+			"I must do something! Davis thought. He raised his head to observe the tank ditch.",
+			"A tank was working its way into the ditch. It struggled there for sev- eral moments, then climbed out on the east side. Picking up speed, it crashed through a pillow of smoke, firing its machine guns as it raced by.",
+			"A Javelin missile was fired, sending exhaust smoke, flame, and debris to the rear of the position. The missile darted up and down as it accelerated toward the fast-moving target.",
+			"The Javelin missile hit the tank in the top of the turret. The high- explosive antitank warhead tore through the soul of the tank, bring- ing the enemy vehicle to a horrific grinding halt. Thick, oily black smoke billowed skyward from the openings of the fractured turret. Another tank moved forward, passing the burning hulk to the right. The second tank lumbered toward BP Alamo and turned its turret toward Davis.",
+			"\"Hit the dirt!\" Davis screamed."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [90, "result_die"],
+            [10, "result_survive"]
+        ]
+}

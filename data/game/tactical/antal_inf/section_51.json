@@ -1,0 +1,41 @@
+{
+        "scenario_type": "static",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"<h1 class=\"text-center\"> Death </h1>",
+			"\"I'm coming, Piper. Hold on!\" Davis yelled. He spun around onto his belly, leveled his M16 rifle in the direction of the incoming fire, and blasted off a full thirty-round magazine of ammunition.",
+			"Time hung in the air, still, frozen. Davis changed magazines in his rifle, then crawled toward Piper. Davis's heart was beating fast.",
+			"The dirt in front of Davis jumped with the strike of the enemy round. Davis rolled twice to his left, fired off a few rounds, then continued crawling.",
+			"\"Don't move, Piper,\" Davis shouted, almost out of breath. \"We must have stumbled into an enemy observation post. I'll get you out of here.\"",
+			"\"No, get the-\"",
+			"\"Hang on, Sergeant!\" Davis exclaimed. Piper was only a few feet away.",
+			"The short, sharp burst from the enemy sniper rifle was the last thing Davis heard before the enemy bullet entered the back of his neck. He lay facedown in the dirt and died."
+        ],
+        "offensive_units": {
+			"o1": {"name": "Enemy Recon", "icon": "1-circle", "rank_icon": "binoculars"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+					{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [290, 348, 35.0, "planning"], "o1": [280, 316, 100.0, "attack"], 
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]},
+					{"d0": [290, 348, 35.0, "disapprove"]},
+					{"d0": [290, 348, 35.0, "aid-medic"]},
+					{"d0": [290, 348, 35.0, "rout"]}
+		]
+}

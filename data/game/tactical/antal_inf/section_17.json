@@ -1,0 +1,74 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"Davis trod steadily, carrying his M16 facing forward. The two Amer- icans hiked up Hill 865.",
+			"The sound of distant artillery, an ominous rumble of impending action, echoed from the west. \"It sounds like somebody is catching hell up front,\" Davis said quietly.",
+			"Piper nodded impassively. \"I'm sure our friends will be running our way soon. I never worked with our ally before, but from what I saw from Desert Storm, they won't hold out long.\"",
+			"\"Maybe so,\" Davis replied, hoping that Piper was wrong. \"I'1l bet a week's pay that our planes plaster the enemy before he even gets close to us.\"",
+			"\"You're on,\" Piper said with a grin. \"I never count on guys I don't know. In the infantry you've got to take care of yourself. If we get help, it'll be from our own company and battalion.\"",
+			"The two men finally arrived at the top of Hill 865. Davis climbed over to a group of boulders that nature had piled haphazardly on the top of the hill. Piper sat next to Davis behind a large rock and took several gulps of warm water from his green plastic canteen. Davis raised his binoculars and scanned the valley below him. Hill 865 was part of a large ridge that blocked Wadi Al Sirree from view. From 865 he saw a large, open expanse of desert. The view was spectacular. From the northern slope of Hill 865 the ground gently sloped to the north and ended in another steep ridge about twenty kilometers away. A single dirt road, only two kilometers to the north, ran from east to west. This was avenue of approach Viper. Below him, to the north and northeast, Davis saw U.S. forces preparing defensive positions to block the Axis Viper approach.",
+			"\"We look awfully alone out here in this big open place. Perfect tank country,\" Davis mentioned. \"At least Wadi Al Sirree is more confined. It offers us some constricted avenues of approach to am- bush an attacker.\"",
+			"\"Yeah, it's just a beautiful place,\" Piper joked as he crawled next to his officer and took in the view. \"It's hard to believe that they're paying us to visit such exciting vacation spots.\"",
+			"Davis continued to search the area with his binoculars. To his left front, toward the west, he saw a single-lane tarmac road that led to the steep ridge on the northern horizon. The ground gradually sloped up to the northwest until it reached another jagged ridgeline on the western horizon. Except for the two roads and a few smaller hills of rock, everything was wide open. The area was like a huge football stadium, about thirty to forty kilometers of open playing field in the center, surrounded by steep walls on the north and western ap- proaches. Davis's platoon was defending the extreme south-central flank of this stadium.",
+			"The far-off chop of helicopter rotors filled the air to the northeast. Davis saw two black dots skimming low off the desert floor heading west. He ducked down behind the rocks, exposing himself only enough to view the helicopters. The sound grew louder.",
+			"\"They look like a Warrior and an Apache attack helicopter team to me. Seems like we're getting some help after all. Sergeant, I believe you owe me some money,\" Davis declared with a sly smile.",
+			"The helicopters passed beneath them in the valley to the north, moving west at high speed. A small OH-68 Warrior led. Another he- licopter, a bigger, heavily armed Apache AH-64 attack helicopter, followed three hundred meters behind. The helicopters soon disap- peared into the jagged ridge on the western horizon.",
+			"\"Wait a minute, Lieutenant. I thought you said air force,\" Piper quibbled. I don't remember you saying anything about any army he- licopters.\" Both men looked at each other and chuckled.",
+			"The crisp sound of an AK-47 rifle interrupted the conversation.",
+			"Davis instinctively ducked. A bullet struck the rocks only inches in front of him. He quickly hit the ground and fired a burst of M16 fire in the direction of the enemy.",
+			"\"I'm hit!\" Piper yelled as he dropped his M16 and fell down, stunned by the impact of the round in his chest. Piper lay sprawled in the open, five meters away from Davis.",
+			"Another round struck near Davis, scattering dust and rock frag- ments inches from his head. He rolled to his left, behind a big rock, gaining protection from the enemy sniper. Lying on his back he looked toward Piper. \"Piper, how bad are you hit?\"",
+			"Silence. Davis heard only the sound of the wind blowing across the rock-studded hill.",
+			"\"Piper!\" Davis screamed.",
+			"\"Bad. I'm hit bad,\" Piper wheezed. \"I'm bleeding. Feels like I'm losing a lot of blood. I need some help, Lieutenant.\"",
+			"Damn it! Davis thought. I'm up here all by myself without a radio and no way to get support. I can <b>go for the sniper</b> or <b>help Piper</b>. Which will it be?"
+        ],
+        "offensive_units": {
+			"o1": {"name": "Enemy Recon", "icon": "1-circle", "rank_icon": "binoculars"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"hill_865": {"name": "Hill 865", "icon": "geo-fill", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M4", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": {
+            "initial":
+                [
+					{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [290, 348, 35.0, "recon"], "o1": [280, 316, 100.0, "hide"], 
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]},
+					{"d0": [290, 348, 35.0, "recon"], "o1": [280, 316, 100.0, "attack"]},
+					{"d0": [290, 348, 35.0, "planning"]}
+				],
+            "choice_help": 
+                [
+					{"d0": [290, 348, 35.0, "disapprove"]},
+					{"d0": [290, 348, 35.0, "aid-medic"]},
+					{}
+                ],
+            "choice_stay": 
+                [
+					{"d0": [290, 348, 35.0, "approve"]},
+					{"d0": [290, 348, 35.0, "hide"]},
+					{},
+					{"d0": [290, 348, 35.0, "attack"]}
+                ]
+        },
+        "choices": {
+            "choice_stay": "Try for the sniper",
+            "choice_help": "Help Piper"
+        }
+}

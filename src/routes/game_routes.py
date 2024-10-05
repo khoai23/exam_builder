@@ -6,7 +6,7 @@ from flask import Flask, request, url_for
 import traceback 
 
 from src.campaign import * # clamp down later
-from src.campaign.tactical import HardcodedNarrative
+from src.campaign.tactical import HardcodedScenario, HardcodedNarrative, AntalInfantryGameNarrative
 from src.session import ExamManager 
 
 import logging 
@@ -277,7 +277,14 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
             return flask.jsonify(result=False, error=str(e), error_traceback=traceback.format_exc())
 
     # for now use the exact same narrative obj 
-    narration = HardcodedNarrative()
+    hardcode_narration = HardcodedNarrative()
+    antal_inf_narration = AntalInfantryGameNarrative()
+    
+    def retrieve_narration_from_key(key: str):
+        for nrv in [hardcode_narration, antal_inf_narration]:
+                if key in nrv.graph:
+                    return nrv
+        return ValueError("Incorrect scenario key: " + key)
 
     @app.route("/scenario", methods=["GET"])
     def tactical_scenario():
@@ -288,16 +295,18 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
         if identifier is None:
             scenario = HardcodedScenario()
         else: 
-            scenario = narration.get_scenario(identifier)
+            scenario = retrieve_narration_from_key(identifier).get_scenario(identifier)
+            # TODO handle incorrect identifier
         return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
 
     @app.route("/interact_scenario", methods=["GET"])
     def interact_scenario():
         # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
+        # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
         # TODO receive quiz result, checkup and process forward accordingly
         identifier = request.args.get("key", None)
         choice = request.args.get("choice", None)
-        next_scenario_key = narration.handle_scenario_choice(identifier, choice=choice)
+        next_scenario_key = retrieve_narration_from_key(identifier).handle_scenario_choice(identifier, choice=choice)
         # TODO redirect directly to the next scenario?
         # TODO handle error due to wrong data?
         return flask.jsonify(result=True, link="scenario?key="+next_scenario_key)

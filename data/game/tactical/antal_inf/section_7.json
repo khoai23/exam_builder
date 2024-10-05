@@ -1,0 +1,94 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"When his fighting position was finally complete, Davis put down his shovel. He and Cowper had used steel picks to loosen the ground and entrenching tools to scoop out the dirt. They had piled sand in front of their position and stacked black basalt rocks to create a strong fir- ing parapet. Working all day, they had burrowed four feet into the rocky hill overlooking the tank ditch.",
+			"Suddenly the supersonic blast of a Threat aircraft split the air above Davis's head. He dove for the ground. A second ear-shattering shriek occurred as Davis was nose down in the dust of the desert floor.",
+			"Startled by the boom, the young lieutenant gathered his courage and looked up. A U.S. Navy F/A-18 was chasing an enemy aircraft. The enemy bird, now just a dot in the eastern sky, pulled straight up to circle back toward his own lines. Suddenly the small black dot burst into a bright orange fireball. The disintegrating aircraft hurtled earthward in a twisting mass of smoke and debris.",
+			"Davis's men cheered. There had been no warning of the enemy aircraft's approach. If it had been on a strike run against them, they would have been caught with their pants down.",
+			"\"See what I mean, Lieutenant? The air force has just about got this here war won already!\" announced Piper.",
+			"The sun had passed its zenith. Davis motioned for his squad lead- ers to re-form around him.",
+			"\"That was probably a navy aircraft, and they won't be in our fox- holes to defend this valley if we're attacked,\" Davis replied laconi- cally before changing the subject to the work at hand. \"Let's get back to our operations order.\"",
+			"Sergeant Piper and the squad leaders dusted themselves off, then moved back to Lieutenant Davis and formed a semicircle around him. The lieutenant's map lay at his feet in front of the assembled leaders.",
+			"\"The point of our defense is to block the enemy from crossing the tank ditch. It's that simple,\" Piper said as he pointed to the lieu- tenant's map, which was displayed on the ground in front of them.",
+			"<blockquote>In war so much is always unknown that it frequently happens that the simple to the complex is the rule of war, therefore the simpler, more direct and clearer the beginning the less likely is action to get out of hand. -- Maj. Gen. J. F. C. Fuller</blockquote>",
+			"\"Correct,\" the platoon leader replied, scratching the plan of de- fense into the desert sand. \"It's all a matter of how we place our weapons. First Squad will cover the north.\"",
+			"Sergeant Jordan, the leader of 1st Squad, nodded.",
+			"\"Second Squad will cover the center. Third Squad will cover the south. Each squad will have eight AT4s and its squad weapons to cover its assigned areas. I'1] have both M60 machine guns and two Javelins in the center. From the center we can range the entire tank ditch. As soon as an enemy comes into our best engagement range, about fifteen hundred meters from our battle position, we'll clobber him with Javelin fire. At the same time, Sergeant Mark will be call- ing for artillery fires.\"",
+			"\"Right,\" Davis said. \"Ill be in the center, with Sergeant Mark, in 2d Squad's position. Sergeant Mark will call for fires for me. I'll use my radio to communicate with you and Captain Bludgell. Piper will be with 3d Squad.\"",
+			"\"We'll plaster the enemy with Javelins and whatever AT4s are left as he crosses the tank ditch,\" Piper commented directly to the squad leaders. \"We have six Javelin rounds per command launch unit. When these are gone we'll have to rely on machine guns and small arms. If the enemy does breach the ditch, he'll have to cross one at a time-perfect targets for our antitank weapons.\"",
+			"\"Remember,\" Piper added, \"no one withdraws without orders. You're safer to stay in position and fight from where you are. The enemy tank gunners will key on our movement. Once you're out of your holes, you won't have a chance against their armor.\"",
+			"The platoon sergeant, FO, squad leaders, and machine gunners lis- tened carefully, trying to make sure they understood their exact roles. They knew their lives depended on acting correctly the first time. If the enemy attacked, they might not get a second chance.",
+			"\"What if they break through the minefields?\" Sergeant Jordan asked. \"I have eight AT4s to stop them. After eight shots, I'm out of tank-killing ammunition.\"",
+			"\"I don't think they'll fight that tough. Once we kill a few of them, they'll probably turn north to avoid our fires. But if you run out of AT4s, I want you to fire small arms and machine guns at the ar- mored vehicles to keep them buttoned up,\" Piper concluded. \"Right, Lieutenant?\"",
+			"\"Yes, of course,\" Davis answered, trying to envision the enemy withdrawing as Piper had suggested. \"The bottom line is that we have to stop the enemy from crossing the ditch, as Piper has said. I think the antitank mines will make a big difference in our ability to block their attack. We'll have to work most of the night to place enough mines to make this happen.\"",
+			"Sergeant Tyler sighed. \"Sir, my men are beat. Working all night won't boost their morale.\"",
+			"\"I don't see any other way,\" Davis said, looking at Piper. \"We have to lay more mines. We need to put a minefield, M1, on the north side of the tank ditch. We'll plug the gap on our southern flank with another minefield, which we'll number M3. Last of all, we'll lay M2, to stop him in our engagement area in the center.\"",
+			"\"We could set up a couple of triple-strand wire barriers in front of M1 and M3,\" Jordan added, \"reinforcing the minefields. That could convince the bastards that the tank ditch is the path of least resistance.\"",
+			"\"Which will put him right in our killing zone,\" Sergeant Mizo- gouchi, the leader of 3d Squad, answered with a grin. \"My guys are tired, but we'll take care of putting up wire at M3 tonight. It'll take us a while, but we'll have it done by morning.\"",
+			"\"Look, I know how little sleep you've had,\" Davis said sympa- thetically. \"But we've got to make the most of our time. We'll have pretty good illumination for several hours tonight, almost a full moon. We can minimize heat casualties by working at night.\"",
+			"Piper looked nervously at his platoon leader. Two men had fallen ill from heat cramps. The water supply had run low as the tempera- ture rose. No one knew when the two soldiers, both from 2d Squad, would return from the battalion aid station. Davis needed every man he could muster.",
+			"\"How's 2d Squad doing, Tyler?\" Davis asked the 2d Squad leader.",
+			"\"Both of the men who were medevacked today should be back in two days. Everyone else is fine,\" Tyler answered, adjusting his glasses. \"I'm lining them up every two hours and forcing them to drink half a canteen of water.\"",
+			"\"Good. How's our water supply?\" Davis inquired, turning to Piper.",
+			"\"Lieutenant Sandburg dropped off ten five-gallon cans just thirty minutes ago. He also brought fifteen AT4s, some extra 5.56mm am- munition, twenty white illumination flares, six green and six red star clusters, and ten rolls of concertina wire,\" Piper reported.",
+			"\"That'll help,\" Davis replied with a smile. \"So our total is twenty- four AT4s and eight Javelin missiles.\"",
+			"\"Twenty-four rounds doesn't sound like a lot to stop them,\" Mizogouchi replied matter-of-factly.",
+			"\"That's why the mines are so crucial,\" Davis rejoined, pausing for a few seconds, searching for something else to say. \"We should fire the AT4s in volleys, two at a time at the same target. We'll get bet- ter results that way, especially against tanks. Excluding the effects of our minefields, we could destroy fifteen or sixteen enemy armored vehicles. That should be enough to stop them.\"",
+			"The men fidgeted nervously. The thought of imminent combat was on everyone's mind. Fifteen or sixteen armored vehicles was an awe- some array to destroy.",
+			"\"Wilco,\" Piper replied, ending the meeting. \"Make sure there's plenty of small-arms ammunition in each fighting position. I want each man to have four extra magazines, in addition to the seven we brought with us.\"",
+			"The squad leaders nodded.",
+			"\"All right,\" Piper said. \"Let's get cracking.\"",
+			"Davis stood silent as the squad leaders returned to their men. Piper scanned the northern ridgeline of the valley and pointed to the crest of Hill 865.",
+			"\"What do you say we climb the north wall and get a good view of the approaches that lead into the valley?\" Piper asked.",
+			"\"IT don't know,\" Davis said with hesitation. \"What about our posi- tions? We still have a lot of work to accomplish.\"",
+			"\"Your first lesson, sir, is to learn how to delegate tasks. You can't do everything yourself,\" Piper answered, talking like a father does to his son. \"The squad leaders can build this position, and we can tell Cowper and Sergeant Mark to finish your fighting hole.\"",
+			"Davis looked at the tank ditch and then back at the hill where his men were digging. The hill was a beehive of activity as soldiers swung their picks into the hard, rocky soil.",
+			"\"Let's call it our leader's recon. We'll climb up to the top of Hill 865 and plan our battle while the squad leaders keep everyone working,\" Piper remarked with a smile. \"Well, what do you say, Lieutenant?\""
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"hill_865": {"name": "Hill 865", "icon": "geo-fill", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M4", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": {
+            "initial":
+                [
+					{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [430, 326, 35.0, "planning"], 
+					"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]}
+				],
+            "choice_personal_recon": 
+                [
+					{"d0": [430, 326, 35.0, "approve"]},
+					{"d0": [368, 312, 35.0, "hide"]},
+					{"d0": [318, 302, 35.0, "hide"]},
+					{"d0": [290, 348, 35.0, "hide"]},
+					{"d0": [290, 348, 35.0, "recon"]},
+					{}
+                ],
+            "choice_continue_work": 
+                [
+					{"d0": [430, 326, 35.0, "disapprove"]},
+					{"d0": [430, 326, 35.0, "working"]},
+					{}, {}
+                ]
+        },
+        "choices": {
+            "choice_personal_recon": "Go with Piper",
+            "choice_continue_work": "Stay"
+        }
+}

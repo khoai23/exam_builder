@@ -1,0 +1,72 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"The 125mm round from the enemy tank struck the Javelin gunner's position. When the smoke cleared, Specialist Chambers and his as- sistant gunner were gone.",
+			"A BMP raced past the tank and charged up the northern trail of Wadi Al Sirree. Other BMPs fired machine guns and 30mm cannons at the survivors of BP Alamo.",
+			"\"Shit, they're getting past us!\" Davis screamed.",
+			"The platoon returned fire at the advancing armored vehicles with- out effect. Two more BMPs struggled out of the tank ditch. The lead BMP hit an antitank mine. The mine sent a stream of molten metal up into the belly of the BMP. Exploding from inside out, the BMP disintegrated in a burst of fire and black smoke.",
+			"Most of Davis's men were down. Many had head wounds. Davis could hear the screams of the wounded in between the roar of enemy tank cannon and the blast of enemy machine guns.",
+			"\"Sir, we have to make a run for it!\" Sergeant Mark yelled. \"Let's <b>get the hell out</b> of here!\"",
+			"Davis looked at Cowper. Cowper's radio hand mike was ready.",
+			"Davis has to decide!"
+        ],
+        "offensive_units": {
+			"ot1": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot2": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot3": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot4": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"om1": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om2": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om3": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om4": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": { 
+			"initial": [
+				{
+					"d1": [361, 385, 60.0, "defend"], "d2": [407, 367, 75.0, "defend"], "d3": [494, 348, 55.0, "defend"], "d4": [551, 312, 60.0, "defend"], "d0": [430, 326, 35.0, "defend"],
+					"ot1": [317, 517, 100.0, "attack"], "ot2": [416, 497, 100.0, "attack"], "ot3": [515, 466, 100.0, "attack"], "ot4": [590, 414, 100.0, "attack"],
+					"om1": [311, 446, 100.0, "attack"], "om2": [411, 438, 100.0, "attack"], "om3": [436, 430, 100.0, "attack"], "om4": [537, 384, 100.0, "attack"],
+				"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "active"], "mine_m2": [374, 424, null, "active"], "mine_m3": [436, 419, null, "active"], "mine_m4": [557, 349, null, "active"]},
+				{
+					"d0": [430, 326, 35.0, "attack"],
+					"ot1": [317, 517, 100.0, "move"], "ot2": [416, 497, 0.0, "rout"], "ot3": [515, 466, 100.0, "move"], "ot4": [590, 414, 100.0, "move"],
+					"om1": [307, 480, 100.0, "move"], "om2": [411, 450, 100.0, "move"], "om3": [495, 446, 50.0, "move"], "om4": [590, 384, 100.0, "move"]
+				},
+				{
+					"ot1": [317, 517, 100.0, "move"], "ot2": [null, null, 0.0, "rout"], "ot3": [515, 466, 100.0, "move"], "ot4": [590, 414, 100.0, "move"],
+					"om1": [307, 480, 75.0, "move"], "om2": [411, 450, 75.0, "move"], "om3": [495, 446, 50.0, "rout"], "om4": [590, 384, 100.0, "move"]
+				}
+			],
+			"choice_withdraw": [
+				{"d1": [337, 340, 60.0, "retreat"], "d2": [369, 331, 75.0, "retreat"], "d3": [457, 300, 55.0, "retreat"], "d4": [504, 206, 60.0, "retreat"], "d0": [420, 274, 35.0, "retreat"]},
+				{"d1": [284, 231, 60.0, "retreat"], "d2": [314, 277, 75.0, "retreat"], "d3": [427, 218, 55.0, "retreat"], "d4": [482, 136, 60.0, "retreat"], "d0": [431, 146, 35.0, "retreat"]}
+			],
+			"choice_fight": [
+				{"d1": [361, 385, 60.0, "attack"], "d2": [407, 367, 75.0, "attack"], "d3": [494, 348, 55.0, "attack"], "d4": [551, 312, 60.0, "attack"], "d0": [430, 326, 35.0, "attack"]},
+				{},
+				{}
+			]
+		},
+        "choices": {
+            "choice_withdraw": "Withdraw",
+            "choice_fight": "Fight"
+        }
+}

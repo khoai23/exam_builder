@@ -1,0 +1,42 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"If we run now, we die. If we stay, we die. Is there no way out?",
+			"\"Damn it! We don't stand a chance if we run,\" Davis shouted. \"Stand fast. We're fighting here. Keep up the fire!\"",
+			"Davis fired his M16 toward an enemy tank attempting to push through the tank ditch.",
+			"\"Damn it! Keep firing!\" Few of the Americans heard their platoon leader's voice over the din of battle.",
+			"A BMP raced forward, firing wildly as it sped to the east. Tracers struck the advancing enemy armored vehicle without effect. An M60 machine gun, two positions down from Davis's hole, engaged the BMP. The distraction caused by the 7.62mm rounds gave another soldier just enough time to fire his AT4 and send the BMP to hell. A second BMP followed, bypassing his smoldering leader, and was blown apart by an antitank mine.",
+			"Undaunted, more BMPs followed. Davis's machine guns rattled and scraped the sides of the passing vehicles; however, the steady stream of armor-piercing incendiary bullets merely bounced off the hard flanks of the advancing enemy armor. Showered with sparks from the strike of Davis's guns, the BMPs drove on. A few BMPs were stopped by AT4s. More vehicles were missed than were hit.",
+			"The platoon was almost out of antitank missiles.",
+			"A tank crested the tank ditch and raced toward the defenders, slewing its turret to the right and left and firing its machine guns as it raced by. Two BMPs followed closely behind. The vehicles zig- zagged wildly as they sped through the smoke trying to avoid mines and burning vehicles.",
+			"\"They're getting past us!\" Davis screamed.",
+			"The trailing BMP surged forward, detonated a mine, and ex- ploded. It crumbled to pieces in a burst of black smoke and flame.",
+			"Tracers filled the air. Several of Davis's men were down. Many had head wounds. The screams of the wounded could be heard in between the roar of exploding vehicles. One of the Javelins was knocked out of action, its gunner sprawled on the desert floor in a puddle of bright red blood.",
+			"Bullets ripped at the sandbags of Davis's fighting position. Cowper, his M203 pointed up out of the hole, pummeled the advanc- ing enemy with grenade fire.",
+			"Another BMP suddenly exploded in a burst of orange flame and black smoke as a Javelin round hit its target. Twisted metal flew through the air. The turret came off the BMP and landed upside down on the hull.",
+			"From inside their bunkers, a few of Davis's men fired their M16s at the enemy vehicles in defiance. Their spirit was short lived.",
+			"An enemy detachment moved to battle formation west of the tank ditch and continued the attack. Moving on-line, they poured a con- tinuous volley of devastating machine-gun, 30mm cannon, and 125mm tank gun fire into the American position. One after another the defensive positions were blown apart. The Americans stopped firing.",
+			"Davis was down to a handful of men. He couldn't reach anyone on the radio. From his position, it was hard to see if anyone was alive. The entire area of Wadi Al Sirree was filled with smoke from vehicle exhaust, smoke generators, blazing vehicles, and burning smoke pots. The engagement area in front of his position was completely obscured. Davis surveyed the scene, scanning the smoke for enemy movement.",
+			"\"Sir, look out!\" Cowper shouted.",
+			"Two enemy tanks rocked to a halt behind a burning BMP, two hundred meters in front of BP Alamo, and leveled their guns at Davis's men."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [60, "result_die"],
+            [40, "result_captured"]
+        ]
+}

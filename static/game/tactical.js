@@ -16,7 +16,17 @@ var action_icons = {
 	"defend": "shield-exclamation",
 	"hide": "eye-slash",
 	"rout": "x-lg",
-	"hold": "hourglass"
+	"hold": "hourglass",
+	"recon": "binoculars",
+	"working": "hammer",
+	"working-hide": "hammer",
+	"planning": "clipboard",
+	"approve": "clipboard-check",
+	"disapprove": "clipboard-x",
+	"aid-medic": "bandaid",
+	"rest": "cup-hot",
+	"rest-hide": "cup-hot",
+	"retreat": "escape",
 }
 
 function update_action_icon(core_icon, action_icon, action) {
@@ -24,13 +34,14 @@ function update_action_icon(core_icon, action_icon, action) {
 	// TODO streamline it like `action_icons` above 
 	if(action == "blink") {
 		core_icon.addClass("animate-blink");
+		core_icon.css("opacity", "1.0")
 	} else {
 		core_icon.removeClass("animate-blink");
 		if(action == "inactive") {
-			core_icon.css("opacity", "0.0"); // effectively hiding it
+			core_icon.css("opacity", "0.0"); // effectively completely hiding it
 		} else if(action == "rout") {
 			core_icon.css("opacity", "0.2")
-		} else if(action == "hide") {
+		} else if(action.includes("hide")) { // if work in secret, make it transparent
 			core_icon.css("opacity", "0.5")
 		} else {
 			core_icon.css("opacity", "1.0")
@@ -38,9 +49,12 @@ function update_action_icon(core_icon, action_icon, action) {
 	}
 	// depending on specific action, give the action_icon appropriate visual
 	if(action_icons[action]) {
-		// have associating action icon; the actual element should be swapped
+		// have associating action icon; the actual element should be swapped. TODO don't disrupt it if it's correct?
 		action_icon.removeClass().addClass("bi bi-" + action_icons[action]);
 		action_icon.show()
+		if(action.includes("working") || action.includes("rest") ) { // also allow action icon to blink on specific ones
+			action_icon.addClass("animate-blink");
+		}
 	} else {
 		// have no associating action icon, the element will be hidden 
 		action_icon.hide()
@@ -61,7 +75,7 @@ function nextScriptStep(script, loopback=true, animation=true) {
 	let step_data = script[current_script_step];
 	for (const [unit_id, [x, y, strength, action]] of Object.entries(step_data)) {
 		let unit = $("#" + unit_id);
-		if(x === null || y === null || strength === null) {
+		if(x === null || y === null) {
 			// unit have left the board and should be hidden
 			unit.hide();
 		} else {
@@ -140,3 +154,5 @@ function roll(event) {
 		window.location.href = redirect_link;
 	})
 }
+
+var go_next_section = roll; // they are the same - just send up a signal to continue

@@ -1,0 +1,9 @@
+{
+        "scenario_type": "static",
+        "narration": [
+			"<h1 class=\"text-center\"> Death </h1>",
+			"A horrendous explosion blasted close to Davis's position. In a blind- ing burst of fire, flying shards of hot steel tore Davis to pieces. He never had a chance to feel the pain before he died.",
+			"<b>Consider what lead up to this, and if you have made proper precaution to mimimize the risk. Your death may have been the result of your choice, or fate's hand in spite of it.</b>"
+        ],
+        "mapless_mode": true
+}

@@ -1,0 +1,33 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+		"\"Now, Chambers, fire! Get the bastard!\"",
+		"Specialist Chambers, kneeling with his eye pressed against the missile tracking unit sight, depressed the Javelin trigger. He fired his last missile. The missile burst out of the tube in a loud roar and flew a jumping, erratic path to the stationary enemy tank.",
+		"The Javelin missile hit the top of the tank. The warhead burned through the tank and sent a molten stream of energy into its turret. The tank ignited in a surge of smoke and flame as its ammunition exploded.",
+		"The tank behind the exploding hulk turned its turret in Davis's direction, apparently eager to avenge the death of the lead vehicle. The enemy tank fired its machine guns in a wide, wild arc as the tur- ret turned. BMPs moved forward under the cover of the tank's fire.",
+		"Davis watched as Chambers jumped out of his hole to grab the last remaining Javelin round near the dead gunner to his left. Chambers secured the round and threw himself to the ground. He worked furiously to place the guidance system onto the missile. Machine-gun bullets ripped through the American positions.",
+		"A BMP forced its way around the first burning tank and advanced another fifty meters before it was ripped apart by an antitank mine. Undaunted, another BMP tank moved up behind the burning wreck and pushed it through the minefield.",
+		"\"Fire our last missile at that BMP!\" Davis screamed.",
+		"Chambers placed the Javelin missile on his shoulder. At the same moment, the BMP fired."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [15, "result_die"],
+            [25, "result_captured"],
+            [60, "result_survive"]
+        ]
+}

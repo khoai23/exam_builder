@@ -1,0 +1,30 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"Cowper jumped under the roof of his fighting position. Davis quickly followed him into the protection of their small bunker.",
+			"Seconds later a hail of shells landed all around BP Alamo. In quick succession a volley of eighteen shells smashed into the hill overlooking the tank ditch. The noise was tremendous.",
+			"The barrage consumed Davis's senses. Like an angry storm, the enemy artillery attempted to pound the Americans into the ground. Davis hugged the bottom of his hole, helpless to stop the power of the enemy fire. He held his arms over his head as rocks and flying metal tore at the top of his fighting position.",
+			"The shock wave caused by the artillery crushed in around Davis, causing his nose to bleed. He didn't know what to do but he had to do something. He had to see what was happening. Quickly he raised his head to the firing aperture. The detonations had created large black holes in the rocky hill. He watched in horror as positions to his left and right took direct hits from the enemy's deadly accurate artil- lery shells.",
+			"Suddenly a round landed close to Davis's position and forced him back to the bottom of his foxhole."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [40, "result_die"],
+            [30, "result_captured"],
+            [30, "result_survive"]
+        ]
+}

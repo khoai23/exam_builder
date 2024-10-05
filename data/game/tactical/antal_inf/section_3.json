@@ -1,0 +1,85 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"Davis, back with his platoon at the western mouth of Wadi Al Sirree, studied his map. There were several ways he could defend his sector. His mission, he reminded himself, was to block enemy forces from attacking through Wadi Al Sirree. In spite of the fact that Bludgell didn't expect the enemy to attack through Wadi Al Sirree, Davis knew that his mission was critical to the company's success.",
+			"<blockquote>Deny the enemy access to a given area or prevent en- emy advance in a given direction. It may be for a specified time.\nUnits may have to retain terrain and accept decisive engagement. -- FM 101-5-1, Operational Terms and Symbols, 1985</blockquote>",
+			"Davis quickly saw that there were three ways to defend the valley: forward of the trails, behind the trails, or in the trails. He quickly scribbled three sketches to mentally war-game his options.",
+			"A <b>forward defense</b> was the simplest option. If the enemy tried to attack through Wadi Al Sirree, he would have to fight through Davis's men first. It would require the preparation of a platoon battle position east of the tank ditch to deny the enemy access into the trails. He would have to improve their present fighting positions and antitank ditch with mines and wire, thus blocking the enemy's ad- vance into the valley. This option would maximize simplicity, mass, and unity of command. Sometimes the simplest plan was the best one.",
+			"Davis's second option was a <b>reverse-slope defense</b> at the eastern edge of the four trails that led into the valley. This course of action called for the entire platoon to reposition to the east, abandoning the hill that overlooked the tank ditch. A reverse-slope defense would deny the platoon clear observation of the enemy as he approached the valley, but it would provide better protection from enemy direct and indirect fires. The concept was to allow the enemy to breach the tank ditch and mines, place obstacles to force the enemy to move along the narrow northern trails, and then destroy the enemy at close range as he entered the valley. This course of action maximized se- curity and economy of force.",
+			"The third option was to block the enemy in <b>each of the four trails</b> that led into Wadi Al Sirree. Davis knew that he had more short- range weapons than long-range weapons. He could divide the pla- toon into antiarmor ambush teams and assign each team a trail that led into the valley. The platoon could engage the attacker's lead ve- hicles in selected short-range combat areas along each trail. By fight- ing a close-range battle in the trails that led into the valley, the pla- toon could pick off the enemy one at a time. The enemy wouldn't see the defenders until it was too late. This option would maximize sur- prise and offensive action.",
+			"Was there a fourth option? Davis weighed the possibilities.",
+			"<blockquote>You will usually find that the enemy has three courses of action open to him, and of these he will adopt a fourth. -- Field Marshal Helmuth Graf von Moltke</blockquote>",
+			"Hell, I can second-guess myself all day, he thought. I need to get cracking. Better to decide now and put a good plan to work rather than waste time trying to decide on the perfect plan.",
+			"Davis walked over to Sergeant Piper, who was finishing the work on his two-man foxhole-now three feet deep. The rest of the pla- toon was dug in at about the same depth. The soldiers were piling up black basalt rocks in front of their positions to form firing parapets.",
+			"\"Our company commander has positioned everyone but us in BP Bravo. I've drawn our company's graphics on my map,\" Davis said, kneeling down to talk to his platoon sergeant. \"The brigade has the 2d and 3d Rifle Battalions defending the valley to our north. In ad- dition they have a heavy tank task force, acting as a brigade reserve, to stop the enemy if he breaks through our infantry. In a couple of days they expect the 1st Brigade of the 1st Infantry Division to arrive to support us.\"",
+			"Davis stooped down and unfolded his map. The big black lines on his map case depicted the platoon's area of responsibility. \"I've been studying our setup here and I think we need to talk. We may have to move our positions.\"",
+			"<blockquote>The decisive point of a battlefield is determined . . . by the character of the position, the bearing of different localities upon the strategic object in view, and, finally, by the arrangement of the contending forces. -- Antoine Henri Baron de Jomini</blockquote>",
+			"\"You've got to be kidding, Lieutenant,\" Piper complained, loud enough for the entire platoon to hear. He threw his shovel to the ground. It struck the desert floor and sent a billow of fine dust into the air.",
+			"The first basic concept in tactics is to achieve a decision. It is time for Davis to decide."
+        ],
+        "offensive_units": {
+			"a1": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a2": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a3": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a4": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a5": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a6": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a7": {"name": "Projected attacker", "icon": "question-circle"}, 
+			"a8": {"name": "Projected attacker", "icon": "question-circle"} 
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": {
+            "initial":
+                [
+					{"d1": [361, 385, 100.0, "hide"], "d2": [407, 367, 100.0, "hide"], "d3": [494, 348, 100.0, "hide"], "d4": [551, 312, 35.0, "hide"], "d0": [430, 326, 35.0, "hide"], "defend_objective": [367, 105, null, "blink"], "a1": [300, 570, 100.0, "hold"], "a2": [300, 570, 100.0, "hold"], "a3": [300, 570, 100.0, "hold"], "a4": [300, 570, 100.0, "hold"], "a5": [480, 570, 100.0, "hold"], "a6": [480, 570, 100.0, "hold"], "a7": [480, 570, 100.0, "hold"], "a8": [480, 570, 100.0, "hold"]}
+				],
+            "choice_forward_slope": 
+                [
+                    {"a1": [354, 456, 100.0, "move"], "a2": [385, 444, 100.0, "move"], "a3": [416, 432, 100.0, "move"], "a4": [447, 420, 100.0, "move"], "a5": [478, 408, 100.0, "move"], "a6": [509, 396, 100.0, "move"], "a7": [540, 384, 100.0, "move"], "a8": [571, 372, 100.0, "move"]},
+					{"d1": [361, 385, 100.0, "attack"], "d2": [407, 367, 100.0, "attack"], "d3": [494, 348, 100.0, "attack"], "d4": [551, 312, 35.0, "attack"], "d0": [430, 326, 35.0, "attack"],
+					"a1": [350, 430, 50.0, "move"], "a2": [381, 418, 80.0, "move"], "a3": [412, 406, 80.0, "move"], "a4": [443, 396, 70.0, "move"], "a5": [460, 390, 60.0, "move"], "a6": [491, 378, 70.0, "move"], "a7": [532, 366, 70.0, "move"], "a8": [553, 356, 80.0, "move"]},
+					{"a1": [350, 430, 20.0, "rout"], "a2": [381, 418, 60.0, "defend"], "a3": [412, 406, 70.0, "defend"], "a4": [443, 396, 50.0, "defend"], "a5": [478, 408, 30.0, "defend"], "a6": [491, 378, 35.0, "rout"], "a7": [532, 366, 50.0, "defend"], "a8": [553, 356, 60.0, "defend"]},
+					{"a1": [null, null, null, "rout"], "a2": [381, 418, 25.0, "rout"], "a3": [416, 432, 35.0, "defend"], "a4": [443, 396, 25.0, "rout"], "a5": [478, 408, 30.0, "hold"], "a6": [null, null, null, "rout"], "a7": [532, 366, 25.0, "rout"], "a8": [553, 356, 60.0, "defend"]},
+					{"a2": [null, null, null, "rout"], "a3": [385, 444, 15.0, "rout"], "a4": [447, 420, 10.0, "rout"], "a5": [478, 408, 30.0, "rout"], "a7": [540, 384, 25.0, "rout"], "a8": [553, 356, 50.0, "rout"]},
+					{"a3": [null, null, null, "rout"], "a4": [null, null, null, "rout"], "a5": [null, null, null, "rout"], "a7": [null, null, null, "rout"], "a8": [null, null, null, "rout"]}
+                ],
+            "choice_reverse_slope": 
+                [
+                    {"a1": [354, 456, 100.0, "move"], "a2": [385, 444, 100.0, "move"], "a3": [416, 432, 100.0, "move"], "a4": [447, 420, 100.0, "move"], "a5": [478, 408, 100.0, "move"], "a6": [509, 396, 100.0, "move"], "a7": [540, 384, 100.0, "move"], "a8": [571, 372, 100.0, "move"]},
+					{"d1": [361, 385, 100.0, "attack"], "d2": [407, 367, 100.0, "attack"], "d3": [494, 348, 100.0, "attack"], "d4": [551, 312, 35.0, "attack"], "d0": [430, 326, 35.0, "attack"],
+					"a1": [350, 430, 50.0, "move"], "a2": [381, 418, 80.0, "move"], "a3": [412, 406, 80.0, "move"], "a4": [443, 396, 70.0, "move"], "a5": [460, 390, 60.0, "move"], "a6": [491, 378, 70.0, "move"], "a7": [532, 366, 70.0, "move"], "a8": [553, 356, 80.0, "move"]},
+					{"a1": [350, 430, 20.0, "rout"], "a2": [381, 418, 60.0, "defend"], "a3": [412, 406, 70.0, "defend"], "a4": [443, 396, 50.0, "defend"], "a5": [478, 408, 30.0, "defend"], "a6": [491, 378, 35.0, "rout"], "a7": [532, 366, 50.0, "defend"], "a8": [553, 356, 60.0, "defend"]},
+					{"a1": [null, null, null, "rout"], "a2": [381, 418, 25.0, "rout"], "a3": [416, 432, 35.0, "defend"], "a4": [443, 396, 25.0, "rout"], "a5": [478, 408, 30.0, "hold"], "a6": [null, null, null, "rout"], "a7": [532, 366, 25.0, "rout"], "a8": [553, 356, 60.0, "defend"]},
+					{"a2": [null, null, null, "rout"], "a3": [385, 444, 15.0, "rout"], "a4": [447, 420, 10.0, "rout"], "a5": [478, 408, 30.0, "rout"], "a7": [540, 384, 25.0, "rout"], "a8": [553, 356, 50.0, "rout"]},
+					{"a3": [null, null, null, "rout"], "a4": [null, null, null, "rout"], "a5": [null, null, null, "rout"], "a7": [null, null, null, "rout"], "a8": [null, null, null, "rout"]}
+                ],
+            "choice_split_up": 
+                [
+                    {"a1": [354, 456, 100.0, "move"], "a2": [385, 444, 100.0, "move"], "a3": [416, 432, 100.0, "move"], "a4": [447, 420, 100.0, "move"], "a5": [478, 408, 100.0, "move"], "a6": [509, 396, 100.0, "move"], "a7": [540, 384, 100.0, "move"], "a8": [571, 372, 100.0, "move"]},
+					{"d1": [361, 385, 100.0, "attack"], "d2": [407, 367, 100.0, "attack"], "d3": [494, 348, 100.0, "attack"], "d4": [551, 312, 35.0, "attack"], "d0": [430, 326, 35.0, "attack"],
+					"a1": [350, 430, 50.0, "move"], "a2": [381, 418, 80.0, "move"], "a3": [412, 406, 80.0, "move"], "a4": [443, 396, 70.0, "move"], "a5": [460, 390, 60.0, "move"], "a6": [491, 378, 70.0, "move"], "a7": [532, 366, 70.0, "move"], "a8": [553, 356, 80.0, "move"]},
+					{"a1": [350, 430, 20.0, "rout"], "a2": [381, 418, 60.0, "defend"], "a3": [412, 406, 70.0, "defend"], "a4": [443, 396, 50.0, "defend"], "a5": [478, 408, 30.0, "defend"], "a6": [491, 378, 35.0, "rout"], "a7": [532, 366, 50.0, "defend"], "a8": [553, 356, 60.0, "defend"]},
+					{"a1": [null, null, null, "rout"], "a2": [381, 418, 25.0, "rout"], "a3": [416, 432, 35.0, "defend"], "a4": [443, 396, 25.0, "rout"], "a5": [478, 408, 30.0, "hold"], "a6": [null, null, null, "rout"], "a7": [532, 366, 25.0, "rout"], "a8": [553, 356, 60.0, "defend"]},
+					{"a2": [null, null, null, "rout"], "a3": [385, 444, 15.0, "rout"], "a4": [447, 420, 10.0, "rout"], "a5": [478, 408, 30.0, "rout"], "a7": [540, 384, 25.0, "rout"], "a8": [553, 356, 50.0, "rout"]},
+					{"a3": [null, null, null, "rout"], "a4": [null, null, null, "rout"], "a5": [null, null, null, "rout"], "a7": [null, null, null, "rout"], "a8": [null, null, null, "rout"]}
+                ]
+        },
+        "choices": {
+            "choice_forward_slope": "Forward Defense",
+            "choice_reverse_slope": "Reverse-Slope Defense",
+            "choice_split_up": "Scattered Defense"
+        }
+}

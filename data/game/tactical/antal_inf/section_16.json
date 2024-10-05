@@ -1,0 +1,54 @@
+{
+        "scenario_type": "static",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"<h1 class=\"text-center\"> Death </h1>",
+			"Davis moved steadily, carrying his M16 facing forward, his canteens sloshing at his sides. The sound of distant artillery, almost like the rumble of a thunderstorm off on the horizon, emanated from the west.",
+			"\"It sounds like somebody is catching hell up front,\" commented Davis.",
+			"Piper nodded phlegmatically. \"I'm sure our allies will be running our way soon. I never worked with these guys before, but from what I saw of Desert Storm, they won't hold out long.\"",
+			"\"Maybe so,\" Davis replied, praying silently that Piper was wrong. \"At least our air force will have a chance to soften up the enemy before they hit us.\"",
+			"\"Don't count on it,\" Piper said with a shrug. \"In the infantry you've got to take care of yourself. We can't count on any help other than our own company and battalion.\"",
+			"As if to dispute Piper's comments, the far-off hum of helicopter rotors filled the air to the east. Two low-flying choppers, moving several kilometers off to the men's right, chopped through the air, heading west.",
+			"\"Well, it looks like somebody decided to help. Those babies will sure give 'em hell,\" Davis announced, pointing to the U.S. Army Apache and OH-68 Warrior helicopter team. Piper didn't answer. Both men watched as the helicopters flew over the western ridgeline and out of view.",
+			"The two men finally arrived at the top of Hill 865. Davis climbed onto a large boulder to get a better view. He brought his binoculars to his eyes.",
+			"Three shots shattered the tranquillity. Bullets ripped into Davis's left arm, knocking him off the boulder. He dropped his binoculars and M16 and hit the ground with a hard thud.",
+			"What is happening? I have to move, Davis thought. He felt a burn- ing sensation in his arm. He was confused. Mustering his strength, he forced himself to stand.",
+			"\"Get down, Lieutenant! Take cover!\" Piper yelled. The sergeant jumped up and fired a few rounds in the direction of their attacker. Davis stood in front of the boulder, dazed by his wound and the im- pact of the fall. Piper climbed up a few steps to drag him out of the field of fire.",
+			"The enemy rifles barked again.",
+			"Davis felt the impact of the rounds as they entered his chest. He tumbled backward, doubling over.",
+			"Piper crawled close, grabbed Davis's boot, and pulled the downed officer behind a large, jagged rock outcropping. The sergeant then spun around on his belly and leveled his M16 rifle in the direction of the enemy fire. He blasted off a full magazine of ammunition.",
+			"Time hung in the air, still, frozen. Davis looked up at the clear blue sky. He felt his heart beating fast. He was having trouble breath- ing. Each gasp for air was a painful struggle. It had all happened so quickly, he thought.",
+			"\"Don't move, Lieutenant,\" Piper warned. \"We must have stumbled onto an enemy observation post. I'll get you out of here.\"",
+			"\"No, 'm-\"",
+			"\"Hang on, Lieutenant!\" Piper urged as he changed magazines in his M16. \"Don't give up.\"",
+			"Davis couldn't reply. He was choking for air. His mouth tasted of blood and dust, and he felt terribly cold. A thousand questions boiled in his mind. Why couldn't he move or turn his head? Slowly the sounds of battle drifted over him. The muffled blast of a grenade, the slow, deliberate fire from Sergeant Piper's M16, and the short, sharp burst from the enemy sniper rifle were the last things he heard. Sud- denly the world went black.",
+			"After a few spasmodic gasps, Davis stopped breathing and died."
+        ],
+        "offensive_units": {
+			"o1": {"name": "Enemy Recon", "icon": "1-circle", "rank_icon": "binoculars"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+		{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [290, 348, 35.0, "recon"], "o1": [280, 316, 100.0, "inactive"], 
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]},
+			{"o1": [280, 316, 100.0, "inactive"]},
+			{"d0": [290, 348, 35.0, "rout"]},
+			{"d0": [null, null, 35.0, "rout"]}
+		]
+}

@@ -1,0 +1,70 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"Through the thick smoke Davis could see two columns of enemy armor racing toward Wadi Al Sirree from the west. A battalion-sized unit of enemy tanks and armored infantry fighting vehicles was heading directly for him. The enemy was about eight hundred meters away and closing fast.",
+			"Davis ducked down and hugged the bottom of his fighting posi- tion. The enemy artillery fire continued to pulverize BP Alamo. Fly- ing metal filled the air, whizzing past at high speed in a terrible tra- jectory of death.",
+			"The enemy fire is extremely accurate. Too accurate! Davis thought. Either they have an observer nearby or they're using laser- guided artillery shells.",
+			"\"Sir, I finally got through to battalion mortars,\" Cowper yelled. \"They're pulling back. The company has been shot to hell. They have enemy infantry all over the place. We're on our own.\"",
+			"\"Enemy infantry?\" Davis questioned. A puzzled look streaked across his tired face. \"The bastards must have conducted an air as- sault in our rear! Why in the hell have they left us alone?\"",
+			"The enemy artillery fire slackened. The dazed survivors of BP Alamo raised their heads to see the battlefield.",
+			"\"Medic, medic!\" someone screamed.",
+			"\"Fetterman is dead. So is Gerber,\" another voice shouted.",
+			"\"Everybody check your weapons,\" Piper bellowed. \"The enemy will be here soon.\"",
+			"\"Get those Javelins ready,\" Davis stood up and shouted to the Jav- elin gunners in the positions to the left and right. \"Don't fire until the enemy gets to the minefield!\"",
+			"Two explosions detonated two hundred meters to their front. \"Take cover. Incoming!\" Cowper screamed.",
+			"A single artillery round exploded directly on top of a position on the north edge of BP Alamo. The high-explosive shell disintegrated the position in a blast of fire and smoke. Davis fell over from the force of the blast. His ears were ringing so badly he could barely hear Private Cowper.",
+			"\"Shit! They're going to take us out one at a time with artillery,\" Cowper cried, shaking with fear. \"We've got to get out of here!\""
+        ],
+        "offensive_units": {
+			"ot1": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot2": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot3": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot4": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"om1": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om2": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om3": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om4": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d1": [361, 385, 60.0, "hold"], "d2": [407, 367, 75.0, "hold"], "d3": [494, 348, 55.0, "hold"], "d4": [551, 312, 60.0, "hold"], "d0": [430, 326, 35.0, "hold"],
+				"ot1": [286, 592, 100.0, "move"], "ot2": [363, 570, 100.0, "move"], "ot3": [490, 548, 100.0, "move"], "ot4": [560, 582, 100.0, "move"],
+				"om1": [276, 562, 100.0, "move"], "om2": [363, 530, 100.0, "move"], "om3": [470, 528, 100.0, "move"], "om4": [560, 502, 100.0, "move"],
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "active"], "mine_m2": [374, 424, null, "active"], "mine_m3": [436, 419, null, "active"], "mine_m4": [557, 349, null, "active"]},
+			{
+				"ot1": [317, 517, 100.0, "move"], "ot2": [416, 497, 100.0, "move"], "ot3": [515, 466, 100.0, "move"], "ot4": [590, 414, 100.0, "move"],
+				"om1": [307, 480, 100.0, "move"], "om2": [411, 450, 100.0, "move"], "om3": [495, 446, 100.0, "move"], "om4": [590, 384, 100.0, "move"]
+			},
+			{
+				"ot1": [317, 517, 100.0, "attack"], "ot2": [416, 497, 100.0, "attack"], "ot3": [515, 466, 100.0, "attack"], "ot4": [590, 414, 100.0, "attack"],
+				"om1": [311, 446, 100.0, "move"], "om2": [411, 438, 100.0, "move"], "om3": [436, 430, 100.0, "move"], "om4": [537, 384, 100.0, "move"]
+			},
+			{
+				"ot1": [317, 517, 100.0, "attack"], "ot2": [416, 497, 100.0, "attack"], "ot3": [515, 466, 100.0, "attack"], "ot4": [590, 414, 100.0, "attack"],
+				"om1": [311, 446, 100.0, "attack"], "om2": [411, 438, 100.0, "attack"], "om3": [436, 430, 100.0, "attack"], "om4": [537, 384, 100.0, "attack"]
+			}
+		],
+        "choices": [
+            [50, "result_captured"],
+            [25, "result_survive_v1"],
+			[25, "result_survive_v2"]
+        ]
+}

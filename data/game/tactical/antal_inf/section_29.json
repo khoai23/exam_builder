@@ -1,0 +1,39 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"The ground three hundred meters in front of Davis rocked with ex- plosions. There was little he could do except press his body against the hard ground and pray for the artillery to end.",
+			"Cowper cringed low in the two-man hole next to his platoon leader. The RTO strained to hear the radio, pressing the receiver hard against his ear. Davis struggled to see. From the slit of his bunker he could observe the enemy at the tank ditch.",
+			"I must get some artillery on them, he thought.",
+			"\"Cowper! Try to get Sergeant Mark,\" Davis ordered, his voice colored with urgency.",
+			"Enemy artillery shells slammed into BP Alamo. Dirt was falling all over them. Dust filled the air, entering Davis's mouth and lungs, making it difficult to breathe.",
+			"\"No luck, sir. He's not answering!\" Cowper yelled frantically, choking from the swirl of dirt caused by the artillery.",
+			"Davis grabbed the hand mike from Cowper.",
+			"\"Charlie Five-Five, this is One-Six,\" Davis shouted, trying to reach his forward observer. \"Five-Five, this is One-Six. Over.\"",
+			"There was no response.",
+			"\"Damn it!\" Davis shouted. \"I'm going to Sergeant Mark's hole.\"",
+			"A terrific explosion rocked the ground just meters in front of Davis's foxhole.",
+			"\"Are you OK?\" Cowper shouted in between the roar of exploding shells.",
+			"\"Yes,\" Davis yelled. \"Wait here. I'll be back!\"",
+			"Cowper looked at his platoon leader with disbelief."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [60, "result_die"],
+            [10, "result_die_2"],
+            [30, "result_captured"]
+        ]
+}

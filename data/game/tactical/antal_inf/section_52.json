@@ -1,0 +1,55 @@
+{
+        "scenario_type": "static",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"<h1 class=\"text-center\"> Critical Injury </h1>",
+			"\"Hold on!\" Davis yelled. He spun around on his belly, leveled his M16 rifle in the direction of the incoming fire, and blasted off a full thirty-round magazine of ammunition. \"I'Il get to you as soon as I take this guy out!\"",
+			"Time hung in the air, still, frozen. Davis changed magazines in his rifle, then crawled to the left, looking for a better shot at his antago- nist. He felt his heart beating fast.",
+			"The dirt in front of Davis jumped with the strike of the enemy round. Davis rolled to his right, fired a few rounds, and contin- ued crawling.",
+			"\"Don't move, Piper,\" Davis shouted as he changed magazines in his M16. \"We must have stumbled into an enemy observation post. I'll get you out of here.\"",
+			"Piper didn't respond.",
+			"From his new position, Davis was within grenade range of the enemy, who had piled heavy stones to form the walls of their fight- ing position. The top of the position was covered with plywood, sandbags, and rocks.",
+			"Davis unhooked a grenade from the flap of his ammo pouch, pulled the pin, and flung the grenade. It exploded just in front of the enemy position. Rocks and dirt flew everywhere, adding to the shrapnel effect.",
+			"One man, staggering from the blast, got up to run. Davis dropped him with a well-aimed shot from his M16. Another enemy soldier stood up and fired his AK-74 at Davis before Davis could respond. Davis was hit in the left shoulder. He dropped his M16. The force of the bullet's impact spun him around and knocked him to the ground. With a surge of strength he crawled behind a rock to hide from the enemy's fire.",
+			"His M16 lay in the open, just beyond his reach. His left arm and side were numb. He groped for his rifle but recoiled his hand as a burst from an AK-74 struck inches in front of his fingers.",
+			"I'll never get out of here, Davis thought. I can't reach my rifle.",
+			"Digging his heels into the dirt, Davis pushed himself closer to the rock protecting him from the enemy.",
+			"\"Amreekee!\" the enemy taunted. \"Inta intahate.\"",
+			"Davis pulled another hand grenade from his ammo pouch strap. It was his last grenade. This one would have to count. His left arm was useless. He wedged the grenade under a heavy rock to keep the arm- ing device from igniting, then gently pulled the pin free. Deftly he clasped the grenade with his good arm, holding down the arming spoon as he pulled it from the rock.",
+			"Davis waited and listened. An eternity seemed to pass. Suddenly he heard the dull tread of a boot displacing a rock. It sounded close.",
+			"It's now or never, Davis thought.",
+			"Davis tossed the grenade over his head, toward the sound. The ex- plosion detonated so close that rocks, dirt, and debris scattered over him. As the dust settled, the hill was bathed in an ominous silence.",
+			"Davis rolled to his good side. The second enemy soldier lay face up on the ground, a bloody corpse, splattered by Davis's grenade.",
+			"It took thirty minutes before Davis's men reached him and another hour before a medevac chopper arrived. In that time Sergeant Piper bled to death. Davis was seriously wounded, but his wound was not mortal and he would survive. Sergeant Jordan, the senior NCO in the platoon, took charge. For Davis the war was over."
+        ],
+        "offensive_units": {
+			"o1": {"name": "Enemy Recon", "icon": "1-circle", "rank_icon": "binoculars"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+					{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [290, 348, 35.0, "planning"], "o1": [280, 316, 100.0, "attack"], 
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]},
+					{"d0": [290, 348, 35.0, "approve"]},
+					{"d0": [290, 348, 35.0, "hide"]},
+					{"d0": [290, 348, 35.0, "attack"]},
+					{"d0": [290, 348, 35.0, "attack"], "o1": [280, 316, 100.0, "rout"]},
+					{"d0": [290, 348, 35.0, "rout"], "o1": [null, null, 100.0, "rout"]},
+					{}
+		]
+}

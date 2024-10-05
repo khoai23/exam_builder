@@ -1,0 +1,59 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"\"That's where we need to go,\" Piper said, pointing at the high ground to the north. \"It'll take us about forty minutes.\"",
+			"\"OK,\" Davis said as he adjusted his web gear and grabbed his M16 from inside the fighting position. \"I could use the walk.\"",
+			"\"Jordan,\" Piper yelled. \"You're in charge. Get a detail to lay those mines. When we get back I'll expect you to have most of them laid out. Don't try to bury them, just lay them on the surface.\"",
+			"Jordan nodded in agreement. \"Yeah, Sarge. I'll make it happen.\"",
+			"Davis walked around the northern end of the tank ditch and headed east, with Sergeant First Class Piper, his M16 at the ready, following close behind. The men panted as they struggled up the hill. The heat was stifling.",
+			"\"Why'd you join the army, Lieutenant?\" Piper asked as they trudged forward.",
+			"\"Why? What kind of question is that, Sergeant?\"",
+			"\"Just curious. You come from a military family?\" Piper continued.",
+			"\"Yes, I do. The Davises have always been soldiers, or marines. It's in our blood. I have a brother in the marines and another in the army. It's what we do.\"",
+			"\"Not me. I joined to earn a college education. Once I got in, I found out I liked it. Haven't had a chance to finish college yet. Maybe I'll finish school once this is all over.\"",
+			"The two men climbed for several hundred meters in silence. Davis led; Piper followed close behind. They found a narrow, winding trail and slowly trekked up it. As the sun rose higher in the sky, the temperature reached one hundred degrees Fahrenheit. A huge black crow flew overhead, interrupting the quiet of the desert with its portentous cawing.",
+			"Suddenly Davis stopped and raised his hand, signaling for Piper to take cover. Crouching behind a big rock, Davis raised his binoculars to search the ground ahead.",
+			"\"I could have sworn I saw something moving,\" Davis said in a whisper.",
+			"\"Where?\"",
+			"\"Over there, on top of that rise,\" Davis said, pointing. \"I don't see anything now.\"",
+			"The two men waited for several minutes. Davis continued to scan the area with his binoculars.",
+			"\"It was probably a crow,\" Piper replied. \"We haven't had any re- ports that the enemy is in our area.\"",
+			"\"Maybe so, but let's keep alert,\" Davis said as he switched off the safety on his M16 rifle."
+        ],
+        "offensive_units": {
+			"o1": {"name": "Enemy ?", "icon": "question"},
+			"o2": {"name": "Enemy ?", "icon": "question"},
+			"o3": {"name": "Enemy ?", "icon": "question"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [430, 326, 35.0, "approve"], "o1": [280, 316, 100.0, "inactive"], "o2": [280, 384, 100.0, "inactive"], "o3": [314, 360, 100.0, "inactive"], 
+			"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]},
+			{"d0": [368, 312, 35.0, "hide"]},
+			{"d0": [318, 302, 35.0, "hide"]},
+			{"d0": [290, 348, 35.0, "hide"], "o1": [280, 316, 100.0, "blink"]},
+			{"d0": [290, 348, 35.0, "recon"], "o1": [280, 316, 100.0, "inactive"], "o2": [280, 384, 100.0, "blink"]},
+			{"d0": [290, 348, 35.0, "recon"], "o2": [280, 384, 100.0, "inactive"], "o3": [314, 360, 100.0, "blink"]}
+		],
+        "choices": [
+            [25, "result_dead"],
+            [75, "result_piper_hit"]
+        ]
+}

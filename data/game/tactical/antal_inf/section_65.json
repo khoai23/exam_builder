@@ -1,0 +1,30 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+		"Bullets ripped at the dirt in front of Davis's firing position. Tracers filled the air. Several of Davis's men were hit.",
+		"The enemy BMP turned toward the center of the company and rolled forward, firing directly at Davis's position. Cowper aimed his M203 at the advancing enemy vehicle. The round landed near the flank of the vehicle, distracting the gunner for one vital second.",
+		"The lead BMP suddenly exploded in a burst of orange flame and black smoke as the last Javelin round hit its target. Twisted metal flew through the air. The BMP burst into flames.",
+		"Davis's men cheered. Davis surveyed the scene, scanning the ho- rizon for enemy movement.",
+		"\"Sir, look out!\" Cowper shouted.",
+		"An enemy tank raced out of the smoke and screeched to a halt be- hind the burning BMP. The big 125mm gun swung toward Davis's men."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [75, "result_die"],
+            [25, "result_captured"]
+        ]
+}

@@ -1,7 +1,8 @@
 """Tactical (battalion-level) map/scenario. For now we will have railroaded scenarios basing on result of a test.
 Goal is for this to be updated to have interactable impact."""
 
-import random, json
+import json, io, os
+import random, base64
 
 from typing import Dict, List, Optional
 
@@ -16,34 +17,31 @@ class Scenario:
                 - o/d color: HTML color used for the units.
                 - script: list of positions & states of each unit per phase."""
         data = {}
+        # there is a mapless mode; reserved for static variant for now
+        if getattr(self, "mapless_mode", False):
+            # mapless mode initiated. Only take the type, narration & leave
+            data["mapless_mode"] = True 
+            data["scenario_type"] = "static"
+            data["narration"] = self.narration
+            return data
         # converting units to dict 
-        data["offensive_units"] = [{"id": v, "name": k, "icon": "{:d}-circle".format(i % 10)} for i, (k, v) in enumerate(self.offensive_units.items())]
-        data["defensive_units"] = [{"id": v, "name": k, "icon": "{:d}-circle".format(i % 10)} for i, (k, v) in enumerate(self.defensive_units.items())]
-        data["neutrals"]   = [{"id": v, "name": k, "icon": "question-circle"} for k, v in getattr(self, "neutrals", dict()).items()] # could be object or unrelated units. use generic icon for now
+        data["offensive_units"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in self.offensive_units.items()}
+        data["defensive_units"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in self.defensive_units.items()}
+        data["neutrals"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in getattr(self, "neutrals", dict()).items()} # could be object or unrelated units. Can be empty
         # no map for now.
-        data["map"] = None 
+        data["map"] = getattr(self, "map", None) 
         # script is converted to json to be given to javascript hardcoded 
-        offensive_ids, defensive_ids = set(self.offensive_units.values()), set(self.defensive_units.values())
+        offensive_ids, defensive_ids = set(self.offensive_units.keys()), set(self.defensive_units.keys())
         # TODO properly assign necessary health for all three scenario types.
         if self.scenario_type == "static":
-            railroad_script = [
-                {i: [x, y, 100.0, action] for i, (x, y, action) in script_step.items()}
-                for script_step in self.script]
-            data["railroad_script"] = json.dumps(railroad_script)
+            data["railroad_script"] = json.dumps(self.script)
+            if getattr(self, "outcome", None): # if can be redirected, this will allow moving on
+                data["next_section"] = "Continue"
         elif self.scenario_type == "choice":
             data["choices"] = self.choices
-            choice_script = dict()
-            for choice, script_sequence in self.script.items():
-                script_sequence_with_health = []
-                for i in range(len(script_sequence)):
-                    script_sequence_with_health.append({i: [x, y, 100.0, action] for i, (x, y, action) in script_sequence[i].items()})
-                choice_script[choice] = script_sequence_with_health
-            data["choice_script"] = json.dumps(choice_script)
+            data["choice_script"] = json.dumps(self.script)
         elif self.scenario_type == "random":
-            railroad_script = [
-                {i: [x, y, 100.0, action] for i, (x, y, action) in script_step.items()}
-                for script_step in self.script]
-            data["railroad_script"] = json.dumps(railroad_script)
+            data["railroad_script"] = json.dumps(self.script)
         else:
             raise NotImplementedError
         # rest is given as-is
@@ -94,25 +92,25 @@ class HardcodedScenario(Scenario):
             "Surprised by the sudden contact, the following red unit retreated, leaving its sibling exposed to enemy attack",
             "Further indecision from this unit means it did not mount an effective defense to the ambusher onslaught, who circled around and outflanked it during subsequent combat."
         ]
-        self.offensive_units = {"attacking_unit_1": 0, "attacking_unit_2": 1}
-        self.defensive_units = {"defending_unit_1": 2, "defending_unit_2": 3}
+        self.offensive_units = {0: {"name": "Patrol squad 1", "icon": "1-circle"}, 1: {"name": "Patrol squad 2", "icon": "2-circle"}}
+        self.defensive_units = {2: {"name": "Ambush squad 1", "icon": "1-circle"}, 3: {"name": "Ambush squad 2", "icon": "2-circle"}}
         self.offensive_color = "red"
         self.defensive_color = "blue"
         self.script = [
             # attacking unit moving through a curve
-            {0: (300, 0, "move"), 1: (300, 50, "move"),    2: (400, 275, "hide"), 3: (400, 325, "hide")},
-            {0: (300, 100, "move"), 1: (300, 150, "move"), 2: (400, 275, "hide"), 3: (400, 325, "hide")},
-            {0: (300, 200, "move"), 1: (300, 250, "move"), 2: (400, 275, "hide"), 3: (400, 325, "hide")},
-            {0: (300, 300, "move"), 1: (350, 300, "move"), 2: (400, 275, "attack"), 3: (400, 325, "attack")},
+            {0: (300, 0, 100.0, "move"), 1: (300, 50, 100.0, "move"),    2: (400, 275, 100.0, "hide"), 3: (400, 325, 100.0, "hide")},
+            {0: (300, 100, 100.0, "move"), 1: (300, 150, 100.0, "move"), 2: (400, 275, 100.0, "hide"), 3: (400, 325, 100.0, "hide")},
+            {0: (300, 200, 100.0, "move"), 1: (300, 250, 100.0, "move"), 2: (400, 275, 100.0, "hide"), 3: (400, 325, 100.0, "hide")},
+            {0: (300, 300, 100.0, "move"), 1: (350, 300, 100.0, "move"), 2: (400, 275, 100.0, "attack"), 3: (400, 325, 100.0, "attack")},
             # fighting start, 1st unit destroyed, 2nd fallback
-            {0: (300, 300, "hold"), 1: (325, 300, "defend"), 2: (375, 275, "attack"), 3: (370, 325, "attack")},
-            {0: (275, 300, "move"), 1: (300, 300, "rout"), 2: (350, 300, "attack"), 3: (350, 350, "attack")},
+            {0: (300, 300, 100.0, "hold"), 1: (325, 300, 50.0, "defend"), 2: (375, 275, 90.0, "attack"), 3: (370, 325, 90.0, "attack")},
+            {0: (275, 300, 100.0, "move"), 1: (300, 300, 10.0, "rout"), 2: (350, 300, 85.0, "attack"), 3: (350, 350, 80.0, "attack")},
             # defensive unit moved up, one outflanking the 2nd and mop up the remainder
-            {0: (275, 300, "hold"), 1: (None, None, "rout"), 2: (350, 300, "hold"), 3: (250, 350, "move")},
-            {0: (275, 300, "defend"), 1: (None, None, "rout"), 2: (350, 300, "attack"), 3: (225, 275, "move")},
-            {0: (275, 300, "defend"), 1: (None, None, "rout"), 2: (320, 300, "attack"), 3: (250, 275, "attack")},
-            {0: (275, 300, "rout"), 1: (None, None, "rout"), 2: (310, 300, "attack"), 3: (250, 310, "attack")},
-            {0: (None, None, "rout"), 1: (None, None, "rout"), 2: (310, 300, "hold"), 3: (250, 310, "hold")}
+            {0: (275, 300, 100.0, "hold"), 1: (None, None, None, "rout"), 2: (350, 300, 85.0, "hold"), 3: (250, 350, 80.0, "move")},
+            {0: (275, 300, 80.0, "defend"), 1: (None, None, None, "rout"), 2: (350, 300, 75.0, "attack"), 3: (225, 275, 80.0, "move")},
+            {0: (275, 300, 40.0, "defend"), 1: (None, None, None, "rout"), 2: (320, 300, 65.0, "attack"), 3: (250, 275, 75.0, "attack")},
+            {0: (275, 300, 10.0, "rout"), 1: (None, None, None, "rout"), 2: (310, 300, 65.0, "attack"), 3: (250, 310, 75.0, "attack")},
+            {0: (None, None, None, "rout"), 1: (None, None, None, "rout"), 2: (310, 300, 65.0, "hold"), 3: (250, 310, 75.0, "hold")}
         ]
 
         self.paths = [
@@ -135,41 +133,41 @@ class HardcodedChoiceScenario(Scenario):
             "Opposing you are two enemy units which are stationed a distance apart. They may come to each other's aid. One unit (1) is closer and only slightly weaker than you, the other (2) was badly mauled in a prior engagement, but is stationed deeper inward.",
             "Do you launch your first attack on (1) or (2)?"
         ]
-        self.offensive_units = {"attacking_unit_1": 0}
-        self.defensive_units = {"defending_unit_1": 1, "defending_unit_2": 2}
+        self.offensive_units = {0: {"name": "Attack squad", "icon": "1-circle", "rank_icon": "star"}}
+        self.defensive_units = {1: {"name": "Defend squad 1", "icon": "1-circle"}, 2: {"name": "Defend squad 2", "icon": "2-circle"}}
         self.offensive_color = "red"
         self.defensive_color = "blue"
         self.script = {
             "initial":
-                [{0: (300, 0, "hold"), 1: (300, 100, "hold"), 2: (400, 275, "hold")}],
+                [{0: (300, 0, 100.0, "hold"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")}],
             "choice_1": 
                 [
-                    {0: (300, 75, "attack"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
-                    {0: (300, 75, "attack"), 1: (300, 100, "defend"), 2: (375, 250, "move")},
-                    {0: (300, 80, "attack"), 1: (300, 105, "defend"), 2: (350, 225, "move")},
-                    {0: (300, 85, "attack"), 1: (300, 105, "rout"), 2: (350, 150, "move")},
-                    {0: (325, 100, "move"), 1: (275, 125, "rout"), 2: (350, 150, "move")},
-                    {0: (325, 115, "attack"), 1: (None, None, "rout"), 2: (330, 130, "attack")},
-                    {0: (335, 125, "attack"), 1: (None, None, "rout"), 2: (350, 120, "defend")},
-                    {0: (345, 125, "attack"), 1: (None, None, "rout"), 2: (380, 115, "rout")},
-                    {0: (345, 125, "hold"), 1: (None, None, "rout"), 2: (None, None, "rout")},
+                    {0: (300, 75, 100.0, "attack"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")},
+                    {0: (300, 75, 100.0, "attack"), 1: (300, 100, 80.0, "defend"), 2: (375, 250, 35.0, "move")},
+                    {0: (300, 80, 100.0, "attack"), 1: (300, 105, 80.0, "defend"), 2: (350, 225, 35.0, "move")},
+                    {0: (300, 85, 100.0, "attack"), 1: (300, 105, 80.0, "rout"), 2: (350, 150, 35.0, "move")},
+                    {0: (325, 100, 100.0, "move"), 1: (275, 125, 80.0, "rout"), 2: (350, 150, 35.0, "move")},
+                    {0: (325, 115, 100.0, "attack"), 1: (None, None, 80.0, "rout"), 2: (330, 130, 35.0, "attack")},
+                    {0: (335, 125, 100.0, "attack"), 1: (None, None, 80.0, "rout"), 2: (350, 120, 35.0, "defend")},
+                    {0: (345, 125, 100.0, "attack"), 1: (None, None, 80.0, "rout"), 2: (380, 115, 35.0, "rout")},
+                    {0: (345, 125, 100.0, "hold"), 1: (None, None, 80.0, "rout"), 2: (None, None, 35.0, "rout")},
                 ],
             "choice_2": 
                 [
-                    {0: (400, 0, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
-                    {0: (450, 50, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
-                    {0: (450, 150, "move"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
-                    {0: (450, 250, "attack"), 1: (300, 100, "hold"), 2: (400, 275, "hold")},
-                    {0: (445, 255, "attack"), 1: (350, 100, "move"), 2: (400, 275, "defend")},
-                    {0: (425, 265, "attack"), 1: (400, 100, "move"), 2: (390, 285, "rout")},
-                    {0: (425, 265, "hold"), 1: (400, 150, "move"), 2: (365, 310, "rout")},
-                    {0: (400, 250, "hold"), 1: (400, 200, "move"), 2: (None, None, "rout")},
-                    {0: (400, 250, "attack"), 1: (400, 230, "attack"), 2: (None, None, "rout")},
-                    {0: (400, 260, "attack"), 1: (400, 235, "attack"), 2: (None, None, "rout")},
-                    {0: (400, 240, "attack"), 1: (400, 215, "defend"), 2: (None, None, "rout")},
-                    {0: (400, 215, "attack"), 1: (400, 185, "rout"), 2: (None, None, "rout")},
-                    {0: (400, 215, "hold"), 1: (400, 135, "rout"), 2: (None, None, "rout")},
-                    {0: (400, 215, "hold"), 1: (None, None, "rout"), 2: (None, None, "rout")},
+                    {0: (400, 0, 100.0, "move"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")},
+                    {0: (450, 50, 100.0, "move"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")},
+                    {0: (450, 150, 100.0, "move"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")},
+                    {0: (450, 250, 100.0, "attack"), 1: (300, 100, 80.0, "hold"), 2: (400, 275, 35.0, "hold")},
+                    {0: (445, 255, 100.0, "attack"), 1: (350, 100, 80.0, "move"), 2: (400, 275, 35.0, "defend")},
+                    {0: (425, 265, 100.0, "attack"), 1: (400, 100, 80.0, "move"), 2: (390, 285, 35.0, "rout")},
+                    {0: (425, 265, 100.0, "hold"), 1: (400, 150, 80.0, "move"), 2: (365, 310, 35.0, "rout")},
+                    {0: (400, 250, 100.0, "hold"), 1: (400, 200, 80.0, "move"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 250, 100.0, "attack"), 1: (400, 230, 80.0, "attack"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 260, 100.0, "attack"), 1: (400, 235, 80.0, "attack"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 240, 100.0, "attack"), 1: (400, 215, 80.0, "defend"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 215, 100.0, "attack"), 1: (400, 185, 80.0, "rout"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 215, 100.0, "hold"), 1: (400, 135, 80.0, "rout"), 2: (None, None, 35.0, "rout")},
+                    {0: (400, 215, 100.0, "hold"), 1: (None, None, 80.0, "rout"), 2: (None, None, 35.0, "rout")},
                 ]
         }
         self.choices = {
@@ -187,12 +185,12 @@ class HardcodedRollScenario(Scenario):
             "You are being pounded by enemy artillery prefacing an enemy assault. You have done all you could to reinforce your position, but, sometimes, fate will get you anyway",
             "If you believe in any god, start praying."
         ]
-        self.defensive_units = {"defending_unit_1": 0, "defending_unit_2": 1}
-        self.offensive_units = {"attacking_unit_1": 2, "attacking_unit_2": 3, "attacking_unit_4": 4, "attacking_unit_3": 5}
-        self.neutrals = {"artillery_marker_1": 101, "artillery_marker_2": 102, "artillery_marker_3": 103, "artillery_marker_4": 104}
+        self.defensive_units = {0: {"name": "Defend squad 1", "icon": "1-circle"}, 1: {"name": "Defend squad 2", "icon": "2-circle"}}
+        self.offensive_units = {2: {"name": "Unknown attacking force", "icon": "question-circle"}, 3: {"name": "Unknown attacking force", "icon": "question-circle"}, 4: {"name": "Unknown attacking force", "icon": "question-circle"}, 5: {"name": "Unknown attacking force", "icon": "question-circle"}}
+        self.neutrals = {arty_fire_id: {"name": "Artillery fire", "icon": "patch-exclamation", "color": "yellow"} for arty_fire_id in range(101, 105)}
         self.script = [
-                {0: (325, 0, "defend"), 1: (275, 25, "defend"), 101: (315, 15, "blink"), 102: (340, 5, "inactive"), 103: (285, 15, "active"), 104: (260, 25, "inactive"), 2: (150, 600, "move"), 3: (300, 600, "move"), 4: (450, 600, "move"), 5: (300, 550, "move")},
-                {0: (325, 0, "defend"), 1: (275, 25, "defend"), 101: (315, 15, "inactive"), 102: (340, 5, "blink"), 103: (285, 15, "inactive"), 104: (260, 25, "blink"), 2: (150, 600, "move"), 3: (300, 600, "move"), 4: (450, 600, "move"), 5: (300, 550, "move")}
+                {0: (325, 0, 100.0, "defend"), 1: (275, 25, 100.0, "defend"), 101: (315, 15, None, "blink"), 102: (340, 5, None, "inactive"), 103: (285, 15, None, "active"), 104: (260, 25, None, "inactive"), 2: (150, 600, 100.0, "move"), 3: (300, 600, 100.0, "move"), 4: (450, 600, 100.0, "move"), 5: (300, 550, 100.0, "move")},
+                {0: (325, 0, 100.0, "defend"), 1: (275, 25, 100.0, "defend"), 101: (315, 15, None, "inactive"), 102: (340, 5, None, "blink"), 103: (285, 15, None, "inactive"), 104: (260, 25, None, "blink"), 2: (150, 550, 100.0, "move"), 3: (300, 550, 100.0, "move"), 4: (450, 550, 100.0, "move"), 5: (300, 500, 100.0, "move")}
         ]
         self.defensive_color = "blue"
         self.offensive_color = "red"
@@ -207,9 +205,27 @@ class WrittenScenario(Scenario):
     def __init__(self, file_path: str):
         with io.open(file_path, "r", encoding="utf-8") as jf:
             data = json.load(jf)
+        base_folder = os.path.dirname(file_path)
         # TODO enforcing necessary checks?
         for k, v in data.items():
             setattr(self, k, v)
+            if(k.endswith("_path")):
+                # additionally, for any _path property, try to retrieve the associating file and put that in as data 
+                if k == "map_path":
+                    if os.path.isfile(os.path.join(base_folder, v)):
+                        # has the file in shared folder, use that.
+                        with io.open(os.path.join(base_folder, v), "rb") as mf:
+                            image_encoded = base64.b64encode(mf.read())
+                            setattr(self, "map", image_encoded.decode("utf-8"))
+                    elif os.path.isfile(v):
+                        # has the file directly accessible from root, use that 
+                        with io.open(v, "rb") as mf:
+                            image_encoded = base64.b64encode(mf.read())
+                            setattr(self, "map", image_encoded.decode("utf-8"))
+                    else:
+                        print("@WrittenScenario error: invalid (no file found) map_path: ", v)
+                else:
+                    raise NotImplementedError # Not implementing others yet.
 
 class Narrative:
     """A narrative has the same structure as an interactive novel, linking multiple scenarios together depending on choices.This should handle the above at the minimum."""
@@ -250,3 +266,39 @@ class HardcodedNarrative(Narrative):
         roll_sc.outcome = {"result_unscathed": choice_key, "result_dead": end_key}
         choice_sc.outcome = {"choice_1": roll_key, "choice_2": end_key}
         super(HardcodedNarrative, self).__init__({end_key: end_sc, roll_key: roll_sc, choice_key: choice_sc})
+
+
+class AntalInfantryGameNarrative(Narrative):
+    # transition to json-based when done with the main scenarios.
+    def __init__(self, id_to_key_fn: callable=lambda i: "antal_inf_section_{:d}".format(i)):
+        narrative_graph = dict()
+        section_by_id = dict()
+        for section_number in [3, 4, 7, 10, 11, 12, 13, 14, 15, 16, 17, 29, 32, 39, 40, 41, 43, 45, 48, 51, 52, 53, 55, 58, 60, 61, 62, 65, 93, 96]:
+            try:
+                section_by_id[section_number] = narrative_graph[id_to_key_fn(section_number)] = WrittenScenario("data/game/tactical/antal_inf/section_{:d}.json".format
+(section_number))
+            except Exception as e:
+                print("Failed section: ", section_number)
+                raise e
+        # current deadends: 16, 48, 51, 52, 55, 58, 62, 93, 96
+        section_by_id[3].outcome = {"choice_forward_slope": id_to_key_fn(4), "choice_reverse_slope": None, "choice_split_up": None}
+        section_by_id[4].outcome = id_to_key_fn(7)
+        section_by_id[7].outcome = {"choice_personal_recon": id_to_key_fn(10), "choice_continue_work": id_to_key_fn(11)}
+        section_by_id[10].outcome = {"result_dead": id_to_key_fn(16), "result_piper_hit": id_to_key_fn(17)}
+        section_by_id[17].outcome = {"choice_help": id_to_key_fn(51), "choice_stay": id_to_key_fn(52)}
+        section_by_id[11].outcome = {"choice_rest": id_to_key_fn(12), "choice_keep_working": id_to_key_fn(13)}
+        section_by_id[13].outcome = {"result_arty_direct_hit": id_to_key_fn(62), "result_captured": id_to_key_fn(48), "result_survive": id_to_key_fn(15)}
+        section_by_id[15].outcome = {"result_captured": id_to_key_fn(55), "result_survive_v1": id_to_key_fn(32), "result_survive_v2": id_to_key_fn(39)}
+        section_by_id[39].outcome = {"result_die": id_to_key_fn(58), "result_survive": id_to_key_fn(41)}
+        section_by_id[32].outcome = {"choice_withdraw": id_to_key_fn(45), "choice_stay": id_to_key_fn(43)}
+        section_by_id[41].outcome = {"choice_withdraw": id_to_key_fn(45), "choice_stay": id_to_key_fn(61)}
+        section_by_id[43].outcome = {"result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(93)}
+        section_by_id[45].outcome = {"result_fail_breakout": id_to_key_fn(44), "result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(55)}
+        section_by_id[61].outcome = {"result_survive": id_to_key_fn(60), "result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(93)}
+        section_by_id[60].outcome = {"result_survive": id_to_key_fn(65), "result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(55)}
+        section_by_id[65].outcome = {"result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(55)}
+        section_by_id[12].outcome = {"choice_personal_recon": id_to_key_fn(96), "choice_stay": id_to_key_fn(53)}
+        section_by_id[53].outcome = {"result_die": id_to_key_fn(62), "result_survive": id_to_key_fn(14)}
+        section_by_id[14].outcome = {"result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(48), "result_survive": id_to_key_fn(29)}
+        section_by_id[29].outcome = {"result_die": id_to_key_fn(62), "result_captured": id_to_key_fn(48), "result_die_2": id_to_key_fn(40)}
+        super(AntalInfantryGameNarrative, self).__init__(narrative_graph)

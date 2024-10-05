@@ -1,0 +1,32 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"The battered infantrymen fired at the enemy entering the engagement area. Tanks and BMPs halted to plaster the position with cannon and machine-gun fire. The volume of the enemy's direct fire was over- whelming. Suddenly, no one was firing at the attackers.",
+			"\"OK, Cowper, tell everyone to make a break for it,\" Davis said, his voice tinged with urgency.",
+			"\"All stations, this is One-Six Alpha,\" Cowper transmitted. \"Leave now. Get out while you still can. Take any wounded with you.\"",
+			"The sound of the radio was quickly replaced by the blast of BMP cannon fire. The ground in front of Davis detonated in smoke and flame as the 30mm shells exploded. Davis ducked to the bottom of his hole as the enemy fire ripped apart the roof of his position.",
+			"Cowper crouched low, next to his platoon leader. The RTO strained to hear the radio, pressing the receiver hard against his ear.",
+			"\"Sir, no response!\" Cowper shouted in between artillery explosions.",
+			"Davis was consumed with fear and anger. The platoon is being pulverized by enemy fire, he reflected despondently. I've got to do something! Dejected, he waited for a few seconds for the fire to slacken, then struggled up to the aperture of his position to see the battlefield."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [10, "result_fail_breakout"],
+            [60, "result_die"],
+            [30, "result_captured"]
+        ]
+}

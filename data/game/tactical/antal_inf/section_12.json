@@ -1,0 +1,57 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"\"OK, we'll sack out for three hours,\" Davis decided. \"Post security and wake everyone up at 1030.\"",
+			"\"Yes, sir,\" Piper said. Fatigue edged his voice as he continued. \"AS soon as we get up, we'll finish our holes and put up the over- head cover.\"",
+			"The tired soldiers rigged ponchos over their fighting positions to provide shade from the rising sun. Knowing that their buddies were standing guard, they fell asleep. Sergeant Piper and a few men pulled perimeter security.",
+			"Davis pulled out the remainder of his MRE from the brown plas- tic package. MREs weren't the epitome of fine dining, Davis thought, but they beat going hungry. He looked over BP Alamo as he munched on the barely edible breakfast. Most of the soldiers were already sleeping. The BP was quiet as a graveyard.",
+			"After three hours had elapsed, Piper walked over to Davis's posi- tion, carrying a map in his left hand.",
+			"\"Let's conduct a leader's recon,\" Piper said enthusiastically. \"I'll put Sergeant Jordan in charge here. I think we could get a great view of our sector from Hill 865.\""
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"hill_865": {"name": "Hill 865", "icon": "geo-fill", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M4", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": {
+            "initial":
+                [
+					{"d1": [361, 385, 100.0, "working"], "d2": [407, 367, 100.0, "working"], "d3": [494, 348, 100.0, "working"], "d4": [551, 312, 35.0, "working"], "d0": [430, 326, 35.0, "planning"], 
+					"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "working"], "mine_m2": [374, 424, null, "working"], "mine_m3": [436, 419, null, "working"], "mine_m4": [557, 349, null, "working"]}
+				],
+            "choice_personal_recon": 
+                [
+					{"d0": [430, 326, 35.0, "approve"]},
+					{"d0": [368, 312, 35.0, "hide"]},
+					{"d0": [318, 302, 35.0, "hide"]},
+					{"d0": [290, 348, 35.0, "hide"]},
+					{"d0": [290, 348, 35.0, "recon"]},
+					{}
+                ],
+            "choice_stay": 
+                [
+					{"d0": [430, 326, 35.0, "disapprove"]},
+					{"d0": [430, 326, 35.0, "planning"]},
+					{}, {}
+                ]
+        },
+        "choices": {
+            "choice_personal_recon": "Go with Piper",
+            "choice_stay": "Stay"
+        }
+}

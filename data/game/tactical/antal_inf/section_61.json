@@ -1,0 +1,43 @@
+{
+        "scenario_type": "random",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"No, the slaughter comes in the pursuit, Davis thought, steeling his soul with determination. If we run now, they have us. If we fight, we can take some of these bastards with us. \"Stand fast. We're fighting here. Keep up the fire!\" Davis shouted.",
+			"The entire platoon fired at the advancing armored vehicles as the enemy entered the platoon engagement area.",
+			"A tank pushed a destroyed BMP into the ditch. Other tanks and BMPs churned down the sides of the ditch. Loose sand and rocks crumbled under the weight of the metal monsters. Enemy infantry, braving the fire from Davis's men, flung themselves into the channel to break down the sides with shovels and picks. Several tanks, with special plows mounted in the front, scooped up dirt and brushed it into the obstacle. Soon, several BMPs were working their way out onto the eastern side.",
+			"Piper's machine guns roared, knocking down the dismounted at- tackers as they raised their heads from the tank ditch or raced to dis- mount from their BMPs. The AT4s destroyed several BMPs as they closed on BP Alamo, confusing the fighting even more with their exploding ammunition. Machine guns rattled and scraped the sides of other BMPs and tanks as they zigzagged through the minefields, searching for a safe route to advance. Tracers and armor-piercing incendiary bullets bounced off the hard flanks of the advancing en- emy armor in a shower of sparks.",
+			"The American antitank fires slackened as the platoon ran out of antitank weapons. A tank crossed the minefield, crested the hill, and raced toward the center of the valley, slewing its turret to the right and left and firing machine guns as it raced by. Two BMPs fol- lowed closely behind, heading up Trails 1 and 2. The vehicles jinked wildly as they raced through the smoke, trying to avoid mines and burning vehicles.",
+			"\"Shit, they're getting past us!\" Davis screamed.",
+			"A BMP moved closer to BP Alamo, spraying the position with close-range automatic cannon fire. As the BMP entered the center minefield, it exploded in a shower of sparks. The mine detonated a stream of fire up into the belly of the BMP. Exploding from inside out, the BMP crumbled in a burst of black smoke.",
+			"Tracers filled the air. Many of Davis's men were down-wounded or dying. Davis could hear the screams of the wounded in between the roar of exploding vehicles and the clamor of machine guns. Spe- cialist Montoya knocked out two enemy tanks before a third beast blasted the Javelin gunner's fighting position to oblivion.",
+			"Bullets ripped at the sandbags of Davis's fighting position. Cowper, his M203 pointed up out of the hole, shot a grenade at an advancing BMP. The grenade hit the moving vehicle but had no ef- fect. The enemy had gained the upper hand in the battle.",
+			"Suddenly the roar of jet engines filled the air. A U.S. A-10 ground attack fighter, dropping flares from its tail section, dipped its wings on an attack run against the enemy tanks advancing through Wadi Al Sirree. The A-10 came from the west, taking the enemy from the rear.",
+			"Another group of BMPs raced forward, charging across the breached tank ditch. The A-10 attacked them with a fierce shower of 30mm cannon fire. The lead BMP exploded in a burst of orange flame and twisted metal. A few of Davis's men cheered from inside their bunkers. They were finally getting some support. A second A-10, firing its powerful 30mm antitank cannon, destroyed another BMP and a tank.",
+			"Antiaircraft missiles, shoulder-launched versions of an improved SA-14, streaked through the air at the retreating A-10s. Hundreds of green machine-gun tracers chased the retreating U.S. aircraft. One aircraft exploded in a brilliant red-yellow fireball. Twisted, burning pieces of metal fell to the ground far behind Davis's position.",
+			"Wadi Al Sirree filled with the smoke. The engagement area in front of Davis's position was now crowded with dead soldiers and burning vehicles. For a short time 1st Platoon had effectively blocked the enemy from entering Wadi Al Sirree.",
+			"But the enemy was determined. The sound of approaching ar- mored vehicles rose from the west. Another wave of machine-gun fire cut through the dense smoke that obscured the area around the tank ditch. Bullets struck wildly all across the front of BP Alamo.",
+			"\"Sir, look out!\" Cowper shouted, pointing to two enemy tanks near the entrance to Trail 1 that were moving cautiously forward to take BP Alamo in enfilade.",
+			"\"Chambers! We've got to get those tanks!\" Davis screamed to his last remaining Javelin gunner. The lieutenant pointed at the silhou- ettes of two tanks emerging from the smoke.",
+			"Chambers signaled that he understood and prepared his Javelin for firing.",
+			"The two enemy tanks halted behind a burning BMP and leveled their guns at Davis's men."
+        ],
+        "offensive_units": {},
+        "defensive_units": {
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": [
+			{
+				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
+		],
+        "choices": [
+            [15, "result_die"],
+            [25, "result_captured"],
+            [60, "result_survive"]
+        ]
+}

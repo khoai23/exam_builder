@@ -1,0 +1,88 @@
+{
+        "scenario_type": "choice",
+		"map_path": "map_valley_terrain.png",
+        "size": [600, 600],
+        "narration": [
+			"The enemy armored vehicles deployed into battle line and began spraying the American positions with machine-gun fire.",
+			"\"Sir, I jumped frequencies and got through to the company head- quarters. They're pulling back. Captain Bludgell is dead. Bravo Company is headed east. They're in really bad shape. Lots of dead and wounded. The enemy is all over the place. Maybe we should pull out.\"",
+			"Davis ignored his RTO.",
+			"\"Fire at the lead tank,\" Davis shouted to Specialist Chambers, in the position to the left.",
+			"Chambers nodded. The antitank gunner was kneeling in the open firing trench next to his covered position, with the Javelin on his shoulder. He sent a worried glance back to Lieutenant Davis.",
+			"Davis coolly stood up, out of his fighting position, so that the men to his flanks could see him. He shouted again, \"Get ready!\"",
+			"<blockquote>When the smoke cleared away, it was the man with the sword, or the crossbow, or the rifle, who settled the final issue on the field. -- Gen. George C. Marshall</blockquote>",
+			"Now it's up to me and my infantrymen, Davis thought.",
+			"\"Top engagement mode,\" Davis shouted in a cracked voice, indi- cating how the javelins were to be set to attack their targets. \"Fire as soon as they hit the minefield.\"",
+			"The survivors to his right and left gave the lieutenant a thumbs-up signal to indicate that they were ready.",
+			"An enemy tank burst into flames nine hundred meters in front of Davis's position. Other enemy vehicles deployed, discharging smoke from their grenade launchers and engine smoke generators. The wind, blowing from the west, rolled the smoke into Wadi Al Sirree.",
+			"They found the minefields, Davis thought with morbid satis- faction. It won't take long now before we educate them about our antitank missile positions. Come on, you bastards, we're ready for you.",
+			"The smoke grew thicker, obscuring the tank ditch. Explosions from M21 antitank mines interrupted the haze with brilliant flashes as they were detonated by advancing enemy vehicles. Davis could see vague shapes moving in the artificial fog. Suddenly a tank crashed through the smoke at high speed, firing its machine guns as it raced forward.",
+			"\"Fire!\" Davis shouted.",
+			"Specialist Chambers's Javelin missile fired, sending exhaust smoke, flame, and debris to the rear of his position. The missile darted up and accelerated toward the moving enemy tank.",
+			"The Javelin impacted on the top of the turret with a loud boom, halting the tank's forward movement a few seconds after impact. The missile warhead tore through the thin top armor of the tank and ig- nited the ammunition inside the turret. In a tremendous flash, the turret exploded and leaped six feet into the air, then crashed back down on the burning hull.",
+			"\"HOOAHH!\" Chambers yelled.",
+			"A BMP raced past the dead tank. The other Javelin gunner fired. The missile sped to this new target and exploded directly above the small, one-man turret. The vehicle came to a screeching halt and burst into flames. The conflagration devoured all the life that had once been inside.",
+			"Another BMP raced forward, firing its cannon at the defenders. In a shower of sparks and flame a powerful M21 antitank mine ripped through the BMP's soft underbelly. The force of ten and a half pounds of explosive detonated under the advancing armored vehicle, immediately transforming it into a smoldering hunk of burn- ing metal.",
+			"Undaunted, a third BMP moved toward the hill. Disregarding the fate of its comrades, the vehicle stopped and fired its 30mm cannon at Davis's men.",
+			"Another Javelin missile fired. The round shot from the launch tube and raced through the air, striking the stationary BMP in the front of the turret. The conically shaped turret exploded, ripped clean off its chassis, and soared into the air in a burst of white hot sparks.",
+			"The squeaking clatter of tank tracks indicated that more enemy armor was on the way.",
+			"\"It's time to get out of here!\" Sergeant Mark yelled. \"We're not going to get any more help!\"",
+			"Davis had to decide. Withdraw, or stay and fight?"
+        ],
+        "offensive_units": {
+			"ot1": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot2": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot3": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"ot4": {"name": "Enemy Tank", "icon": "question-circle", "rank_icon": "diamond"},
+			"om1": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om2": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om3": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"},
+			"om4": {"name": "Enemy Mechanized Infantry", "icon": "question-circle", "rank_icon": "gear-wide"}
+		},
+        "defensive_units": {
+			"d1": {"name": "Defend squad 1", "icon": "1-circle"}, 
+			"d2": {"name": "Defend squad 2", "icon": "2-circle"}, 
+			"d3": {"name": "Defend squad 3", "icon": "3-circle"}, 
+			"d4": {"name": "Defend squad 4", "icon": "4-circle"}, 
+			"d0": {"name": "Platoon HQ", "icon": "0-circle", "rank_icon": "star"}
+		},
+		"neutrals": {
+			"defend_objective": {"name": "Defending Objective", "icon": "shield-fill-exclamation", "color": "blue"},
+			"mine_m1": {"name": "Minefield M1", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m2": {"name": "Minefield M2", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m3": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"},
+			"mine_m4": {"name": "Minefield M3", "icon": "dash-square-dotted", "color": "green"}
+		},
+        "offensive_color": "red",
+        "defensive_color": "blue",
+        "script": { 
+			"initial": [
+				{
+					"d1": [361, 385, 60.0, "defend"], "d2": [407, 367, 75.0, "defend"], "d3": [494, 348, 55.0, "defend"], "d4": [551, 312, 60.0, "defend"], "d0": [430, 326, 35.0, "defend"],
+					"ot1": [317, 517, 100.0, "attack"], "ot2": [416, 497, 100.0, "attack"], "ot3": [515, 466, 100.0, "attack"], "ot4": [590, 414, 100.0, "attack"],
+					"om1": [311, 446, 100.0, "attack"], "om2": [411, 438, 100.0, "attack"], "om3": [436, 430, 100.0, "attack"], "om4": [537, 384, 100.0, "attack"],
+				"defend_objective": [367, 105, null, "blink"], "hill_865": [291, 300, null, "active"], "mine_m1": [297, 429, null, "active"], "mine_m2": [374, 424, null, "active"], "mine_m3": [436, 419, null, "active"], "mine_m4": [557, 349, null, "active"]},
+				{
+					"d0": [430, 326, 35.0, "attack"],
+					"ot1": [317, 517, 100.0, "move"], "ot2": [416, 497, 0.0, "rout"], "ot3": [515, 466, 100.0, "move"], "ot4": [590, 414, 100.0, "move"],
+					"om1": [307, 480, 100.0, "move"], "om2": [411, 450, 100.0, "move"], "om3": [495, 446, 50.0, "move"], "om4": [590, 384, 100.0, "move"]
+				},
+				{
+					"ot1": [317, 517, 100.0, "move"], "ot2": [null, null, 0.0, "rout"], "ot3": [515, 466, 100.0, "move"], "ot4": [590, 414, 100.0, "move"],
+					"om1": [307, 480, 75.0, "move"], "om2": [411, 450, 75.0, "move"], "om3": [495, 446, 50.0, "rout"], "om4": [590, 384, 100.0, "move"]
+				}
+			],
+			"choice_withdraw": [
+				{"d1": [337, 340, 60.0, "retreat"], "d2": [369, 331, 75.0, "retreat"], "d3": [457, 300, 55.0, "retreat"], "d4": [504, 206, 60.0, "retreat"], "d0": [420, 274, 35.0, "retreat"]},
+				{"d1": [284, 231, 60.0, "retreat"], "d2": [314, 277, 75.0, "retreat"], "d3": [427, 218, 55.0, "retreat"], "d4": [482, 136, 60.0, "retreat"], "d0": [431, 146, 35.0, "retreat"]}
+			],
+			"choice_fight": [
+				{"d1": [361, 385, 60.0, "attack"], "d2": [407, 367, 75.0, "attack"], "d3": [494, 348, 55.0, "attack"], "d4": [551, 312, 60.0, "attack"], "d0": [430, 326, 35.0, "attack"]},
+				{},
+				{}
+			]
+		},
+        "choices": {
+            "choice_withdraw": "Withdraw",
+            "choice_fight": "Fight"
+        }
+}
