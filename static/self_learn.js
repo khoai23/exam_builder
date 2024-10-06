@@ -2,10 +2,11 @@ var bpmnViewer = new BpmnJS({container: "#bpmn_canvas"});
 
 async function load_graph_fron_xml(xml_content_or_json, clear_mode=false) {
 	let xml_content = (typeof xml_content_or_json === 'string' || xml_content_or_json instanceof String) ? xml_content_or_json : xml_content_or_json.data;
-	// console.log(xml_content);
+	//console.log(xml_content);
 	if(xml_content === undefined) {
 		// if data is not available on disk; hack by getting from online link & then clear it 
-		return open_graph_from_online_link(null, link=test_graph, mode="text", clear_mode=true);
+		// weirdly after loading, the program 
+		return open_graph_from_online_link(null, link=test_graph, mode="text", clear_mode=false);
 	}
 	try {
 		await bpmnViewer.importXML(xml_content);

@@ -2,6 +2,7 @@
 {% block content %}
 <div id="bpmn_canvas" style="flex: auto">
 </div>
+
 <div id="button_bar" style="position: fixed; bottom: 20px; left: 20px">
 	<button id="save_button" type="button" class="btn btn-success">Save</button>
 	{% if can_model %}
@@ -11,6 +12,7 @@
 		<button id="load_button" type="button" class="btn btn-primary" onclick="open_graph_from_online_link(event)">Load</button>
 	{% endif %}
 </div>
+
 <a id="hidden_xml_link" style="display: none;">Save Link</a>
 {% endblock %}
 

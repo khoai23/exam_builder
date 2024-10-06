@@ -22,11 +22,11 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
     @app.route("/self_learn_upload", methods=["POST"])
     def self_learn_upload():
         # allow uploading the saved xml from bpmn into local storage.
+        location = request.args.get("location", DEFAULT_LEARN_XML_POSITION)
         try:
             content = request.data#.files["file"]
-            with io.open(DEFAULT_LEARN_XML_POSITION, "w") as wf:
+            with io.open(location, "w") as wf:
                 wf.write(content.decode("utf-8"))
-#            file.save(DEFAULT_LEARN_XML_POSITION)
         except Exception as e:
             return flask.jsonify(result=False, error=str(e))
         return flask.jsonify(result=True, uploaded_location=DEFAULT_LEARN_XML_POSITION)
@@ -34,8 +34,9 @@ def build_learn_routes(app: Flask, login_decorator: callable=lambda f: f, lesson
     @app.route("/self_learn_download", methods=["GET"])
     def self_learn_download():
         # allow downloading the content of the saved xml 
+        location = request.args.get("location", DEFAULT_LEARN_XML_POSITION)
         try: 
-            with io.open(DEFAULT_LEARN_XML_POSITION, "r") as rf:
+            with io.open(location, "r") as rf:
                 data = rf.read()
             return flask.jsonify(result=True, data=data)
         except Exception as e:

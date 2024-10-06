@@ -51,15 +51,18 @@ function create_interactive_section(base_item, question_header="❔") {
 		if(index > 0 && current_item.prev().is("h5")) {
 			// detect prior H5;
 			if(current_item.is("h6")) {
+				let question = current_item.prev();
+				let answer = current_item;
 				// self is H6, in FAQ mode. Binding the collapse function accordingly.
-				current_item.addClass("collapse");
+				answer.addClass("collapse");
 				let question_badge = $("<span>").attr("class", "badge badge-info ml-2").text("?");
-				current_item.prev().append(question_badge);
+				question.append(question_badge);
 				// current_item.prev().text(question_header + " " + current_item.prev().text());
-				current_item.prev().click(function() {
+				question.click(function() {
+					console.log("Attempt to unload item: ", question, answer);
 					// if click & item is collapsed, launch it; if not, just ignore 
-					if(current_item.hasClass("collapse")) {
-						current_item.collapse('show');
+					if(answer.hasClass("collapse")) {
+						answer.collapse('show');
 						question_badge.removeClass("badge-info").addClass("badge-success");
 					}
 				});
