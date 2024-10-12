@@ -80,45 +80,75 @@ def convert_to_scenario(data: Dict[str, dict], templates: Dict[str, str]):
             continue # arrow item, ignore again
         true_ids = props["true_id"] if isinstance(props["true_id"], tuple) else (props["true_id"], )
         multiple_target_issue = False
-        if props["type"] == "exclusiveGateway": # choice item; generate appropriate response from template
-            # if exclusiveGateway, generate the choices using annotated outward signs. Report in case where it lost the annotation.
-            choice_dict = {}
-            missing_name_issue = False
-            for out_key in outgoings:
-                # cannot have int as choices outward must be properly narrated
-                arrow = data[out_key]
-                target_section = data[arrow["targetRef"]] 
-                target_id = target_section["true_id"]
-                choice_name = arrow.get("description", None)
-                if choice_name is None:
-                    choice_name = "!!Missing Choice Name!!"
-                    missing_name_issue = True 
-                    logger.warning("[{}] Section no. {}'s choice is not annotated. The name will be replaced with a default value.".format(key, props["true_id"]))
+        if props["type"] in ("exclusiveGateway", "task"): # choice/random item; generate appropriate response from template
+            # generate the choices using annotated outward signs. Report in case where it lost the annotation if the mode is .
+            is_choice = props["type"] == "exclusiveGateway"
+            if is_choice:
+                choice_dict = {}
+                missing_name_issue = False
+            else:
+                result_array = []
+
+            # convert the outgoings list into proper outcome dict/list matching the types
+            for out_key in props["outgoings"]:
+                if isinstance(out_key, str):
+                    # is arrow object id; retrieve the correct id variant
+                    arrow = data[out_key]
+                    target_section = data[arrow["targetRef"]] 
+                    target_id = target_section["true_id"]
+                    # choices outward must be properly narrated in case of the `choice` variant.
+                    choice_name = arrow.get("description", None)
+                    if choice_name is None:
+                        choice_name = "!!Missing Choice Name!!"
+                        missing_name_issue = True 
+                        logger.warning("[{}] Section no. {}'s choice is not annotated. The name will be replaced with a default value.".format(key, props["true_id"]))
+                else: 
+                    assert not is_choice, "[{}] Section no. {} is a choice but has an independent shortcut outward. Check the graph construction.".format(key, props["true_id"])
+                    # is int/tuple; rollback with this specific 
+                    target_id = out_key
+
                 if isinstance(target_id, tuple):
                     # need manual correction what-to-where; purposely set up a wrong pathway and warn through logging 
                     logger.warning("[{}] Section no. {} lead to one of {}; Make sure to manually realign them afterward.".format(key, props["true_id"], target_id))
-                    multiple_target_issue = True
-                    choice_dict["to_section_{}".format("/".join(target_id))] = choice_name
+                    multiple_target_issue = True 
+                    if is_choice:
+                        choice_dict["to_section_{}".format("/".join(target_id))] = choice_name
+                    else:
+                        result_array.append((1, "to_section_{}".format("/".join(target_id)))) # standard weight for now
                 else:
                     # is already a working version; just linkup as-is
-                    choice_dict["to_section_{:d}".format(target_id)] = choice_name
-            # if true_ids, generate equivalent templates accordingly 
+                    if is_choice:
+                        choice_dict["to_section_{:d}".format(target_id)] = choice_name 
+                    else:
+                        result_array.append((1, "to_section_{:d}".format(target_id)))
+
+            # if multiple true_id,  generate equivalent templates accordingly to each of those
             for i in true_ids:
-                section_data = dict(templates["choice"])
-                section_data["choices"] = dict(choice_dict)
+                if is_choice:
+                    section_data = dict(templates["choice"])
+                    section_data["choices"] = dict(choice_dict)
+                    narrative_graph["section_{:d}".format(i)] = {k: v.replace("to_", "") for k, v in section_data["choices"]}
+                else:
+                    section_data = dict(templates["random"])
+                    # recalculate the result array with any correct percentage 
+                    weights = {2: [50, 50], 3: [30, 30, 40], 4: [25, 25, 25, 25]}
+                    result_weight_array = weights[len(result_array)]
+                    section_data["choices"] = [(w, k) for w, (iw, k) in zip(result_weight_array, result_array)]
+                    narrative_graph["section_{:d}".format(i)] = {v: v.replace("to_", "") for w, v in section_data["choices"]}
+
                 section_data["narration"] = [
                     "This is autogenerated data for Section {:d}. Please replace with the appropriate text & illustration (if any).".format(i),
-                    "The section is of type \"choice\". Make sure to supply the narrative context for the wording of the choices."
+                    "The section is of type \"{:s}\". Make sure to supply the narrative context for the wording of the choices.".format("choice" if is_choice else "random")
                 ]
-                if missing_name_issue:
+                if missing_name_issue and is_choice:
+                    # only append this warning in choice mode (roll mode doesn't need this)
                     section_data["narration"].append("NOTE: There are missing choice names. Make sure to amend that.")
                 if multiple_target_issue:
                     section_data["narration"].append("NOTE: There are choices which are incorrectly designated. Make sure to amend that.")
                 generated_sections["section_{:d}".format(i)] = section_data 
-                narrative_graph["section_{:d}".format(i)] = {k: v.replace("to_", "") for k, v in }
         elif props["type"] == "task": # roll item; generate roughly equal chance to each possible option 
-            # TODO prioritize narratively important nodes
-                       
+            # TODO prioritize narratively important nodes in the rolling percentage so quiz mode can go into better result
+            # generate the outcomes in non-annotated outward sign; use default percentage atm.           
         else: # static item; for endEvent, assure there is no outward connection; for other, assure the leadout is properly generated.
             for i in true_ids:
                 section_data = dict(templates["static"])
@@ -128,9 +158,25 @@ def convert_to_scenario(data: Dict[str, dict], templates: Dict[str, str]):
                 if props.get("outgoings", None):
                     if props["type"] == "endEvent":
                         # endEvent should not have outgoings atm. 
-                        logger.warning("[{}] Section {} should not have outgoing arrows; but the graph do have them {}. The data will be ignored.".format(key, i, props["outgoings"]))
+                        logger.warning("[{}] Section {} should not have outgoing indication; but the graph do have them {}. The data will be ignored.".format(key, i, props["outgoings"]))
                     else:
-                        # other will have it as the "outcome" property
+                        # other will have it as the "outcome" property. Should be only one 
+                        outgoings = props["outgoings"]
+                        if len(outgoings) > 1:
+                            # multiple result available; pick 1st. TODO pick best (in case we have route to some explanation)
+                            logger.warning("[{}] Section {} should only have one outgoing indication; but the graph do have multiple {}. Only the 1st will be evaluated.".format(key, i, props["outgoings"]))
+                        outcome = outgoings[0]
+                        if isinstance(outcome, str):
+                            # is an arrow id (default); retrieve the correct target from the graph 
+                            outcome = data[outcome]["true_id"]
+                        if isinstance(outcome, tuple):
+                            # lead up to multiple result; like before, purposely damage it
+                            logger.warning("[{}] Section no. {} lead to one of {}; Make sure to manually realign them afterward.".format(key, props["true_id"], outcome))
+                            section_data["narration"].append("NOTE: There are choices which are incorrectly designated. Make sure to amend that.")
+                            section_data["outcome"] = "to_section_{}".format("/".join(outcome))
+                        else:
+                            section_data["outcome"] = "to_section_{}".format(outcome)
+    return generated_sections, narrative_graph
                     
 if __name__ == "__main__":
     logging.basicConfig()
@@ -138,4 +184,11 @@ if __name__ == "__main__":
     test_xml = "test/learn_bpmn.xml"
     with io.open(test_xml, "r") as tf:
         data = extract_bpmn(tf.read(), ["startEvent", "intermediateThrowEvent", "endEvent", "exclusiveGateway", "task", "sequenceFlow"])
-    logger.info(json.dumps(data, indent=2))
+#    logger.info(json.dumps(data, indent=2))
+    # try to run to construct the whole thing 
+    templates = {k: {"scenario_type": k, "size": [600, 600], "mapless_mode": True} for k in ["static", "choice", "random"]}
+    sections, graph = convert_to_scenario(data, templates)
+    logger.info("------------")
+    logger.info(json.dumps(sections, indent=2))
+    logger.info("------------")
+    logger.info(json.dumps(graph, indent=2))
