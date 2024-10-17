@@ -61,15 +61,22 @@ function update_action_icon(core_icon, action_icon, action) {
 	}
 }
 
-function nextScriptStep(script, loopback=true, animation=true) {
+var nextStepSuspended = false;
+var scriptLoopback = false;
+
+function nextScriptStep(script, animation=true, force_next_step=false) {
+	if(nextStepSuspended && !force_next_step) {
+		return; // this will be governed by autorun. When autorun is enabled, this block does not execute. When autorun is disabled, this function will only be available with force_next_step deliberately set to True
+	}
 	current_script_step += 1;
 	if(current_script_step >= script.length) {
-		if(loopback) {
+		if(scriptLoopback) {
 			current_script_step = 0; // allow loopback, start with 0 again
 		} else {
 			return false; // skip the step; TODO unload itself from the interval
 		}
 	}
+	$("#current_step").text(current_script_step);
 	//console.log("Running railroaded step ", current_script_step);
 	// move everything to their specific location.
 	let step_data = script[current_script_step];
@@ -156,3 +163,103 @@ function roll(event) {
 }
 
 var go_next_section = roll; // they are the same - just send up a signal to continue
+
+// this concern editing, updating the scenario with the interactions on screens
+
+var editable = false;
+var editable_ids = null;
+
+var current_edit_item = null;
+
+function bind_all_existing_item() {
+	// bind all the relevant items on the control board to reflect inner control 
+	$("#checkbox_autorun").on("click", function() {
+		// autorun the sequence accordingly. Should set continuation flag and stop interval fn from executing
+		let autorun_is_active = $("#checkbox_autorun").is(":checked");
+		nextStepSuspended = !autorun_is_active; 
+		// also disabling/enabling increment/decrement step as autorun is moving
+		$("#btn_previous_step").prop("disabled", autorun_is_active);
+		$("#btn_next_step").prop("disabled", autorun_is_active);
+	});
+
+	$("#checkbox_loopback").on("click", function() {
+		// just enable the flag to allow loopback
+		scriptLoopback = $("#checkbox_loopback").is(":checked");
+	});
+	
+	// populate the selectors with appropriate options.
+	let action_selector = $("#action_selector");
+	action_selector.append($("<option>").attr("value", "use_above").text("Use prior state"));
+	for (const [action, icon_cue] of Object.entries(action_icons)) {
+		action_selector.append($("<option>").attr("value", action).text(action));
+	}
+
+	$("#btn_next_step").on("click", function() {
+		let script = railroad_script ? railroad_script : current_preview_script;
+		if(!script) {
+			// No valid script; this will do nothing.
+			console.log("No script; cannot move to next step.", railroad_script, current_preview_script);
+			return
+		}
+		nextScriptStep(script, false, true); // No animation & bypassing the autorun's blocker
+	});
+
+	$("#btn_previous_step").on("click", function() {
+		let script = railroad_script ? railroad_script : current_preview_script;
+		if(!script) {
+			// No valid script; this will do nothing.
+			console.log("No script; cannot move to previous step.", railroad_script, current_preview_script);
+			return
+		}
+		if(current_script_step <= 0) {
+			console.log("Script already reached first position; cannot backtrack any further.");
+			return
+		}
+		current_script_step -= 2;
+		nextScriptStep(script, false, true); // No animation & bypassing the autorun's blocker
+	});
+
+	// bind the appropriate function to show the properties being broadcasted; this last even after mouseup.
+	// TODO properly disengage the item after some time to allow addition
+	dragStartCallback = function (element) {
+		current_edit_item = element;
+		let unit_id = current_edit_item.attr("id");
+		$("#core_icon").val(current_edit_item.attr("class"));
+		let rank_item = $("#" + unit_id + "_rank");
+		// TODO load the actual info from the json instead
+		if(rank_item.length && rank_item.is(":visible")) {
+			// has a visible rank item; rank_icon will be populated.
+			$("#rank_icon").val(rank_item.attr("class"));
+		} else {
+			$("#rank_icon").val("");
+		}
+		// retrieve the appropriate action from the railroading mechanism, and set the action accordingly
+		let script = railroad_script ? railroad_script : current_preview_script;
+		if(!script || current_script_step < 0) {
+			// ideally, even with the failure of properly enabled script, the selector will still be wired on the values currently assigned to the actual icon. TODO later though
+			//let status_item = $("#" + unit_id + "_action");
+			//$("#action_icon").val(status_item.attr("class"));
+		} else {
+			console.log(script, current_script_step, unit_id);
+			// valid script & valid step, extract appropriate action being used and select the appropriate one from that dropdown
+			let step_value = script[current_script_step > script.length ? script.length-1 : current_script_step][unit_id];
+			if(step_value === undefined) { // step data is unspecified; item is keeping the above state.
+				action = "use_above"
+			} else {
+				action = step_value[3];
+			}
+			$("#action_selector").val(action);
+		}
+	}
+	// bind the appropriate function to reflect necessary X/Y coordinates
+	dragPerformCallback = function (element, offset) {
+		$("#x_coordinate").val(offset.left);
+		$("#y_coordinate").val(offset.top);
+	}
+	// now bind all items with appropriate ids with generalized drag & drop 
+	editable_ids.forEach(i => {
+		let item = $("#"+i);
+		// console.log("Adding draggable for", item);
+		setElementDragable(item);
+	});
+}

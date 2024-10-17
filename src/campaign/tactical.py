@@ -28,6 +28,7 @@ class Scenario:
         data["offensive_units"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in self.offensive_units.items()}
         data["defensive_units"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in self.defensive_units.items()}
         data["neutrals"] = {k: {"id": k, "tooltip": v["name"], **v} for k, v in getattr(self, "neutrals", dict()).items()} # could be object or unrelated units. Can be empty
+        data["all_units"] = [*data["offensive_units"].keys(), *data["defensive_units"].keys(), *data["neutrals"].keys()]
         # no map for now.
         data["map"] = getattr(self, "map", None) 
         # script is converted to json to be given to javascript hardcoded 

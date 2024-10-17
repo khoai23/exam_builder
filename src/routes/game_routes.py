@@ -3,6 +3,7 @@
 import random, secrets, time
 import flask
 from flask import Flask, request, url_for
+from flask_login import current_user
 import traceback 
 
 from src.campaign import * # clamp down later
@@ -290,14 +291,18 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
     def tactical_scenario():
         identifier = request.args.get("key", None)
         # Displaying a battalion level scenario.
+        # Allowing Maintainer+ to edit these scenario
+        if current_user and not current_user.is_anonymous:
+            editable = current_user.can_do("edit_scenario")
+        else:
+            editable = False
         # TODO allow customization based on user
-        # get the hardcoded one for now
         if identifier is None:
             scenario = HardcodedScenario()
         else: 
             scenario = retrieve_narration_from_key(identifier).get_scenario(identifier)
             # TODO handle incorrect identifier
-        return flask.render_template("game/tactical.html", **scenario.convert_to_template_data())
+        return flask.render_template("game/tactical.html", editable=editable, **scenario.convert_to_template_data())
 
     @app.route("/interact_scenario", methods=["GET"])
     def interact_scenario():

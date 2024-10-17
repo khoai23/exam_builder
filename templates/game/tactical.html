@@ -68,6 +68,43 @@
 	</div>
 	{% endif %}
 		<div id="narration_panel" class="container-fluid m-2">
+			{% if editable %}
+				{# Editable will allow a panel to create, select and modify each step of the respective scenario. TODO make it an interactable list to allow interactions with hidden elements #} 
+				<div id="run_control" class="d-flex">
+					<button class="btn btn-primary" id="btn_previous_step"> &lt; </button> 
+					<span class="align-center"> Current step: <b id="current_step">N/A</b></span>
+					<button class="btn btn-primary" id="btn_next_step"> &gt; </button> 
+					<input type="checkbox" class="btn-check ml-auto" id="checkbox_autorun"> 
+						<label class="btn btn-outline-dark" for="checkbox_autorun">Autorun</label>
+					</input>
+					<input type="checkbox" class="btn-check" id="checkbox_loopback"> 
+						<label class="btn btn-outline-dark" for="checkbox_loopback">Loopback</label>
+					</input>
+				</div>
+				<div id="unit_properties">
+					<label for="x_coordinate"> X: </label>
+					<input type="number" class="form-control" id="x_coordinate"> </input>
+					<label for="y_coordinate"> Y: </label>
+					<input type="number" class="form-control" id="y_coordinate"> </input>
+					<label for="core_icon"> Core icon: </label>
+					<input type="text" class="form-control" id="core_icon"> </input>
+					<label for="action_icon"> Step-Action (top-right): </label>
+					<select class="form-select" aria-label="Step-Action selection" id="action_selector">
+					</select>
+					<label for="rank_icon"> Rank icon (bottom-right, optional): </label>
+					<input type="text" class="form-control" id="rank_icon"> </input>
+				</div>
+				<div id="confirm_change">
+					<i id="mockup_icon" class="bi bi-question" style="position: relative; font-size: 2rem; color: red; transform: translate(-50%,-50%)">
+						<i id="mockup_icon_action" class="bi" style="position: absolute; font-size: 1rem; color: red">
+						</i>
+						<i id="mockup_icon_rank" class="bi" style="position: absolute; top: 1.5rem; left: 2rem; font-size: 1rem; color: {{defensive_color}}">
+						</i>
+					</i>
+					<button class="btn btn-primary" id="btn_add_new_unit"> Add </button>
+					<button class="btn btn-warning" id="btn_unselect_unit"> Unselect </button>
+				</div>
+			{% endif %}
 			{# This will contain description for the scenario.#}
 			{% if narration %}
 				{% for paragraph in narration %}
@@ -114,18 +151,26 @@
 
 {% block script %}
 <script src={{ url_for('static', filename="utils.js") }}></script>
-<script src={{ url_for('static', filename="game/tactical.js") }}></script>
+<script src={{ url_for('static', filename="scripts/game/tactical.js") }}></script>
+{% if editable %}
+	{# if editable; allow drag & drop on all existing items; plus new creation should also be bounded with similar interactivity.#}
+	<script src={{ url_for('static', filename="scripts/dragdrop.js") }}></script>
+	<script type="text/javascript">
+		editable_ids = {{ all_units | safe }};
+		$(document).ready(bind_all_existing_item);
+	</script>
+{% endif %}
 {% if railroad_script %}
 	{# the hardcoded script is supplied from server; convert it into the run data #}
 	<script type="text/javascript">
-		var railroad_script = {{ railroad_script | safe }}
+		railroad_script = {{ railroad_script | safe }}
 		$(document).ready(toggle_railroad_script);
 	</script>
 {% endif %}
 {% if choice_script %}
 	{# the hardcoded script is supplied from server; convert it into the run data #}
 	<script type="text/javascript">
-		var choice_script = {{ choice_script | safe }}
+		choice_script = {{ choice_script | safe }}
 	</script>
 {% endif %}
 {% endblock %}

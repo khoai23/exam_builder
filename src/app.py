@@ -64,11 +64,7 @@ def main():
 @app.route("/test")
 def test():
     """Enter the test page, to put and test new stuff"""
-    offensive_units = [{"id": 1}]
-    defensive_units = [{"id": 2}, {"id": 3}]
-    offensive_color = "red"
-    defensive_color = "blue"
-    return flask.render_template("game/tactical.html", offensive_units=offensive_units, defensive_units=defensive_units, offensive_color=offensive_color, defensive_color=defensive_color)
+    return flask.render_template("test.html", content="# Dummydata\nThis should be parsed by markdown.")
 
 @app.route("/retrieve_text", methods=["GET"])
 def retrieve_text():

@@ -32,7 +32,12 @@ class UserRole(IntEnum):
     @staticmethod
     def allowCreateExam(role: int):
         # check if role allow creating & managing exams 
-        return role <= UserRole.Teacher
+        return role <= UserRole.Teacher 
+
+    @staticmethod 
+    def allowEditScenario(role: int):
+        # check if role allow editing tactical scenarios.
+        return role <= UserRole.Maintainer
 
 class User(UserMixin):
     def __init__(self, username, password, user_id: Optional[str]=None, name: str="N/A", role: UserRole=None, info: Optional[dict]=None):
@@ -68,5 +73,7 @@ class User(UserMixin):
             return UserRole.allowModifyExamData(self.role)
         elif task == "create_exam":
             return UserRole.allowCreateExam(self.role)
+        elif task == "edit_scenario":
+            return UserRole.allowEditScenario(self.role)
         else:
             raise ValueError("Invalid query, cannot find required task \"{}\" of the system.".format(task))
