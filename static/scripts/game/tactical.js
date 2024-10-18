@@ -68,13 +68,14 @@ function nextScriptStep(script, animation=true, force_next_step=false) {
 	if(nextStepSuspended && !force_next_step) {
 		return; // this will be governed by autorun. When autorun is enabled, this block does not execute. When autorun is disabled, this function will only be available with force_next_step deliberately set to True
 	}
-	current_script_step += 1;
-	if(current_script_step >= script.length) {
+	if(current_script_step >= script.length-1) {
 		if(scriptLoopback) {
 			current_script_step = 0; // allow loopback, start with 0 again
 		} else {
 			return false; // skip the step; TODO unload itself from the interval
 		}
+	} else {
+		current_script_step += 1;
 	}
 	$("#current_step").text(current_script_step);
 	//console.log("Running railroaded step ", current_script_step);
@@ -219,17 +220,45 @@ function bind_all_existing_item() {
 		nextScriptStep(script, false, true); // No animation & bypassing the autorun's blocker
 	});
 
+	let update_mock_icon = function() {
+		// on changes of items that is relevant to the display of the icon, update all the necessary properties 
+		let core_icon_cls = $("#core_icon").val();
+		$("#mockup_icon").removeClass().addClass("bi bi-" + core_icon_cls);
+		let rank_icon_cls = $("#rank_icon").val();
+		if(rank_icon_cls) {
+			$("#mockup_icon_rank").removeClass().addClass("bi bi-" + rank_icon_cls).show();
+		} else {
+			$("#mockup_icon_rank").hide();
+		}
+		let action = $("#action_selector").val();
+		// TODO dim instead of complete hide in the editable mode
+		update_action_icon($("#mockup_icon"), $("#mockup_icon_action"), action);
+	};
+	$("#core_icon").on("change", update_mock_icon);
+	$("#action_selector").on("change", update_mock_icon);
+	$("#rank_icon").on("change", update_mock_icon);
+
+	$("#btn_update_current").on("click", update_unit_at_step);
+	$("#btn_unselect_unit").on("click", unselect_unit);
+
+	// synchronize the UI element with their appropriate variables
+	unselect_unit();
+	$("#checkbox_autorun").prop("checked", !nextStepSuspended);
+	$("#checkbox_loopback").prop("checked", scriptLoopback);
+
+
 	// bind the appropriate function to show the properties being broadcasted; this last even after mouseup.
-	// TODO properly disengage the item after some time to allow addition
+	// TODO properly disengage the item after some time to allow addition 
+	var class_icon_regex = /bi\-([\w\d\-]+)/g
 	dragStartCallback = function (element) {
 		current_edit_item = element;
 		let unit_id = current_edit_item.attr("id");
-		$("#core_icon").val(current_edit_item.attr("class"));
+		$("#core_icon").val(current_edit_item.attr("class").match(class_icon_regex)[0].replace("bi-", ""));
 		let rank_item = $("#" + unit_id + "_rank");
 		// TODO load the actual info from the json instead
 		if(rank_item.length && rank_item.is(":visible")) {
 			// has a visible rank item; rank_icon will be populated.
-			$("#rank_icon").val(rank_item.attr("class"));
+			$("#rank_icon").val(rank_item.attr("class").match(class_icon_regex)[0].replace("bi-", ""));
 		} else {
 			$("#rank_icon").val("");
 		}
@@ -250,6 +279,9 @@ function bind_all_existing_item() {
 			}
 			$("#action_selector").val(action);
 		}
+		// also enable the update button & disable the add function
+		$("#btn_add_new_unit").prop("disabled", true);
+		$("#btn_update_current").prop("disabled", false);
 	}
 	// bind the appropriate function to reflect necessary X/Y coordinates
 	dragPerformCallback = function (element, offset) {
@@ -262,4 +294,59 @@ function bind_all_existing_item() {
 		// console.log("Adding draggable for", item);
 		setElementDragable(item);
 	});
+}
+
+// dynamic repopulation. TODO transfer the current jinja embedded-in-page data into this one, by 1st download the template, then 2nd repopulate it with the javascript functionality
+
+function update_unit_at_step() {
+	// function will be triggered for an existing valid entity (current_edit_item), a valid step (current_script_step) and optionally the appropriate cue of the current running script
+	// write the step data being edited into the appropriate spot 
+	if(!current_edit_item) {
+		console.log("No selected item to update; action cannot be run.");
+		return;
+	}
+	let script = null;
+	let preview_choice = null;
+	if(railroad_script) {
+		script = railroad_script;
+	} else if(current_preview_script) {
+		script = current_preview_script;
+		preview_choice = current_preview_choice;
+	} else {
+		console.log("Script to try editing doesn't exist, action cannot be run.");
+		return
+	}
+	if(current_script_step < 0 || current_script_step >= script.length) {
+		console.log("Current step is incorrect; action cannot be performed.")
+	}
+	let target_script_step = script[current_script_step];
+	let target_id = current_edit_item.attr("id");
+	let action_type = $("#action_selector").val();
+	// TODO support full-hide by assigning nulls
+	if(action_type == "use_above") {
+		// using the previous step's data (change nothing); delete the id from the dictionary.
+		delete target_script_step[target_id];
+		console.log("Deleted the step ", current_script_step, " as obj ", target_script_step, " & id; this will use the prior status as-is", target_id);
+	} else {
+		// using a specific action; overwrite that id with new data.
+		// ideally x/y should always be populated; but in case it doesn't, take the actually visible current positions on board
+		let x = parseFloat($("#" + target_id).css("left"));
+		let y = parseFloat($("#" + target_id).css("top"));
+		let strength = 100; // TODO actually update this 
+		target_script_step[target_id] = [x, y, strength, action_type];
+		console.log("Updated the step ", current_script_step, " as obj ", target_script_step, " with ", target_script_step[target_id]);
+	}
+}
+
+function unselect_unit() {
+	// unhook the current_edit_item; wipe the entire section, allow Add if the step is 0 and disable Update.
+	["x_coordinate", "y_coordinate", "core_icon", "rank_icon", "action_selector"].forEach(id => $("#" + id).val(""));
+	current_edit_item = null;
+	$("#btn_add_new_unit").prop("disabled", current_script_step === 0);
+	$("#btn_update_current").prop("disabled", true);
+}
+
+function submit_script_change() {
+	// sending the appropriate script change up to be considered by the scenario.
+	alert("Fill in later.")
 }

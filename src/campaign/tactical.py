@@ -4,7 +4,7 @@ Goal is for this to be updated to have interactable impact."""
 import json, io, os
 import random, base64
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Tuple, Optional, Any
 
 class Scenario:
     """A scenario should consist of a terrain map, a list of offensive/defensive units and for now, the script that it'll adhere to. Upon requested, the scenario will play out as scripted."""
@@ -55,6 +55,17 @@ class Scenario:
             if paths or regions:
                 data.update(paths=paths, regions=regions, svg_scene=True)
         return data
+
+    def edit(self, property_name: str, property_value: Any) -> Tuple[bool, Optional[str]]:
+        """Allow in-session edit of the scenario. Saving is not supported at the moment.
+        NOTE: allow selective overwriting of sub-property?"""
+        old_property = getattr(self, property_name, None)
+        if old_property is not None:
+            if not type(old_property) == type(property_value):
+                return False, "Cannot perform replacement of {} (type {}) with {} (type {}); as they may completely break the structure."
+        # if pass the check, set down and report
+        setattr(self, property_name, property_value)
+        return True, None
 
     def return_next_result(self) -> Optional[str]:
         """This will trigger for scenario_type == static. If can lead outward to a different scenario, this will return the appropriate key. If cannot, this return None. Ideally returning that (None) should never happens, but who knows."""

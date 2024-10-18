@@ -74,14 +74,16 @@
 					<button class="btn btn-primary" id="btn_previous_step"> &lt; </button> 
 					<span class="align-center"> Current step: <b id="current_step">N/A</b></span>
 					<button class="btn btn-primary" id="btn_next_step"> &gt; </button> 
-					<input type="checkbox" class="btn-check ml-auto" id="checkbox_autorun"> 
-						<label class="btn btn-outline-dark" for="checkbox_autorun">Autorun</label>
-					</input>
-					<input type="checkbox" class="btn-check" id="checkbox_loopback"> 
-						<label class="btn btn-outline-dark" for="checkbox_loopback">Loopback</label>
-					</input>
+					<div class="form-check form-switch ml-auto">
+						<input type="checkbox" class="form-check-input" id="checkbox_autorun"> </input>
+						<label class="form-check-label" for="checkbox_autorun">Autorun</label>
+					</div>
+					<div class="form-check form-switch">
+						<input type="checkbox" class="form-check-input" id="checkbox_loopback"> </input>
+						<label class="form-check-label" for="checkbox_loopback">Loopback</label>
+					</div>
 				</div>
-				<div id="unit_properties">
+				<div id="unit_properties" class="form-group">
 					<label for="x_coordinate"> X: </label>
 					<input type="number" class="form-control" id="x_coordinate"> </input>
 					<label for="y_coordinate"> Y: </label>
@@ -89,21 +91,25 @@
 					<label for="core_icon"> Core icon: </label>
 					<input type="text" class="form-control" id="core_icon"> </input>
 					<label for="action_icon"> Step-Action (top-right): </label>
-					<select class="form-select" aria-label="Step-Action selection" id="action_selector">
+					<select class="form-control form-select" aria-label="Step-Action selection" id="action_selector">
 					</select>
 					<label for="rank_icon"> Rank icon (bottom-right, optional): </label>
 					<input type="text" class="form-control" id="rank_icon"> </input>
 				</div>
-				<div id="confirm_change">
-					<i id="mockup_icon" class="bi bi-question" style="position: relative; font-size: 2rem; color: red; transform: translate(-50%,-50%)">
+				<div id="confirm_change" class="d-flex">
+					<span class="text-align-center">Resulting Icon (color follows appropriate side):</span>
+					<i id="mockup_icon" class="bi bi-question" style="position: relative; font-size: 2rem; color: brown">
 						<i id="mockup_icon_action" class="bi" style="position: absolute; font-size: 1rem; color: red">
 						</i>
-						<i id="mockup_icon_rank" class="bi" style="position: absolute; top: 1.5rem; left: 2rem; font-size: 1rem; color: {{defensive_color}}">
+						<i id="mockup_icon_rank" class="bi" style="position: absolute; top: 1.5rem; left: 2rem; font-size: 1rem; color: brown">
 						</i>
 					</i>
-					<button class="btn btn-primary" id="btn_add_new_unit"> Add </button>
+					<button class="btn btn-primary ml-auto" id="btn_add_new_unit"> Add </button>
+					<button class="btn btn-success" id="btn_update_current"> Update </button>
+					<button class="btn btn-outline-primary" id="btn_reset"> Reset </button>
 					<button class="btn btn-warning" id="btn_unselect_unit"> Unselect </button>
 				</div>
+				<hr />
 			{% endif %}
 			{# This will contain description for the scenario.#}
 			{% if narration %}

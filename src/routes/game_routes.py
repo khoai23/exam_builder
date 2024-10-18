@@ -304,9 +304,31 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
             # TODO handle incorrect identifier
         return flask.render_template("game/tactical.html", editable=editable, **scenario.convert_to_template_data())
 
+    @app.route("/scenario_data", methods=["GET", "POST"])
+    @login_decorator
+    def get_or_edit_scenario_data():
+        # Only allow on appropriate user for now. If GET, return necessary data usually got from the template. If POST, edit the scenario accordingly with appropriate properties 
+        identifier = request.args.get("key", None)
+        if not identifier:
+            return flask.jsonify(result=False, error="Scenario identifier must be supplied to properly perform get/edit.")
+        scenario = retrieve_narration_from_key(identifier).get_scenario(identifier)
+        if request.method == "GET":
+            # For GET, it's always available
+            return flask.jsonify(**scenario.convert_to_template_data())
+        else:
+            # For POST, make sure account has editable rights and if does, submit the data appropriately
+            if not current_user.can_do("edit_scenario"):
+                return flask.jsonify(result=False, error="Scenario editing is not available at your current permissions.")
+            property_name = request.data["key"]
+            property_value = request.data["value"]
+            result, error = scenario.edit(property_name, property_value) # edit fn will allow overwriting necessary properties of the 
+            if result:
+                return flask.jsonify(result=True)
+            else:
+                return flask.jsonify(result=False, error=str(error))
+
     @app.route("/interact_scenario", methods=["GET"])
     def interact_scenario():
-        # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
         # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
         # TODO receive quiz result, checkup and process forward accordingly
         identifier = request.args.get("key", None)
