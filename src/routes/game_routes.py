@@ -280,16 +280,18 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
     # for now use the exact same narrative obj 
     hardcode_narration = HardcodedNarrative()
     antal_inf_narration = AntalInfantryGameNarrative()
-    
+    all_narration = {"hardcoded": hardcode_narration, "antal_inf": antal_inf_narration}
     def retrieve_narration_from_key(key: str):
         for nrv in [hardcode_narration, antal_inf_narration]:
                 if key in nrv.graph:
                     return nrv
         return ValueError("Incorrect scenario key: " + key)
 
+    @app.route("/scenario/<narrative_key>/<section_key>", methods=["GET"])
+    @app.route("/scenario/<narrative_key>", methods=["GET"])
     @app.route("/scenario", methods=["GET"])
-    def tactical_scenario():
-        identifier = request.args.get("key", None)
+    def tactical_scenario(narrative_key: str=None, section_key: str=None):
+        # identifier = request.args.get("key", None)
         # Displaying a battalion level scenario.
         # Allowing Maintainer+ to edit these scenario
         if current_user and not current_user.is_anonymous:
@@ -297,10 +299,10 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
         else:
             editable = False
         # TODO allow customization based on user
-        if identifier is None:
+        if narrative_key is None or section_key is None:
             scenario = HardcodedScenario()
         else: 
-            scenario = retrieve_narration_from_key(identifier).get_scenario(identifier)
+            scenario = all_narration[narrative_key].get_scenario(section_key)
             # TODO handle incorrect identifier
         return flask.render_template("game/tactical.html", editable=editable, **scenario.convert_to_template_data())
 
@@ -327,15 +329,14 @@ def build_game_routes(app: Flask, exam_manager: ExamManager, login_decorator: ca
             else:
                 return flask.jsonify(result=False, error=str(error))
 
-    @app.route("/interact_scenario", methods=["GET"])
-    def interact_scenario():
+    @app.route("/interact_scenario/<narrative_key>/<section_key>", methods=["GET"])
+    def interact_scenario(narrative_key: str, section_key: str):
         # sibling of the above tactical_scenario; this hardpoint is used for interaction (selecting choice, sending quiz result, rolling for transitions etc.)
         # TODO receive quiz result, checkup and process forward accordingly
-        identifier = request.args.get("key", None)
         choice = request.args.get("choice", None)
-        next_scenario_key = retrieve_narration_from_key(identifier).handle_scenario_choice(identifier, choice=choice)
+        next_scenario_key = all_narration[narrative_key].handle_scenario_choice(section_key, choice=choice)
         # TODO redirect directly to the next scenario?
         # TODO handle error due to wrong data?
-        return flask.jsonify(result=True, link="scenario?key="+next_scenario_key)
+        return flask.jsonify(result=True, link=f"scenario/{narrative_key}/{next_scenario_key}", scenario_key=next_scenario_key)
 
     return campaign_data, app

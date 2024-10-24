@@ -143,11 +143,11 @@ function switch_script_choice_preview(event, option_key, interval=1000) {
 
 function choose_option(event, choice_str) {
 	//alert("TODO implement. Chose option: '" + option_key + "'. Key to back-access: " + getUrlParameter("key"));
-	let current_scenario_key = getUrlParameter("key");
-	perform_get("interact_scenario?key=" + current_scenario_key + "&choice=" + choice_str, (data, textStatus, jqXHR) => {
+	// let current_scenario_key = getUrlParameter("key");
+	perform_get(window.location.pathname.replace("scenario", "interact_scenario") + "?&choice=" + choice_str, (data, textStatus, jqXHR) => {
 		// on receiving data, redirect to the new scenario by appropriate response 
-		redirect_link = data["link"];
-		console.log("Received link, attempt to redirect to: ", redirect_link);
+		redirect_link = data["scenario_key"];
+		console.log("Received link/scenario_key, attempt to redirect with the later to section: ", redirect_link);
 		window.location.href = redirect_link;
 	})
 }

@@ -2,9 +2,14 @@
 Goal is for this to be updated to have interactable impact."""
 
 import json, io, os
-import random, base64
+import random, base64 
 
-from typing import Dict, List, Tuple, Optional, Any
+from src.parser.bpmn_graph_to_template import extract_bpmn, convert_to_scenario
+
+from typing import Dict, List, Tuple, Union, Optional, Any
+
+import logging 
+logger = logging.getLogger(__name__)
 
 class Scenario:
     """A scenario should consist of a terrain map, a list of offensive/defensive units and for now, the script that it'll adhere to. Upon requested, the scenario will play out as scripted."""
@@ -214,10 +219,16 @@ class HardcodedRollScenario(Scenario):
 
 class WrittenScenario(Scenario):
     # scenario that is written in a json file and needed to be loaded in.
-    def __init__(self, file_path: str):
-        with io.open(file_path, "r", encoding="utf-8") as jf:
-            data = json.load(jf)
-        base_folder = os.path.dirname(file_path)
+    def __init__(self, file_path_or_data: Union[str, dict], base_folder: Optional[str]=None, keep_raw_data: bool=False):
+        if isinstance(file_path_or_data, str):
+            # TODO handle if the data is in string mode (maybe rudimentary length check)
+            with io.open(file_path_or_data, "r", encoding="utf-8") as jf:
+                data = json.load(jf)
+            base_folder = os.path.dirname(file_path_or_data)
+        else:
+            data = file_path_or_data 
+        if keep_raw_data: 
+            self._raw_data = data
         # TODO enforcing necessary checks?
         for k, v in data.items():
             setattr(self, k, v)
@@ -241,15 +252,16 @@ class WrittenScenario(Scenario):
 
 class Narrative:
     """A narrative has the same structure as an interactive novel, linking multiple scenarios together depending on choices.This should handle the above at the minimum."""
-    def __init__(self, narrative_graph: Dict[str, Scenario]):
+    def __init__(self, narrative_graph: Dict[str, Scenario], name: Optional[str]=None):
         # for now, graph must be pre-constructed with all scenarios 
-        self.graph = narrative_graph
+        self.graph = narrative_graph 
+        self.name = name
 
     def get_scenario(self, scenario_key: str) -> Scenario:
         return self.graph[scenario_key]
 
     def handle_scenario_choice(self, src_scenario_key: str, choice: Optional[str]=None, quiz_result: Optional[float]=None) -> str:
-        """Default, book-like variant. Simply handle going forward and backward. There is no blocking element yet. (e.g if somebody go directly to one section, they can just go from there)."""
+        """Default, book-like variant. Simply handle going forward and backward. There is no blocking element yet. (e.g if somebody go directly to one section, they can just go on from there)."""
         src_scenario = self.graph[src_scenario_key]
         if src_scenario.scenario_type == "static":
             # When encountering this, the scenario only has one choice (a narrative section), or no choice at all.
@@ -277,26 +289,31 @@ class HardcodedNarrative(Narrative):
         choice_key, choice_sc = "example_choice", HardcodedChoiceScenario()
         roll_sc.outcome = {"result_unscathed": choice_key, "result_dead": end_key}
         choice_sc.outcome = {"choice_1": roll_key, "choice_2": end_key}
-        super(HardcodedNarrative, self).__init__({end_key: end_sc, roll_key: roll_sc, choice_key: choice_sc})
-
+        super(HardcodedNarrative, self).__init__({end_key: end_sc, roll_key: roll_sc, choice_key: choice_sc}, name="hardcode")
 
 class AntalInfantryGameNarrative(Narrative):
     # transition to json-based when done with the main scenarios.
-    def __init__(self, id_to_key_fn: callable=lambda i: "antal_inf_section_{:d}".format(i)):
+    def __init__(self):
+        manual_build_data = self.manual_build(keep_raw_data=True)
+        narrative_graph = self.merge_build(manual_build_data)
+        super(AntalInfantryGameNarrative, self).__init__(narrative_graph, name="antal_inf")
+        logger.debug("Narrative [antal_inf]: currently available (+constructed data): {}".format(list(narrative_graph.keys())))
+
+    def manual_build(self, id_to_key_fn: callable=lambda i: "section_{:d}".format(i), keep_raw_data: Optional[bool]=False):
         narrative_graph = dict()
         section_by_id = dict()
         for section_number in [3, 4, 7, 10, 11, 12, 13, 14, 15, 16, 17, 29, 32, 39, 40, 41, 43, 45, 48, 51, 52, 53, 55, 58, 60, 61, 62, 65, 93, 96]:
             try:
                 section_by_id[section_number] = narrative_graph[id_to_key_fn(section_number)] = WrittenScenario("data/game/tactical/antal_inf/section_{:d}.json".format
-(section_number))
+(section_number), keep_raw_data=keep_raw_data)
             except Exception as e:
                 print("Failed section: ", section_number)
                 raise e
         # current deadends: 16, 48, 51, 52, 55, 58, 62, 93, 96
-        section_by_id[3].outcome = {"choice_forward_slope": id_to_key_fn(4), "choice_reverse_slope": None, "choice_split_up": None}
+        section_by_id[3].outcome = {"choice_forward_slope": id_to_key_fn(4), "choice_reverse_slope": id_to_key_fn(5), "choice_split_up": id_to_key_fn(6)}
         section_by_id[4].outcome = id_to_key_fn(7)
         section_by_id[7].outcome = {"choice_personal_recon": id_to_key_fn(10), "choice_continue_work": id_to_key_fn(11)}
-        section_by_id[10].outcome = {"result_dead": id_to_key_fn(16), "result_piper_hit": id_to_key_fn(17)}
+        section_by_id[10].outcome = {"result_die": id_to_key_fn(16), "result_piper_hit": id_to_key_fn(17)}
         section_by_id[17].outcome = {"choice_help": id_to_key_fn(51), "choice_stay": id_to_key_fn(52)}
         section_by_id[11].outcome = {"choice_rest": id_to_key_fn(12), "choice_keep_working": id_to_key_fn(13)}
         section_by_id[13].outcome = {"result_arty_direct_hit": id_to_key_fn(62), "result_captured": id_to_key_fn(48), "result_survive": id_to_key_fn(15)}
@@ -312,5 +329,114 @@ class AntalInfantryGameNarrative(Narrative):
         section_by_id[12].outcome = {"choice_personal_recon": id_to_key_fn(96), "choice_stay": id_to_key_fn(53)}
         section_by_id[53].outcome = {"result_die": id_to_key_fn(62), "result_survive": id_to_key_fn(14)}
         section_by_id[14].outcome = {"result_die": id_to_key_fn(58), "result_captured": id_to_key_fn(48), "result_survive": id_to_key_fn(29)}
-        section_by_id[29].outcome = {"result_die": id_to_key_fn(62), "result_captured": id_to_key_fn(48), "result_die_2": id_to_key_fn(40)}
-        super(AntalInfantryGameNarrative, self).__init__(narrative_graph)
+        section_by_id[29].outcome = {"result_arty_direct_hit": id_to_key_fn(62), "result_captured": id_to_key_fn(48), "result_die": id_to_key_fn(40)}
+        return section_by_id, narrative_graph
+
+    def merge_build(self, manual_data: Tuple[Dict, Dict]): 
+        """Build the automated variants; and merge in with the manual version in priority mode.
+        Using following 4/7/10 for baseline to generate appropriate bases during generation."""
+        section_by_id, manual_graph = manual_data
+        templates = {"static": section_by_id[4]._raw_data, "choice": section_by_id[7]._raw_data, "random": section_by_id[10]._raw_data}
+        
+        # generate
+        test_xml = "test/learn_bpmn.xml"
+        with io.open(test_xml, "r") as tf:
+            data = extract_bpmn(tf.read(), ["startEvent", "intermediateThrowEvent", "endEvent", "exclusiveGateway", "task", "sequenceFlow"])
+        auto_sections, auto_graph = convert_to_scenario(data, templates)
+
+        # merging with the manual_data 
+        # try to identify bind the sections with the manual names if available.
+        id_to_manual_name = dict()
+        for i, sct in section_by_id.items():
+            if not getattr(sct, "outcome", None):
+                # No outcome, no updates anywhere
+                continue
+            if isinstance(sct.outcome, dict):
+                # can be rename-able; for now keep the longest possibility as it 
+                for name, section_keystr in sct.outcome.items():
+                    sid = int(section_keystr.split("_")[-1])
+                    if sid in id_to_manual_name and len(id_to_manual_name[sid]) > len(name):
+                        # only do not write if the name is longer (so probably better)
+                        # TODO deal with result_die_2 stuff
+                        pass 
+                    else:
+                        id_to_manual_name[sid] = name 
+        # attempt to convert all relevant sections with actually relevant internal names.
+        for sname, auto_section_data in auto_sections.items():
+            if auto_section_data["scenario_type"] == "static":
+                # don't do anything to this one since direction should have been established normally
+                continue 
+            sid = int(sname.split("_")[-1])
+            if sid in section_by_id:
+                # already been created manually, ignore 
+                continue
+            outcome = auto_section_data["outcome"]
+            choices = auto_section_data["choices"]
+            if isinstance(choices, (list, tuple)):
+                # choices are list of possibility, so can use it as option entry
+                # rename if available 
+                new_choices = []
+                for percentage, choice_name in choices:
+                    # try to parse the choice name; if that is multiple-id (e.g 14/27); try to search for them incrementally.
+                    target_section_name = outcome[choice_name]
+                    target_id_str = target_section_name.split("_")[-1]
+                    new_choice_name = None
+                    if "/" in target_id_str:
+                        # check for multiple id 
+                        for istr in target_id_str.strip().split("/"):
+                            i = int(istr)
+                            if i in id_to_manual_name:
+                                new_choice_name = id_to_manual_name[i]
+                    else:
+                        new_choice_name = id_to_manual_name.get(int(target_id_str), new_choice_name)
+                    if new_choice_name:
+                        # can be replacable
+                        logger.debug("[Random item] A new choice name is possible; replacing {} -> {}".format(choice_name, new_choice_name))
+                        # write to new_choices
+                        new_choices.append( (percentage, new_choice_name) )
+                        # remove the old choice dict & get new one
+                        outcome.pop(choice_name)
+                        outcome[new_choice_name] = target_section_name
+                    else:
+                        # cannot be replaceable, just re-put old entries 
+                        new_choices.append( (percentage, choice_name) )
+                # re-put back into place
+                auto_section_data["outcome"] = outcome
+                auto_section_data["choices"] = new_choices
+            else:
+                # choices are a dict; same as above - intercept using the necessary values and put it back in if found substitutes
+                new_choices = dict()
+                for choice_name, choice_localization in choices.items():
+                    # try to parse the choice name; if that is multiple-id (e.g 14/27); try to search for them incrementally.
+                    target_id_str = choice_name.split("_")[-1]
+                    new_choice_name = None
+                    if "/" in target_id_str:
+                        # check for multiple id 
+                        for istr in target_id_str.strip().split("/"):
+                            i = int(istr)
+                            if i in id_to_manual_name:
+                                new_choice_name = id_to_manual_name[i]
+                    else:
+                        new_choice_name = id_to_manual_name.get(int(target_id_str), new_choice_name)
+                    if new_choice_name:
+                        # can be replacable
+                        logger.debug("[Choice item] A new choice name is possible; replacing {} -> {}".format(choice_name, new_choice_name))
+                        # write to new_choices 
+                        new_choices[new_choice_name] = choice_localization
+                        # remove the old choice dict & get new one
+                        target_section_name = outcome.pop(choice_name)
+                        outcome[new_choice_name] = target_section_name
+                    else:
+                        # cannot be replaceable, just re-put old entries 
+                        new_choices[choice_name] = choice_localization
+                # re-put back into place
+                auto_section_data["outcome"] = outcome
+                auto_section_data["choices"] = new_choices
+        # After conversion, merge the graph with priority to the manual version 
+        merged = dict(manual_graph)
+        for sname, auto_section_data in auto_sections.items():
+            if sname not in merged:
+                merged[sname] = WrittenScenario(auto_section_data, base_folder="data/game/tactical/antal_inf/")
+        # return the merged file 
+        return merged
+

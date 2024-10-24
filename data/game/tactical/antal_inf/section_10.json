@@ -53,7 +53,7 @@
 			{"d0": [290, 348, 35.0, "recon"], "o2": [280, 384, 100.0, "inactive"], "o3": [314, 360, 100.0, "blink"]}
 		],
         "choices": [
-            [25, "result_dead"],
+            [25, "result_die"],
             [75, "result_piper_hit"]
         ]
 }

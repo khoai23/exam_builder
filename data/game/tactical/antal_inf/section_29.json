@@ -32,8 +32,8 @@
 				"d0": [430, 326, 35.0, "hold"], "defend_objective": [367, 105, null, "blink"]}
 		],
         "choices": [
-            [60, "result_die"],
-            [10, "result_die_2"],
+            [60, "result_arty_direct_hit"],
+            [10, "result_die"],
             [30, "result_captured"]
         ]
 }
